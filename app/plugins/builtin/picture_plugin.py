@@ -49,50 +49,57 @@ class PicturePlugin:
             })
 
             if session.mode in ("gif", "boomerang"):
-                # Create GIF/boomerang from captured frames
                 from datetime import datetime as dt
                 from pathlib import Path
 
-                from PIL import Image
-                from app.processing.effects import apply_effect
-                from app.processing.gif import create_boomerang, create_gif
+                from app.processing.gif import (
+                    create_templated_boomerang,
+                    create_templated_gif,
+                )
 
-                # Apply effect to each frame if selected
+                # Apply effect per-frame during template compositing
                 effect = session.selected_effect
-                total_frames = len(session.captures)
-                if effect and effect != "none":
-                    for i, frame_path in enumerate(session.captures):
-                        pct = 20 + int(60 * (i / total_frames))
-                        await self._broadcast({
-                            "type": "processing_progress",
-                            "step": "applying_effect",
-                            "percent": pct,
-                            "frame": i + 1,
-                            "total_frames": total_frames,
-                        })
-                        img = await asyncio.to_thread(Image.open, frame_path)
-                        img = img.convert("RGB")
-                        img = await asyncio.to_thread(apply_effect, img, effect)
-                        await asyncio.to_thread(
-                            img.save, str(frame_path), quality=90
-                        )
-                        # Keepalive — yield control so WebSocket pings can process
-                        await asyncio.sleep(0)
 
                 date_str = dt.now().strftime("%Y-%m-%d")
-                output_dir = Path(
-                    self._config.general.save_dir
-                ) / "photos" / date_str
+                output_dir = (
+                    Path(self._config.general.save_dir) / "photos" / date_str
+                )
                 output_dir.mkdir(parents=True, exist_ok=True)
                 output_path = output_dir / f"{session.id}.gif"
 
+                footer_vars = {
+                    "event_name": self._config.sharing.event_name,
+                }
+
+                total_frames = len(session.captures)
+                for i in range(total_frames):
+                    pct = 20 + int(60 * (i / total_frames))
+                    await self._broadcast({
+                        "type": "processing_progress",
+                        "step": "applying_effect",
+                        "percent": pct,
+                        "frame": i + 1,
+                        "total_frames": total_frames,
+                    })
+                    await asyncio.sleep(0)  # Yield for WebSocket
+
                 if session.mode == "boomerang":
                     await asyncio.to_thread(
-                        create_boomerang, session.captures, output_path
+                        create_templated_boomerang,
+                        session.captures,
+                        output_path,
+                        template_name=session.layout_template,
+                        footer_vars=footer_vars,
+                        effect=effect,
                     )
                 else:
                     await asyncio.to_thread(
-                        create_gif, session.captures, output_path
+                        create_templated_gif,
+                        session.captures,
+                        output_path,
+                        template_name=session.layout_template,
+                        footer_vars=footer_vars,
+                        effect=effect,
                     )
                 session.composite_path = output_path
             else:

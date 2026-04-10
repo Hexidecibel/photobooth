@@ -78,6 +78,115 @@ def create_boomerang(
     return output
 
 
+def create_templated_gif(
+    frames: list[Path],
+    output: Path,
+    template_name: str = "single",
+    footer_vars: dict | None = None,
+    effect: str | None = None,
+    duration_ms: int = 100,
+    resize_width: int = 600,
+) -> Path:
+    """Create an animated GIF with each frame composited into a template."""
+    from app.processing.effects import apply_effect
+    from app.processing.layout import LayoutEngine
+    from app.processing.templates import load_template
+
+    template = load_template(template_name)
+    engine = LayoutEngine()
+
+    # Calculate output size maintaining template aspect ratio
+    aspect = template.width_inches / template.height_inches
+    out_w = resize_width
+    out_h = int(out_w / aspect)
+
+    composed_frames = []
+    for frame_path in frames:
+        img = Image.open(frame_path).convert("RGB")
+
+        # Apply effect if selected
+        if effect and effect != "none":
+            img = apply_effect(img, effect)
+
+        # Compose into template (single frame as a 1-element list)
+        composite = engine.compose([img], template, footer_vars or {})
+
+        # Resize for GIF (full template res is too big)
+        composite = composite.resize((out_w, out_h), Image.LANCZOS)
+        composed_frames.append(composite)
+
+    if not composed_frames:
+        raise ValueError("No frames to process")
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    composed_frames[0].save(
+        str(output),
+        save_all=True,
+        append_images=composed_frames[1:],
+        duration=duration_ms,
+        loop=0,
+        optimize=True,
+    )
+
+    logger.info("Templated GIF created: %s (%d frames)", output, len(composed_frames))
+    return output
+
+
+def create_templated_boomerang(
+    frames: list[Path],
+    output: Path,
+    template_name: str = "single",
+    footer_vars: dict | None = None,
+    effect: str | None = None,
+    duration_ms: int = 80,
+    resize_width: int = 600,
+) -> Path:
+    """Create a boomerang GIF (forward+reverse) with template framing."""
+    from app.processing.effects import apply_effect
+    from app.processing.layout import LayoutEngine
+    from app.processing.templates import load_template
+
+    template = load_template(template_name)
+    engine = LayoutEngine()
+
+    aspect = template.width_inches / template.height_inches
+    out_w = resize_width
+    out_h = int(out_w / aspect)
+
+    composed_frames = []
+    for frame_path in frames:
+        img = Image.open(frame_path).convert("RGB")
+        if effect and effect != "none":
+            img = apply_effect(img, effect)
+        composite = engine.compose([img], template, footer_vars or {})
+        composite = composite.resize((out_w, out_h), Image.LANCZOS)
+        composed_frames.append(composite)
+
+    if not composed_frames:
+        raise ValueError("No frames to process")
+
+    # Boomerang: forward + reverse (minus endpoints)
+    if len(composed_frames) > 2:
+        boomerang = composed_frames + composed_frames[-2:0:-1]
+    else:
+        boomerang = composed_frames + list(reversed(composed_frames))
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    boomerang[0].save(
+        str(output),
+        save_all=True,
+        append_images=boomerang[1:],
+        duration=duration_ms,
+        loop=0,
+        optimize=True,
+    )
+
+    logger.info(
+        "Templated boomerang created: %s (%d frames)", output, len(boomerang)
+    )
+    return output
+
+
 def gif_to_bytes(gif_path: Path) -> bytes:
     """Read a GIF file and return bytes (for serving via API)."""
     return gif_path.read_bytes()
