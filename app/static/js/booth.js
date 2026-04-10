@@ -292,6 +292,23 @@ class BoothApp {
             this.hidePosePrompt();
         }
 
+        // Processing timeout — if stuck, force advance
+        if (state === 'processing') {
+            var self = this;
+            this._processingTimeout = setTimeout(function () {
+                console.warn('Processing timeout — forcing advance');
+                self.send('result_ready');
+                setTimeout(function () {
+                    if (self.state === 'processing') {
+                        self.showState('idle');
+                    }
+                }, 3000);
+            }, 120000); // 2 minutes
+        }
+        if (previousState === 'processing' && this._processingTimeout) {
+            clearTimeout(this._processingTimeout);
+        }
+
         // Print screen auto-advance
         if (state === 'print') {
             this.startPrintTimer();

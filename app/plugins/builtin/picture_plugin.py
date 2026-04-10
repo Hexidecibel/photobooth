@@ -76,6 +76,8 @@ class PicturePlugin:
                         await asyncio.to_thread(
                             img.save, str(frame_path), quality=90
                         )
+                        # Keepalive — yield control so WebSocket pings can process
+                        await asyncio.sleep(0)
 
                 date_str = dt.now().strftime("%Y-%m-%d")
                 output_dir = Path(
