@@ -72,11 +72,11 @@ class PiCamera2Backend(CameraBase):
             Picamera2, self._camera_index
         )
         config = self._picam2.create_video_configuration(
-            main={"size": resolution, "format": "RGB888"}
+            main={"size": resolution},
         )
         await asyncio.to_thread(self._picam2.configure, config)
         self._output = StreamingOutput()
-        encoder = MJPEGEncoder(bitrate=5_000_000)
+        encoder = MJPEGEncoder(bitrate=8_000_000)
         await asyncio.to_thread(
             self._picam2.start_recording,
             encoder,
