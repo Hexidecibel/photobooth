@@ -131,8 +131,9 @@ class PiCamera2Backend(CameraBase):
         still_config = self._picam2.create_still_configuration(
             main={"size": sensor_res}
         )
-        # Stop preview, capture full-res still, restart preview
+        # Stop preview stream and wait for it to exit
         self._running = False
+        await asyncio.sleep(0.5)  # Wait for stream_mjpeg loop to exit
         await asyncio.to_thread(self._picam2.stop)
         await asyncio.to_thread(self._picam2.configure, still_config)
         await asyncio.to_thread(self._picam2.start)
