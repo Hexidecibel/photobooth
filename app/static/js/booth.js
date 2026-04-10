@@ -233,8 +233,11 @@ class BoothApp {
                 this.onCaptureComplete(msg);
                 break;
             case 'processing_progress':
+                // Once processing starts, hide the recording overlay
+                if (msg.step === 'compositing' || msg.step === 'applying_effect') {
+                    this.hideRecordingOverlay();
+                }
                 this.updateProgress(msg.percent, msg.step, msg.frame, msg.total_frames);
-                // If we get processing_progress while still in capture, advance
                 if (this.state === 'capture') {
                     this.send('capture_advance');
                 }
@@ -271,8 +274,8 @@ class BoothApp {
             s.classList.toggle('active', isActive);
         });
 
-        // Hide recording overlay when leaving capture/preview (GIF mode)
-        if (previousState === 'capture' || previousState === 'preview') {
+        // Hide recording overlay only when going to review/idle (not processing)
+        if (state === 'review' || state === 'idle' || state === 'choose') {
             this.hideRecordingOverlay();
         }
 

@@ -136,11 +136,22 @@
         <button class="btn-cancel" data-action="cancel" data-i18n="cancel">Cancel</button>
     </section>
 
-    <!-- Recording overlay for GIF/boomerang — shows during burst capture -->
+    <!-- Recording overlay for GIF/boomerang — camera viewfinder style -->
     <div class="recording-overlay" id="recording-overlay" style="display:none">
+        <!-- Viewfinder corner brackets -->
+        <div class="viewfinder-corner tl"></div>
+        <div class="viewfinder-corner tr"></div>
+        <div class="viewfinder-corner bl"></div>
+        <div class="viewfinder-corner br"></div>
+        <!-- Recording indicator -->
+        <div class="rec-indicator">
+            <span class="rec-dot"></span>
+            <span class="rec-text">REC</span>
+        </div>
+        <!-- Center content -->
         <div class="recording-content">
-            <p class="recording-message">Keep moving!</p>
-            <div class="recording-counter" id="recording-counter">1</div>
+            <div class="recording-counter" id="recording-counter"></div>
+            <p class="recording-message">Dance! Move! Pose!</p>
             <div class="recording-dots" id="recording-dots"></div>
         </div>
     </div>

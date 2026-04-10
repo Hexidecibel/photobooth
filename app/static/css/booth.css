@@ -441,42 +441,73 @@ section[data-state="preview"] .btn-cancel:hover {
 }
 
 /* ===================================================================
-   RECORDING OVERLAY — GIF/boomerang burst capture
+   RECORDING OVERLAY — Camera viewfinder style
    =================================================================== */
 
 .recording-overlay {
     position: fixed;
     inset: 0;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    background: #000;
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 100;
 }
 
+/* Viewfinder corner brackets */
+.viewfinder-corner {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    border-color: rgba(255, 255, 255, 0.6);
+    border-style: solid;
+    border-width: 0;
+}
+.viewfinder-corner.tl { top: 8%; left: 8%; border-top-width: 3px; border-left-width: 3px; }
+.viewfinder-corner.tr { top: 8%; right: 8%; border-top-width: 3px; border-right-width: 3px; }
+.viewfinder-corner.bl { bottom: 8%; left: 8%; border-bottom-width: 3px; border-left-width: 3px; }
+.viewfinder-corner.br { bottom: 8%; right: 8%; border-bottom-width: 3px; border-right-width: 3px; }
+
+/* REC indicator — top left, blinking red dot */
+.rec-indicator {
+    position: absolute;
+    top: 10%;
+    left: 12%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 5;
+}
+.rec-dot {
+    width: 14px;
+    height: 14px;
+    background: #f44336;
+    border-radius: 50%;
+    animation: rec-blink 1s ease-in-out infinite;
+}
+@keyframes rec-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
+}
+.rec-text {
+    color: #f44336;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+}
+
+/* Center content */
 .recording-content {
     text-align: center;
-}
-
-.recording-message {
-    font-size: clamp(1.5rem, 4vw, 2.5rem);
-    color: var(--pb-accent);
-    font-weight: 700;
-    margin-bottom: 1rem;
-    animation: pulse-text 0.5s ease-in-out infinite alternate;
-}
-
-@keyframes pulse-text {
-    from { opacity: 0.7; }
-    to { opacity: 1; }
+    z-index: 2;
 }
 
 .recording-counter {
-    font-size: clamp(8rem, 25vw, 15rem);
+    font-size: clamp(10rem, 30vw, 18rem);
     font-weight: 900;
     color: white;
     line-height: 1;
-    text-shadow: 0 0 40px var(--pb-accent-glow), 0 0 80px rgba(108, 99, 255, 0.2);
+    text-shadow: 0 0 60px rgba(255, 255, 255, 0.3);
 }
 
 .recording-counter.pop {
@@ -488,23 +519,32 @@ section[data-state="preview"] .btn-cancel:hover {
     100% { transform: scale(1); opacity: 1; }
 }
 
+.recording-message {
+    font-size: clamp(1.5rem, 5vw, 3rem);
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 700;
+    margin-top: 1rem;
+    letter-spacing: 0.05em;
+}
+
 .recording-dots {
     display: flex;
     justify-content: center;
-    gap: 8px;
+    gap: 10px;
     margin-top: 2rem;
 }
 
 .recording-dots .dot {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.15);
     transition: background 0.2s;
 }
 
 .recording-dots .dot.filled {
-    background: var(--pb-accent);
+    background: #f44336;
+    box-shadow: 0 0 8px rgba(244, 67, 54, 0.5);
 }
 
 /* ===================================================================
