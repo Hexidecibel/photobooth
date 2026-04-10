@@ -19,8 +19,8 @@ async def auto_detect_camera(config: CameraConfig) -> CameraBase:
     pi_available = PiCamera2Backend.detect()
     usb_available = OpenCVBackend.detect()
 
-    # Both available: hybrid mode only if explicitly configured
-    if config.backend == "hybrid" and pi_available and usb_available:
+    # Both available: use hybrid automatically (or if explicitly configured)
+    if pi_available and usb_available and config.backend in ("auto", "hybrid"):
         from app.camera.hybrid import HybridCamera
 
         logger.info("Using Hybrid camera (USB webcam preview + Pi camera capture)")
