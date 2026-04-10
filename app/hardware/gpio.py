@@ -67,6 +67,7 @@ class GPIOController:
 
     def _handle_capture(self):
         """Left/capture button pressed."""
+        print("[GPIO] Raw capture button callback fired")
         if self._loop:
             asyncio.run_coroutine_threadsafe(
                 self._on_button("capture"), self._loop
@@ -74,6 +75,7 @@ class GPIOController:
 
     def _handle_print(self):
         """Right/print button pressed."""
+        print("[GPIO] Raw print button callback fired")
         if self._loop:
             asyncio.run_coroutine_threadsafe(
                 self._on_button("print"), self._loop
@@ -84,6 +86,7 @@ class GPIOController:
     async def _on_button(self, button: str) -> None:
         """Route a physical button press to the correct state-machine event."""
         state = self._sm.state
+        print(f"[GPIO] Button '{button}' pressed in state {state}")
 
         if state == BoothState.IDLE:
             await self._sm.trigger("start")
