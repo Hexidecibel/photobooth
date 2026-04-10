@@ -88,7 +88,7 @@ class CameraPlugin:
                     )
                     path.write_bytes(buf.getvalue())
                     session.captures.append(path)
-                    await asyncio.sleep(0.05)  # Yield for WebSocket pings
+                    await asyncio.sleep(0.15)  # Yield for WebSocket + visible pacing
                     print(f"[CAPTURE] frame {i+1}/{frame_count}")
 
                 print(f"[CAPTURE] GIF burst complete, {len(session.captures)} frames")
