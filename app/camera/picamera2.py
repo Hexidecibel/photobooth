@@ -71,11 +71,13 @@ class PiCamera2Backend(CameraBase):
         )
         # Force RGB888 so capture_array returns clean 3-channel RGB
         # Use full sensor output to match capture FOV (otherwise preview crops)
+        # Use 320x240 for fastest possible streaming
+        stream_res = (320, 240)
         sensor_res = self._picam2.camera_properties.get(
             "PixelArraySize", (3280, 2464)
         )
         config = self._picam2.create_preview_configuration(
-            main={"size": resolution, "format": "RGB888"},
+            main={"size": stream_res, "format": "RGB888"},
             raw={"size": sensor_res},
         )
         await asyncio.to_thread(self._picam2.configure, config)
@@ -102,7 +104,7 @@ class PiCamera2Backend(CameraBase):
 
         def _grab_frame_cv2(picam2):
             arr = picam2.capture_array("main")
-            _, jpeg = cv2.imencode(".jpg", arr, [cv2.IMWRITE_JPEG_QUALITY, 50])
+            _, jpeg = cv2.imencode(".jpg", arr, [cv2.IMWRITE_JPEG_QUALITY, 30])
             return jpeg.tobytes()
 
         def _grab_frame_pil(picam2):
