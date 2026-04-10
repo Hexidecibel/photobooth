@@ -367,9 +367,9 @@ async def update_camera_framing(request: Request):
 
     # Apply to camera immediately
     if camera:
-        if "zoom" in data:
-            camera.set_zoom(data["zoom"])
-        elif any(k in data for k in ["crop_x", "crop_y", "crop_width", "crop_height"]):
+        has_crop = any(k in data for k in ["crop_x", "crop_y", "crop_width", "crop_height"])
+        if has_crop:
+            # Crop/pan takes precedence — apply as direct ScalerCrop
             from app.camera.base import CropRegion
 
             camera.set_crop(CropRegion(
@@ -378,6 +378,8 @@ async def update_camera_framing(request: Request):
                 config.camera.crop_width,
                 config.camera.crop_height,
             ))
+        elif "zoom" in data:
+            camera.set_zoom(data["zoom"])
 
         # Apply mirror settings
         if "mirror_preview" in data:
