@@ -320,29 +320,41 @@
             gap: 0.5rem;
         }
 
-        /* ── Gallery Grid ───────────────────────────────── */
-        .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 1rem;
+        /* ── Gallery Grid (Masonry) ─────────────────────── */
+        .masonry-grid {
+            display: flex;
+            gap: 8px;
+            padding: 0.5rem 0;
         }
-
-        .gallery-item {
+        .masonry-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .gallery-card {
             position: relative;
             border-radius: 10px;
             overflow: hidden;
-            aspect-ratio: 1;
             background: #eee;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-
-        .gallery-item img {
+        .gallery-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+        }
+        .gallery-card img {
             width: 100%;
-            height: 100%;
-            object-fit: cover;
+            display: block;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
-
-        .gallery-overlay {
+        .gallery-card img.loaded {
+            opacity: 1;
+        }
+        .gallery-card .gallery-overlay {
             position: absolute;
             bottom: 0;
             left: 0;
@@ -352,15 +364,10 @@
             opacity: 0;
             transition: opacity 0.2s;
         }
-
-        .gallery-item:hover .gallery-overlay { opacity: 1; }
-
+        .gallery-card:hover .gallery-overlay { opacity: 1; }
         .gallery-date { color: #ddd; font-size: 0.75rem; margin-bottom: 0.5rem; }
-
         .gallery-actions { display: flex; gap: 0.5rem; }
-
         .gallery-actions .btn { font-size: 0.75rem; }
-
         .gallery-actions .btn-copy-link {
             background: rgba(255,255,255,0.2);
             color: #fff;
@@ -369,6 +376,56 @@
         .gallery-actions .btn-copy-link:hover {
             background: rgba(255,255,255,0.35);
         }
+
+        /* ── Admin Lightbox ──────────────────────────────── */
+        .admin-lightbox-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.92);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        .admin-lightbox-overlay.active { opacity: 1; }
+        .admin-lightbox-content {
+            max-width: 90vw;
+            max-height: 90vh;
+            text-align: center;
+        }
+        .admin-lightbox-content img {
+            max-width: 100%;
+            max-height: 78vh;
+            border-radius: 8px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+        }
+        .admin-lightbox-actions {
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+        }
+        .admin-lightbox-actions .btn {
+            padding: 0.5rem 1.25rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+        }
+        .admin-lightbox-actions .btn-download {
+            background: #4caf50;
+            color: #fff;
+            text-decoration: none;
+        }
+        .admin-lightbox-actions .btn-download:hover { background: #43a047; }
+        .admin-lightbox-actions .btn-close-lb {
+            background: #555;
+            color: #fff;
+        }
+        .admin-lightbox-actions .btn-close-lb:hover { background: #666; }
 
         /* ── Templates & Effects ────────────────────────── */
         .template-list, .effects-grid {

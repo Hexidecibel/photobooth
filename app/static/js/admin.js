@@ -851,29 +851,70 @@ class AdminPanel {
         }
 
         const baseUrl = this._shareBaseUrl || window.location.origin;
-        let html = '<div class="gallery-grid">';
+
+        // Responsive column count based on container width
+        const containerWidth = container.offsetWidth || 800;
+        const columns = containerWidth > 900 ? 4 : containerWidth > 600 ? 3 : 2;
+
+        // Distribute photos to columns (shortest-column-first for masonry)
+        const columnPhotos = Array.from({ length: columns }, () => []);
+        const columnHeights = new Array(columns).fill(0);
         for (const photo of photos) {
-            const date = new Date(photo.created_at).toLocaleString();
-            const shareUrl = photo.share_token
-                ? `${baseUrl}/share/${photo.share_token}`
-                : null;
-            html += `
-                <div class="gallery-item">
-                    <img src="/api/gallery/${photo.id}" alt="Photo" loading="lazy" />
-                    <div class="gallery-overlay">
-                        <div class="gallery-date">${date}</div>
-                        <div class="gallery-actions">
-                            ${photo.share_token ? `<a href="/share/${photo.share_token}" target="_blank" class="btn btn-sm">Share</a>` : ''}
-                            <button class="btn btn-sm btn-copy-link" data-copy-url="${shareUrl || ''}" data-photo-id="${photo.id}">${shareUrl ? 'Copy Link' : 'Get Link'}</button>
-                            <button class="btn btn-sm btn-danger" data-delete-photo="${photo.id}">Delete</button>
+            const shortest = columnHeights.indexOf(Math.min(...columnHeights));
+            columnPhotos[shortest].push(photo);
+            columnHeights[shortest] += 1;
+        }
+
+        let html = '<div class="masonry-grid">';
+        for (let c = 0; c < columns; c++) {
+            html += '<div class="masonry-column">';
+            for (const photo of columnPhotos[c]) {
+                const date = new Date(photo.created_at).toLocaleString();
+                const shareUrl = photo.share_token
+                    ? `${baseUrl}/share/${photo.share_token}`
+                    : null;
+                html += `
+                    <div class="gallery-card" data-photo-id="${photo.id}" data-photo-url="/api/gallery/${photo.id}">
+                        <img data-src="/api/gallery/${photo.id}/thumbnail" alt="Photo" />
+                        <div class="gallery-overlay">
+                            <div class="gallery-date">${date}</div>
+                            <div class="gallery-actions">
+                                ${photo.share_token ? `<a href="/share/${photo.share_token}" target="_blank" class="btn btn-sm" onclick="event.stopPropagation()">Share</a>` : ''}
+                                <button class="btn btn-sm btn-copy-link" data-copy-url="${shareUrl || ''}" data-photo-id="${photo.id}" onclick="event.stopPropagation()">${shareUrl ? 'Copy Link' : 'Get Link'}</button>
+                                <button class="btn btn-sm btn-danger" data-delete-photo="${photo.id}" onclick="event.stopPropagation()">Delete</button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            `;
+                `;
+            }
+            html += '</div>';
         }
         html += '</div>';
 
         container.innerHTML = html;
+
+        // Lazy load images with IntersectionObserver
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    img.src = img.dataset.src;
+                    img.onload = () => img.classList.add('loaded');
+                    observer.unobserve(img);
+                }
+            });
+        }, { rootMargin: '200px' });
+
+        container.querySelectorAll('.gallery-card img[data-src]').forEach(img => {
+            observer.observe(img);
+        });
+
+        // Click card to open lightbox
+        container.querySelectorAll('.gallery-card').forEach(card => {
+            card.addEventListener('click', () => {
+                this.showAdminLightbox(card.dataset.photoUrl, card.dataset.photoId);
+            });
+        });
 
         // Bind copy link buttons
         container.querySelectorAll('.btn-copy-link').forEach(btn => {
@@ -922,6 +963,45 @@ class AdminPanel {
         container.querySelectorAll('[data-delete-photo]').forEach(btn => {
             btn.addEventListener('click', () => this.deletePhoto(btn.dataset.deletePhoto));
         });
+    }
+
+    showAdminLightbox(url, photoId) {
+        // Remove any existing lightbox
+        const existing = document.querySelector('.admin-lightbox-overlay');
+        if (existing) existing.remove();
+
+        const overlay = document.createElement('div');
+        overlay.className = 'admin-lightbox-overlay';
+        overlay.innerHTML = `
+            <div class="admin-lightbox-content">
+                <img src="${url}" alt="Photo">
+                <div class="admin-lightbox-actions">
+                    <a href="${url}" download class="btn btn-download">Download</a>
+                    <button class="btn btn-close-lb">Close</button>
+                </div>
+            </div>
+        `;
+
+        // Close on overlay background click
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) overlay.remove();
+        });
+
+        // Close button
+        overlay.querySelector('.btn-close-lb').addEventListener('click', () => overlay.remove());
+
+        document.body.appendChild(overlay);
+        // Trigger animation
+        requestAnimationFrame(() => overlay.classList.add('active'));
+
+        // Escape key
+        const escHandler = (e) => {
+            if (e.key === 'Escape') {
+                overlay.remove();
+                document.removeEventListener('keydown', escHandler);
+            }
+        };
+        document.addEventListener('keydown', escHandler);
     }
 
     async deletePhoto(id) {
