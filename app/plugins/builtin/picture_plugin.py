@@ -183,16 +183,19 @@ class PicturePlugin:
 
             await self._broadcast(result_msg)
 
-            # Trigger cloud upload in background (non-blocking)
+            # Upload to cloud gallery (with progress)
             if (
                 self._cloud_service
                 and self._cloud_service.is_configured
                 and self._config.cloud_gallery.auto_upload
                 and session.composite_path
             ):
-                asyncio.create_task(
-                    self._upload_to_cloud(session)
-                )
+                await self._broadcast({
+                    "type": "processing_progress",
+                    "step": "uploading",
+                    "percent": 92,
+                })
+                await self._upload_to_cloud(session)
 
             # Increment photo counter
             if self._counter_service:

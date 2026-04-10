@@ -581,6 +581,7 @@ class BoothApp {
         var messages = {
             compositing: 'Composing your masterpiece...',
             applying_effect: 'Applying the magic...',
+            uploading: 'Uploading to gallery...',
             done: 'Almost there...',
         };
 
