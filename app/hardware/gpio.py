@@ -59,9 +59,9 @@ class GPIOController:
             self._capture_btn.when_pressed = self._handle_capture
             self._print_btn.when_pressed = self._handle_print
 
-            logger.info("GPIO initialized successfully")
+            print(f"[GPIO] Initialized: capture_btn=pin{self._config.capture_button_pin}, print_btn=pin{self._config.print_button_pin}, capture_led=pin{self._config.capture_led_pin}, print_led=pin{self._config.print_led_pin}")
         except (ImportError, RuntimeError) as e:
-            logger.warning(f"GPIO not available: {e}")
+            print(f"[GPIO] NOT available: {e}")
 
     # -- sync callbacks dispatched from gpiozero thread ------------------
 
