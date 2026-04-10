@@ -113,7 +113,7 @@ class CameraPlugin:
                     )
                     path.write_bytes(buf.getvalue())
                     session.captures.append(path)
-                    await _asyncio.sleep(0.1)
+                    await _asyncio.sleep(0.2)  # Give WebSocket time to flush
 
                 # Go straight to processing — broadcast complete and advance
                 await self._broadcast({
@@ -145,11 +145,19 @@ class CameraPlugin:
         if not session:
             return BoothState.IDLE
 
-        if event in ("enter_complete", "capture_advance"):
-            # GIF/boomerang: straight to processing
+        if event == "enter_complete":
+            # For GIF/boomerang: DON'T auto-advance — let capture_advance trigger it
+            # so the recording progress messages have time to display
+            if session.mode in ("gif", "boomerang"):
+                return None
+            # Photo: auto-advance
+            if len(session.captures) >= session.capture_count:
+                return BoothState.PROCESSING
+            return BoothState.PREVIEW
+
+        if event == "capture_advance":
             if session.mode in ("gif", "boomerang"):
                 return BoothState.PROCESSING
-            # Multi-shot: more captures needed?
             if len(session.captures) < session.capture_count:
                 return BoothState.PREVIEW
             return BoothState.PROCESSING
