@@ -62,7 +62,8 @@ class TestViewPlugin:
         )
         assert result == BoothState.PREVIEW
         plugin._sm.new_session.assert_called_once_with(
-            mode="photo", capture_count=4
+            mode="photo", capture_count=4,
+            layout_template="classic-4x6",
         )
 
     @pytest.mark.asyncio
@@ -141,7 +142,9 @@ class TestCameraPlugin:
         session = CaptureSession(capture_count=3)
         session.captures.append(Path("/fake/1.jpg"))  # 1 of 3
 
-        result = await plugin._on_capture_do(session=session)
+        result = await plugin._on_capture_do(
+            session=session, event="enter_complete"
+        )
         assert result == BoothState.PREVIEW
 
     @pytest.mark.asyncio
@@ -153,7 +156,9 @@ class TestCameraPlugin:
         session.captures.append(Path("/fake/1.jpg"))
         session.captures.append(Path("/fake/2.jpg"))
 
-        result = await plugin._on_capture_do(session=session)
+        result = await plugin._on_capture_do(
+            session=session, event="enter_complete"
+        )
         assert result == BoothState.PROCESSING
 
     @pytest.mark.asyncio

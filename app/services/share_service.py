@@ -120,15 +120,5 @@ class ShareService:
     def get_share_url(self, token: str) -> str:
         if self._config.base_url:
             base = self._config.base_url.rstrip("/")
-        else:
-            # Auto-detect local IP for QR codes
-            import socket
-            try:
-                s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                s.connect(("8.8.8.8", 80))
-                ip = s.getsockname()[0]
-                s.close()
-            except Exception:
-                ip = "localhost"
-            base = f"http://{ip}:8000"
-        return f"{base}/share/{token}"
+            return f"{base}/share/{token}"
+        return f"/share/{token}"

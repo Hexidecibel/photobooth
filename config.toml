@@ -94,8 +94,11 @@ host = "0.0.0.0"
 port = 8000
 
 [network]
-# Enable tunnel for public QR code access (uses localhost.run via SSH)
 tunnel_enabled = false
+tunnel_provider = "localhost.run"
+tunnel_custom_command = ""
+tunnel_name = "photobooth"
+tunnel_url_pattern = "https://{name}.tunnel.cush.rocks"
 
 [sound]
 enabled = true

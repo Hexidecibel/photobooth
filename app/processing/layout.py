@@ -60,7 +60,6 @@ class LayoutEngine:
             offset_y = sy + (sh - resized.height) // 2
 
             # Add subtle border around photo for depth
-            from PIL import ImageDraw as SlotDraw
             border_img = Image.new("RGB", (resized.width + 2, resized.height + 2),
                                    self._hex_to_rgb("#d0d0d0"))
             border_img.paste(resized, (1, 1))

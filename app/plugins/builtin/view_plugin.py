@@ -78,6 +78,10 @@ class ViewPlugin:
             return BoothState.PRINT
         if event == "done":
             return BoothState.THANKYOU
+        if event == "select_effect":
+            if session:
+                session.selected_effect = kwargs.get("effect", "none")
+            return None
         return None
 
     async def _on_print_do(self, session, event=None, **kwargs):

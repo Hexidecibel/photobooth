@@ -4,8 +4,6 @@ The webcam runs the live MJPEG stream at 30fps. The Pi camera only
 wakes up for actual photo captures (full sensor resolution).
 """
 
-import asyncio
-import io
 import logging
 from collections.abc import AsyncIterator
 from pathlib import Path
@@ -41,43 +39,15 @@ class HybridCamera(CameraBase):
             yield frame
 
     async def capture_still(self, path: Path) -> Path:
-        """Start Pi camera, capture full-res still, stop Pi camera."""
-        from picamera2 import Picamera2
-
-        logger.info("Hybrid: capturing still with Pi camera")
-        path.parent.mkdir(parents=True, exist_ok=True)
-
-        # Initialize Pi camera fresh for this capture
-        picam2 = await asyncio.to_thread(Picamera2)
-        sensor_res = picam2.camera_properties.get(
-            "PixelArraySize", (3280, 2464)
-        )
-        still_config = picam2.create_still_configuration(
-            main={"size": sensor_res}
-        )
-        await asyncio.to_thread(picam2.configure, still_config)
-        await asyncio.to_thread(picam2.start)
-        await asyncio.sleep(0.5)  # Let AE/AWB settle
-
-        # Apply crop if set
-        if hasattr(self, '_crop') and self._crop:
-            try:
-                sw, sh = sensor_res
-                x = int(self._crop.x * sw)
-                y = int(self._crop.y * sh)
-                w = int(self._crop.width * sw)
-                h = int(self._crop.height * sh)
-                picam2.set_controls({"ScalerCrop": (x, y, w, h)})
-                await asyncio.sleep(0.2)
-            except Exception as e:
-                logger.warning("Hybrid crop failed: %s", e)
-
-        image = await asyncio.to_thread(picam2.capture_image, "main")
-        await asyncio.to_thread(image.save, str(path), quality=95)
-        await asyncio.to_thread(picam2.stop)
-        await asyncio.to_thread(picam2.close)
-        logger.info("Hybrid: still captured at %s", path)
-        return path
+        """Pause preview, delegate capture to capture backend, resume."""
+        logger.info("Hybrid: capturing still with capture backend")
+        await self._preview.stop_preview()
+        try:
+            result = await self._capture.capture_still(path)
+        finally:
+            await self._preview.start_preview()
+        logger.info("Hybrid: still captured at %s", result)
+        return result
 
     async def capture_sequence(
         self, count: int, interval_ms: int, output_dir: Path

@@ -1,4 +1,4 @@
-"""Tunnel service — localhost.run SSH tunnel for public QR code access."""
+"""Tunnel service — manages public URL tunnels for QR code access."""
 
 import asyncio
 import logging
@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class TunnelService:
-    """Manages a localhost.run SSH tunnel."""
+    """Manages tunnel processes for public URL access."""
 
     def __init__(self, config: NetworkConfig, port: int):
         self._config = config
@@ -32,6 +32,17 @@ class TunnelService:
         if not self._config.tunnel_enabled:
             return None
 
+        provider = getattr(self._config, "tunnel_provider", "localhost.run")
+
+        if provider == "localhost.run":
+            return await self._start_localhost_run()
+        elif provider == "custom":
+            return await self._start_custom()
+        else:
+            logger.warning("Unknown tunnel provider: %s", provider)
+            return None
+
+    async def _start_localhost_run(self) -> str | None:
         cmd = [
             "ssh",
             "-o", "StrictHostKeyChecking=no",
@@ -70,12 +81,61 @@ class TunnelService:
             logger.error("Tunnel failed: %s", e)
             return None
 
+    async def _start_custom(self) -> str | None:
+        command = getattr(self._config, "tunnel_custom_command", "")
+        if not command:
+            logger.warning("Custom tunnel provider with no command")
+            return None
+
+        name = getattr(self._config, "tunnel_name", "photobooth")
+        url_pattern = getattr(
+            self._config, "tunnel_url_pattern",
+            "https://{name}.tunnel.cush.rocks",
+        )
+
+        # Substitute placeholders
+        cmd_str = command.format(port=self._port, name=name)
+
+        logger.info("Starting custom tunnel: %s", cmd_str)
+
+        try:
+            self._process = await asyncio.to_thread(
+                subprocess.Popen,
+                cmd_str.split(),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+            )
+
+            # Check if process exited immediately
+            await asyncio.sleep(0.1)
+            if self._process.poll() is not None:
+                logger.error("Custom tunnel exited immediately")
+                self._process = None
+                return None
+
+            # Derive URL from pattern
+            url = url_pattern.format(name=name, port=self._port)
+            self._public_url = url
+            logger.info("Custom tunnel active: %s", url)
+            self._start_monitor()
+            return url
+
+        except FileNotFoundError:
+            logger.error("Custom tunnel command not found: %s", cmd_str)
+            return None
+        except Exception as e:
+            logger.error("Tunnel failed: %s", e)
+            return None
+
     async def _read_url(self, timeout: int = 15) -> str | None:
         async def _read():
             if not self._process or not self._process.stdout:
                 return None
             while True:
-                line = await asyncio.to_thread(self._process.stdout.readline)
+                line = await asyncio.to_thread(
+                    self._process.stdout.readline
+                )
                 if not line:
                     break
                 line = line.strip()

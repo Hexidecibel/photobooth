@@ -20,7 +20,7 @@ class CameraConfig(BaseModel):
     """Camera hardware and capture settings."""
 
     backend: str = "auto"
-    preview_resolution: tuple[int, int] = (1280, 720)
+    preview_resolution: tuple[int, int] = (1920, 1080)
     still_resolution: tuple[int, int] = (4608, 2592)
     webcam_index: int = 0
     flip_horizontal: bool = False
@@ -129,6 +129,10 @@ class NetworkConfig(BaseModel):
     """Network settings."""
 
     tunnel_enabled: bool = False
+    tunnel_provider: str = "localhost.run"
+    tunnel_custom_command: str = ""
+    tunnel_name: str = "photobooth"
+    tunnel_url_pattern: str = "https://{name}.tunnel.cush.rocks"
 
 
 class SoundConfig(BaseModel):
