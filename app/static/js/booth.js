@@ -867,6 +867,19 @@ class BoothApp {
         document.addEventListener('click', function () { self.resetIdleTimer(); });
         document.addEventListener('touchstart', function () { self.resetIdleTimer(); });
 
+        // Processing cancel: force back to idle even if server is stuck
+        var procCancel = document.getElementById('processing-cancel-btn');
+        if (procCancel) {
+            procCancel.addEventListener('click', function () {
+                self.send('cancel');
+                // Force UI to idle after 1 second regardless
+                setTimeout(function () {
+                    self.showState('idle');
+                    window.location.reload();
+                }, 1000);
+            });
+        }
+
         // Thankyou: tap anywhere to go back to idle
         var thankyou = document.getElementById('thankyou-section');
         if (thankyou) {
