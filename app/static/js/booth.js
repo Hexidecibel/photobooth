@@ -283,10 +283,19 @@ class BoothApp {
         // State-specific setup / teardown
         if (state === 'preview') {
             this.startPreview();
-            // Multi-shot: show effect picker between captures
+            // Multi-shot: pause between captures
             var fromCapture = (previousState === 'processing' || previousState === 'capture');
             if (fromCapture && this.captureCount > 1 && this.captureIndex < this.captureCount) {
-                this.showPerShotEffectPicker();
+                // Show "Get ready!" message then countdown
+                var countdownEl = document.getElementById('countdown');
+                if (countdownEl) {
+                    countdownEl.textContent = 'Shot ' + (this.captureIndex + 1) + ' of ' + this.captureCount;
+                    countdownEl.classList.add('tick');
+                }
+                var self = this;
+                setTimeout(function () {
+                    self.showPerShotEffectPicker();
+                }, 2000);
             } else {
                 this.startCountdown();
             }
