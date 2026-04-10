@@ -70,7 +70,7 @@ class PiCamera2Backend(CameraBase):
             Picamera2, self._camera_index
         )
         config = self._picam2.create_preview_configuration(
-            main={"size": resolution},
+            main={"size": resolution, "format": "RGB888"},
         )
         await asyncio.to_thread(self._picam2.configure, config)
         await asyncio.to_thread(self._picam2.start)
@@ -90,10 +90,10 @@ class PiCamera2Backend(CameraBase):
                 frame = await asyncio.to_thread(
                     self._picam2.capture_array, "main"
                 )
-                # Encode to JPEG with PIL (good quality)
+                # Encode to JPEG with PIL
                 from PIL import Image as PILImage
 
-                img = PILImage.fromarray(frame)
+                img = PILImage.fromarray(frame, "RGB")
                 buf = io.BytesIO()
                 img.save(buf, format="JPEG", quality=85)
                 yield buf.getvalue()
