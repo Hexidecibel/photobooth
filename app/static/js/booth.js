@@ -953,10 +953,12 @@ class BoothApp {
                     self.pendingMode = mode;
                     self.pendingTemplate = template;
 
-                    // "multi" = show template picker, "single" = skip to effects
-                    if (template === 'multi') {
+                    // "multi" = show multi-slot templates
+                    // gif/boomerang = show single-slot templates
+                    // "single" = skip picker (only 1 option)
+                    if (template === 'multi' || mode === 'gif' || mode === 'boomerang') {
                         self.showTemplatePicker(mode);
-                    } else if (template === 'single' || mode === 'gif' || mode === 'boomerang') {
+                    } else if (template === 'single') {
                         self.pendingTemplate = 'single';
                         self.showEffectPicker();
                     } else {
