@@ -286,6 +286,7 @@ class BoothApp {
             // Multi-shot: pause between captures
             console.log('[booth] preview: captureCount=' + this.captureCount + ' captureIndex=' + this.captureIndex);
             if (this.captureCount > 1 && this.captureIndex > 0 && this.captureIndex < this.captureCount) {
+                // Show "Shot X of Y" then effect picker
                 var self = this;
                 var countdownEl = document.getElementById('countdown');
                 var shotNum = (this.captureIndex || 0) + 1;
@@ -294,10 +295,14 @@ class BoothApp {
                     countdownEl.textContent = 'Shot ' + shotNum + ' of ' + totalShots + '!';
                     countdownEl.style.fontSize = 'clamp(2rem, 5vw, 3rem)';
                 }
+                // After 1.5s show effect picker, auto-start countdown after 5s total
                 setTimeout(function () {
-                    if (countdownEl) countdownEl.style.fontSize = '';
-                    self.startCountdown();
-                }, 3000);
+                    if (countdownEl) {
+                        countdownEl.textContent = '';
+                        countdownEl.style.fontSize = '';
+                    }
+                    self.showPerShotEffectPicker();
+                }, 1500);
             } else {
                 this.startCountdown();
             }
