@@ -352,85 +352,404 @@ class AdminPanel {
 
     renderConfigForm(config) {
         const container = document.getElementById('config-content');
-        const sections = Object.entries(config);
+        this.config = config;
 
-        let html = '<form id="config-form" class="config-form">';
+        // Helpers for building fields
+        const toggle = (section, key, label, desc, checked) => `
+            <div class="config-field">
+                <div class="config-field-info">
+                    <div class="config-field-label">${label}</div>
+                    ${desc ? `<div class="config-field-desc">${desc}</div>` : ''}
+                </div>
+                <div class="config-field-control">
+                    <label class="cfg-toggle">
+                        <input type="checkbox" ${checked ? 'checked' : ''}
+                               data-section="${section}" data-key="${key}"
+                               onchange="admin.patchConfigField('${section}', '${key}', this.checked)" />
+                        <span class="cfg-toggle-slider"></span>
+                    </label>
+                </div>
+            </div>`;
 
-        for (const [section, values] of sections) {
-            html += `<div class="config-section"><h3>${this.formatLabel(section)}</h3>`;
-            html += this.renderFields(section, values);
-            html += '</div>';
-        }
+        const textInput = (section, key, label, desc, value, cls = '') => `
+            <div class="config-field${cls.includes('stacked') ? ' stacked' : ''}">
+                <div class="config-field-info">
+                    <div class="config-field-label">${label}</div>
+                    ${desc ? `<div class="config-field-desc">${desc}</div>` : ''}
+                </div>
+                <div class="config-field-control">
+                    <input type="text" class="config-input ${cls}" value="${this.escAttr(value)}"
+                           data-section="${section}" data-key="${key}"
+                           onchange="admin.patchConfigField('${section}', '${key}', this.value)" />
+                </div>
+            </div>`;
 
-        html += '<div class="form-actions"><button type="submit" class="btn btn-primary">Save Configuration</button></div>';
-        html += '</form>';
+        const numberInput = (section, key, label, desc, value, cls = 'config-input-sm') => `
+            <div class="config-field">
+                <div class="config-field-info">
+                    <div class="config-field-label">${label}</div>
+                    ${desc ? `<div class="config-field-desc">${desc}</div>` : ''}
+                </div>
+                <div class="config-field-control">
+                    <input type="number" class="config-input ${cls}" value="${value}"
+                           data-section="${section}" data-key="${key}"
+                           onchange="admin.patchConfigField('${section}', '${key}', Number(this.value))" />
+                </div>
+            </div>`;
 
-        container.innerHTML = html;
+        const selectInput = (section, key, label, desc, value, options) => {
+            const opts = options.map(o => {
+                const val = typeof o === 'object' ? o.value : o;
+                const lbl = typeof o === 'object' ? o.label : o;
+                return `<option value="${val}" ${val === value ? 'selected' : ''}>${lbl}</option>`;
+            }).join('');
+            return `
+            <div class="config-field">
+                <div class="config-field-info">
+                    <div class="config-field-label">${label}</div>
+                    ${desc ? `<div class="config-field-desc">${desc}</div>` : ''}
+                </div>
+                <div class="config-field-control">
+                    <select class="config-select"
+                            data-section="${section}" data-key="${key}"
+                            onchange="admin.patchConfigField('${section}', '${key}', this.value)">
+                        ${opts}
+                    </select>
+                </div>
+            </div>`;
+        };
 
-        document.getElementById('config-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.saveConfig();
-        });
+        const slider = (section, key, label, desc, value, min, max, step, suffix = '') => `
+            <div class="config-field">
+                <div class="config-field-info">
+                    <div class="config-field-label">${label}</div>
+                    ${desc ? `<div class="config-field-desc">${desc}</div>` : ''}
+                </div>
+                <div class="config-field-control">
+                    <div class="slider-control">
+                        <input type="range" min="${min}" max="${max}" step="${step}" value="${value}"
+                               data-section="${section}" data-key="${key}"
+                               oninput="this.nextElementSibling.textContent = this.value + '${suffix}'; admin.patchConfigFieldDebounced('${section}', '${key}', Number(this.value))" />
+                        <span class="slider-value">${value}${suffix}</span>
+                    </div>
+                </div>
+            </div>`;
+
+        const sectionCard = (title, desc, content) => `
+            <div class="config-section">
+                <h3>${title}</h3>
+                <div class="section-desc">${desc}</div>
+                ${content}
+            </div>`;
+
+        const c = config;
+
+        // Languages
+        const languages = [
+            { value: 'en', label: 'English' },
+            { value: 'de', label: 'Deutsch' },
+            { value: 'fr', label: 'Francais' },
+            { value: 'es', label: 'Espanol' },
+            { value: 'it', label: 'Italiano' },
+            { value: 'pt', label: 'Portugues' },
+            { value: 'nl', label: 'Nederlands' },
+            { value: 'ja', label: 'Japanese' },
+            { value: 'zh', label: 'Chinese' },
+        ];
+
+        // Effects
+        const effects = (c.picture?.available_effects || []).map(e => ({
+            value: e,
+            label: e === 'none' ? 'None (Original)' : this.formatLabel(e),
+        }));
+
+        // Build sections
+
+        // 1. Event Setup
+        const eventSetupHtml = sectionCard('Event Setup',
+            'Configure the basics for your event. This is the first thing to set up when running a new event.',
+            textInput('sharing', 'event_name', 'Event Name', 'Displayed on QR share pages and photo footers', c.sharing?.event_name || '', 'config-input-lg') +
+            selectInput('general', 'language', 'Language', 'Interface language for the booth screen', c.general?.language || 'en', languages) +
+            `<div class="config-field">
+                <div class="config-field-info">
+                    <div class="config-field-label">Event Logo</div>
+                    <div class="config-field-desc">Displayed on the idle screen and optionally on prints</div>
+                </div>
+                <div class="config-field-control">
+                    <div class="logo-thumb" id="cfg-logo-thumb">
+                        <span class="placeholder">No logo</span>
+                    </div>
+                    <a href="#" onclick="document.querySelector('[data-tab=\\'theme\\']').click(); return false;"
+                       style="font-size:0.85rem; margin-left:0.5rem;">Upload in Theme tab</a>
+                </div>
+            </div>` +
+            textInput('branding', 'company_name', 'Company Name', 'Optional branding name displayed on booth', c.branding?.company_name || '', 'config-input-md') +
+            textInput('branding', 'tagline', 'Tagline', 'Shown below the company name on idle screen', c.branding?.tagline || '', 'config-input-md')
+        );
+
+        // 2. Camera
+        const camRes = c.camera?.preview_resolution || [1280, 720];
+        const cameraHtml = sectionCard('Camera',
+            'Camera hardware settings. Use the Camera tab for live framing, zoom, and crop adjustments.',
+            `<div class="config-field">
+                <div class="config-field-info">
+                    <div class="config-field-label">Live Preview</div>
+                    <div class="config-field-desc">Preview resolution: ${camRes[0]}x${camRes[1]}</div>
+                </div>
+                <div class="config-field-control">
+                    <div class="camera-thumb ${c.camera?.mirror_preview ? 'mirrored' : ''}" id="cfg-camera-thumb">
+                        <img src="/api/camera/stream?t=${Date.now()}" alt="Preview"
+                             onerror="this.style.display='none'; this.parentElement.innerHTML='<span class=\\'placeholder\\'>No camera</span>'" />
+                    </div>
+                </div>
+            </div>` +
+            toggle('camera', 'mirror_preview', 'Mirror Preview', 'Selfie-mode: flip the live preview horizontally', c.camera?.mirror_preview) +
+            toggle('camera', 'mirror_capture', 'Mirror Capture', 'Also flip the saved/printed photo', c.camera?.mirror_capture) +
+            selectInput('camera', 'backend', 'Camera Backend', 'Auto-detect usually works best', c.camera?.backend || 'auto', [
+                { value: 'auto', label: 'Auto Detect' },
+                { value: 'picamera2', label: 'Pi Camera (picamera2)' },
+                { value: 'webcam', label: 'USB Webcam (OpenCV)' },
+                { value: 'gphoto2', label: 'DSLR (gPhoto2)' },
+            ]) +
+            `<div class="config-field">
+                <div class="config-field-info">
+                    <div class="config-field-label">Framing & Zoom</div>
+                    <div class="config-field-desc">Fine-tune crop, zoom, and pan in the dedicated Camera tab</div>
+                </div>
+                <div class="config-field-control">
+                    <a href="#" class="btn btn-sm" style="background:#f5f5ff; color:#6c63ff; border:1px solid #d0d0e8;"
+                       onclick="document.querySelector('[data-tab=\\'camera\\']').click(); return false;">Open Camera Controls</a>
+                </div>
+            </div>`
+        );
+
+        // 3. Photo Settings
+        const photoSettingsHtml = sectionCard('Photo Settings',
+            'Configure how photos are captured, processed, and laid out on the final print.',
+            numberInput('picture', 'capture_count', 'Capture Count', 'Number of photos per session', c.picture?.capture_count || 4) +
+            selectInput('picture', 'default_effect', 'Default Effect', 'Applied to all captures unless guest changes it', c.picture?.default_effect || 'none', effects) +
+            toggle('picture', 'guest_picks_template', 'Guest Picks Template', 'Let guests choose their print layout before capturing', c.picture?.guest_picks_template) +
+            selectInput('picture', 'orientation', 'Orientation', 'Photo strip orientation', c.picture?.orientation || 'portrait', [
+                { value: 'portrait', label: 'Portrait' },
+                { value: 'landscape', label: 'Landscape' },
+            ]) +
+            textInput('picture', 'layout_template', 'Layout Template', 'Name of the print layout template to use', c.picture?.layout_template || 'classic-4x6', 'config-input-md') +
+            textInput('picture', 'footer_text', 'Footer Text', 'Use {event_name} and {date} as placeholders', c.picture?.footer_text || '', 'config-input-md') +
+            numberInput('picture', 'dpi', 'Print DPI', 'Resolution for printed photos (300 or 600)', c.picture?.dpi || 600) +
+            `<div class="config-field stacked">
+                <div class="config-field-info">
+                    <div class="config-field-label">Pose Prompts</div>
+                    <div class="config-field-desc">Text shown before each capture to guide guests</div>
+                </div>
+                <div class="config-field-control">
+                    <div class="prompts-list" id="pose-prompts-editor">
+                        ${(c.picture?.pose_prompts || []).map((p, i) => `
+                            <div class="prompt-row">
+                                <input type="text" value="${this.escAttr(p)}" data-index="${i}"
+                                       onchange="admin.updatePosePrompt(${i}, this.value)" />
+                                <button type="button" class="btn-remove-prompt" onclick="admin.removePosePrompt(${i})">&times;</button>
+                            </div>
+                        `).join('')}
+                        <button type="button" class="btn-add-prompt" onclick="admin.addPosePrompt()">+ Add prompt</button>
+                    </div>
+                </div>
+            </div>`
+        );
+
+        // 4. Sharing
+        const sharingHtml = sectionCard('Sharing',
+            'QR code sharing lets guests download their photos on their phones.',
+            toggle('sharing', 'enabled', 'Enable QR Sharing', 'Show a QR code after each session for instant download', c.sharing?.enabled) +
+            numberInput('sharing', 'qr_size', 'QR Code Size', 'Size in pixels of the generated QR code', c.sharing?.qr_size || 200) +
+            `<div class="config-field">
+                <div class="config-field-info">
+                    <div class="config-field-label">Base URL</div>
+                    <div class="config-field-desc">Auto-detected from server. Set manually if behind a proxy.</div>
+                </div>
+                <div class="config-field-control">
+                    <input type="text" class="config-input config-input-md" value="${this.escAttr(c.sharing?.base_url || '')}"
+                           placeholder="Auto-detect"
+                           data-section="sharing" data-key="base_url"
+                           onchange="admin.patchConfigField('sharing', 'base_url', this.value)" />
+                </div>
+            </div>`
+        );
+
+        // 5. Sound
+        const volumePct = Math.round((c.sound?.volume || 0.8) * 100);
+        const soundHtml = sectionCard('Sound',
+            'Sound effects for the countdown, shutter, and other booth actions.',
+            toggle('sound', 'enabled', 'Enable Sounds', 'Play sound effects during booth operation', c.sound?.enabled) +
+            `<div class="config-field">
+                <div class="config-field-info">
+                    <div class="config-field-label">Volume</div>
+                    <div class="config-field-desc">Master volume for all sound effects</div>
+                </div>
+                <div class="config-field-control">
+                    <div class="slider-control">
+                        <input type="range" min="0" max="100" step="5" value="${volumePct}"
+                               oninput="this.nextElementSibling.textContent = this.value + '%'; admin.patchConfigFieldDebounced('sound', 'volume', Number(this.value) / 100)" />
+                        <span class="slider-value">${volumePct}%</span>
+                    </div>
+                </div>
+            </div>` +
+            textInput('sound', 'countdown_beep', 'Countdown Beep', 'Sound file path for countdown', c.sound?.countdown_beep || '', 'config-input-md') +
+            textInput('sound', 'shutter', 'Shutter Sound', 'Played when photo is captured', c.sound?.shutter || '', 'config-input-md') +
+            textInput('sound', 'applause', 'Applause Sound', 'Played after session completes', c.sound?.applause || '', 'config-input-md')
+        );
+
+        // 6. Display
+        const displayHtml = sectionCard('Display',
+            'Screen and kiosk display settings for the booth monitor.',
+            toggle('display', 'fullscreen', 'Fullscreen', 'Run the booth UI in fullscreen kiosk mode', c.display?.fullscreen) +
+            slider('display', 'idle_timeout', 'Idle Timeout', 'Seconds before returning to the idle screen', c.display?.idle_timeout || 60, 10, 300, 5, 's') +
+            toggle('display', 'hide_cursor', 'Hide Cursor', 'Hide the mouse cursor on the booth display', c.display?.hide_cursor) +
+            numberInput('display', 'width', 'Screen Width', 'Display width in pixels', c.display?.width || 1024) +
+            numberInput('display', 'height', 'Screen Height', 'Display height in pixels', c.display?.height || 600)
+        );
+
+        // 7. Network / Tunnel
+        const tunnelUrl = c.network?.tunnel_url_pattern
+            ? c.network.tunnel_url_pattern.replace('{name}', c.network?.tunnel_name || 'photobooth')
+            : '';
+        const networkHtml = sectionCard('Network / Tunnel',
+            'Remote access via tunnels and hotspot configuration.',
+            toggle('network', 'tunnel_enabled', 'Enable Tunnel', 'Expose the booth to the internet via a tunnel', c.network?.tunnel_enabled) +
+            selectInput('network', 'tunnel_provider', 'Tunnel Provider', 'Service used to create the public URL', c.network?.tunnel_provider || 'localhost.run', [
+                { value: 'localhost.run', label: 'localhost.run' },
+                { value: 'custom', label: 'Custom command' },
+            ]) +
+            textInput('network', 'tunnel_name', 'Tunnel Name', 'Subdomain or identifier for the tunnel', c.network?.tunnel_name || 'photobooth', 'config-input-md') +
+            (tunnelUrl ? `<div class="config-field">
+                <div class="config-field-info">
+                    <div class="config-field-label">Public URL</div>
+                    <div class="config-field-desc">Derived from tunnel name and provider pattern</div>
+                </div>
+                <div class="config-field-control">
+                    <div class="url-display">
+                        <code>${tunnelUrl}</code>
+                        <button type="button" class="btn-copy" onclick="navigator.clipboard.writeText('${tunnelUrl}'); admin.showNotification('Copied!', 'success')" title="Copy">&#128203;</button>
+                    </div>
+                </div>
+            </div>` : '') +
+            textInput('network', 'tunnel_custom_command', 'Custom Command', 'Shell command for custom tunnel provider', c.network?.tunnel_custom_command || '', 'config-input-md') +
+            '<div style="border-top:1px solid #f0f0f0; margin-top:0.5rem; padding-top:0.5rem;"></div>' +
+            toggle('network', 'hotspot_enabled', 'Enable Hotspot', 'Create a WiFi hotspot for guests to connect', c.network?.hotspot_enabled) +
+            textInput('network', 'hotspot_ssid', 'Hotspot SSID', 'WiFi network name', c.network?.hotspot_ssid || 'PhotoBooth', 'config-input-md') +
+            textInput('network', 'hotspot_password', 'Hotspot Password', 'WiFi password for guests', c.network?.hotspot_password || '', 'config-input-md')
+        );
+
+        // 8. Printing
+        const printingHtml = sectionCard('Printing',
+            'Configure the connected printer for instant photo prints.',
+            toggle('printer', 'enabled', 'Enable Printing', 'Allow photos to be printed from the booth', c.printer?.enabled) +
+            textInput('printer', 'printer_name', 'Printer Name', 'CUPS printer name. Leave empty for default.', c.printer?.printer_name || '', 'config-input-md') +
+            toggle('printer', 'auto_print', 'Auto Print', 'Automatically print after each session without asking', c.printer?.auto_print) +
+            `<div class="config-field">
+                <div class="config-field-info">
+                    <div class="config-field-label">Max Pages</div>
+                    <div class="config-field-desc">Limit total prints per event. 0 = unlimited.</div>
+                </div>
+                <div class="config-field-control">
+                    <input type="number" class="config-input config-input-sm" value="${c.printer?.max_pages || 0}" min="0"
+                           onchange="admin.patchConfigField('printer', 'max_pages', Number(this.value))" />
+                </div>
+            </div>` +
+            numberInput('printer', 'copies', 'Copies per Print', 'Number of copies each time a photo is printed', c.printer?.copies || 1)
+        );
+
+        // 9. GPIO / Hardware
+        const gpioHtml = sectionCard('GPIO / Hardware',
+            'Physical button and LED pin assignments for Raspberry Pi. Only relevant when running on Pi hardware.',
+            numberInput('controls', 'capture_button_pin', 'Capture Button Pin', 'GPIO pin for the main capture button', c.controls?.capture_button_pin || 11) +
+            numberInput('controls', 'print_button_pin', 'Print Button Pin', 'GPIO pin for the print button', c.controls?.print_button_pin || 7) +
+            numberInput('controls', 'capture_led_pin', 'Capture LED Pin', 'GPIO pin for the capture indicator LED', c.controls?.capture_led_pin || 15) +
+            numberInput('controls', 'print_led_pin', 'Print LED Pin', 'GPIO pin for the print indicator LED', c.controls?.print_led_pin || 13) +
+            slider('controls', 'debounce_ms', 'Debounce', 'Milliseconds to debounce button presses', c.controls?.debounce_ms || 300, 50, 1000, 50, 'ms')
+        );
+
+        // 10. Chromakey
+        const chromakeyHtml = sectionCard('Green Screen',
+            'Chroma key settings for green screen backgrounds.',
+            toggle('chromakey', 'enabled', 'Enable Chroma Key', 'Remove green background and replace with custom images', c.chromakey?.enabled) +
+            slider('chromakey', 'hue_center', 'Hue Center', 'Center of the hue range to key out (120 = green)', c.chromakey?.hue_center || 120, 0, 180, 1, '') +
+            slider('chromakey', 'hue_range', 'Hue Range', 'Width of the hue range around center', c.chromakey?.hue_range || 40, 5, 90, 1, '')
+        );
+
+        // 11. Email
+        const emailHtml = sectionCard('Email',
+            'Send photos directly to guests via email after their session.',
+            toggle('email', 'enabled', 'Enable Email Sharing', 'Show an email option on the share screen', c.email?.enabled) +
+            textInput('email', 'smtp_host', 'SMTP Host', 'Mail server hostname', c.email?.smtp_host || '', 'config-input-md') +
+            numberInput('email', 'smtp_port', 'SMTP Port', 'Usually 587 for TLS', c.email?.smtp_port || 587) +
+            textInput('email', 'smtp_user', 'SMTP Username', '', c.email?.smtp_user || '', 'config-input-md') +
+            textInput('email', 'from_address', 'From Address', 'Sender email address', c.email?.from_address || '', 'config-input-md') +
+            textInput('email', 'from_name', 'From Name', 'Sender display name', c.email?.from_name || 'Photo Booth', 'config-input-md') +
+            textInput('email', 'subject', 'Subject Line', 'Email subject for photo deliveries', c.email?.subject || '', 'config-input-md')
+        );
+
+        // 12. Advanced
+        const advancedHtml = sectionCard('Advanced',
+            'Server, plugin, and debug settings. Most users will not need to change these.',
+            toggle('general', 'debug', 'Debug Mode', 'Enable verbose logging for troubleshooting', c.general?.debug) +
+            numberInput('general', 'autostart_delay', 'Autostart Delay', 'Seconds to wait before booth starts on boot', c.general?.autostart_delay || 3) +
+            textInput('general', 'save_dir', 'Save Directory', 'Where photos are stored on disk', c.general?.save_dir || 'data', 'config-input-md') +
+            textInput('server', 'host', 'Server Host', 'Bind address (0.0.0.0 for all interfaces)', c.server?.host || '0.0.0.0', 'config-input-md') +
+            numberInput('server', 'port', 'Server Port', 'HTTP port for the web interface', c.server?.port || 8000)
+        );
+
+        container.innerHTML = `<div class="config-form">
+            ${eventSetupHtml}
+            ${cameraHtml}
+            ${photoSettingsHtml}
+            ${sharingHtml}
+            ${soundHtml}
+            ${displayHtml}
+            ${networkHtml}
+            ${printingHtml}
+            ${gpioHtml}
+            ${chromakeyHtml}
+            ${emailHtml}
+            ${advancedHtml}
+        </div>`;
+
+        // Load logo preview into config tab
+        this.loadConfigLogoPreview();
     }
 
-    renderFields(section, values, prefix = '') {
-        let html = '';
-        const path = prefix ? `${prefix}.` : `${section}.`;
-
-        for (const [key, value] of Object.entries(values)) {
-            const fieldName = `${path}${key}`;
-            const label = this.formatLabel(key);
-
-            if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-                html += `<div class="field-group"><h4>${label}</h4>`;
-                html += this.renderFields(section, value, prefix ? `${prefix}.${key}` : `${section}.${key}`);
-                html += '</div>';
-                continue;
+    async loadConfigLogoPreview() {
+        try {
+            const res = await fetch('/api/admin/branding');
+            const data = await res.json();
+            const thumb = document.getElementById('cfg-logo-thumb');
+            if (thumb && data.logo_url) {
+                thumb.innerHTML = `<img src="${data.logo_url}?${Date.now()}" alt="Logo" />`;
             }
-
-            html += `<div class="field">`;
-            html += `<label for="${fieldName}">${label}</label>`;
-
-            if (typeof value === 'boolean') {
-                html += `<label class="toggle">
-                    <input type="checkbox" id="${fieldName}" data-path="${fieldName}" ${value ? 'checked' : ''} />
-                    <span class="toggle-slider"></span>
-                </label>`;
-            } else if (typeof value === 'number') {
-                html += `<input type="number" id="${fieldName}" data-path="${fieldName}" value="${value}" />`;
-            } else if (Array.isArray(value)) {
-                html += `<input type="text" id="${fieldName}" data-path="${fieldName}" value="${JSON.stringify(value)}" class="array-input" />`;
-            } else {
-                // Check if it's a color
-                if (typeof value === 'string' && /^#[0-9a-fA-F]{6}$/.test(value)) {
-                    html += `<div class="color-field">
-                        <input type="color" id="${fieldName}-color" data-path="${fieldName}" value="${value}" />
-                        <input type="text" id="${fieldName}" data-path="${fieldName}" value="${value}" class="color-text" />
-                    </div>`;
-                } else {
-                    html += `<input type="text" id="${fieldName}" data-path="${fieldName}" value="${value}" />`;
-                }
-            }
-
-            html += '</div>';
-        }
-
-        return html;
+        } catch (e) { /* ignore */ }
     }
 
-    async saveConfig() {
-        const form = document.getElementById('config-form');
-        const data = this.formToObject(form);
+    escAttr(val) {
+        return String(val).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // Auto-save: patch a single config field immediately
+    async patchConfigField(section, key, value) {
+        const payload = {};
+        payload[section] = {};
+        payload[section][key] = value;
 
         try {
             const res = await fetch('/api/admin/config', {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data),
+                body: JSON.stringify(payload),
             });
-
             if (res.ok) {
-                this.showNotification('Configuration saved!', 'success');
+                // Update local config cache
+                if (this.config && this.config[section]) {
+                    this.config[section][key] = value;
+                }
+                this.showNotification('Saved', 'success');
             } else {
                 const err = await res.json();
                 this.showNotification(`Save failed: ${err.detail || 'Unknown error'}`, 'error');
@@ -440,41 +759,34 @@ class AdminPanel {
         }
     }
 
-    formToObject(form) {
-        const result = {};
-        const inputs = form.querySelectorAll('input[data-path]');
+    // Debounced version for sliders
+    patchConfigFieldDebounced(section, key, value) {
+        clearTimeout(this._patchDebounce);
+        this._patchDebounce = setTimeout(() => {
+            this.patchConfigField(section, key, value);
+        }, 400);
+    }
 
-        inputs.forEach(input => {
-            const path = input.dataset.path;
-            // Skip duplicate color text inputs
-            if (input.type === 'color') return;
+    // Pose prompt management
+    async updatePosePrompt(index, value) {
+        const prompts = [...(this.config?.picture?.pose_prompts || [])];
+        prompts[index] = value;
+        await this.patchConfigField('picture', 'pose_prompts', prompts);
+        // Don't re-render; the input is already updated
+    }
 
-            const parts = path.split('.');
-            let obj = result;
+    async removePosePrompt(index) {
+        const prompts = [...(this.config?.picture?.pose_prompts || [])];
+        prompts.splice(index, 1);
+        await this.patchConfigField('picture', 'pose_prompts', prompts);
+        this.renderConfigForm(this.config);
+    }
 
-            for (let i = 0; i < parts.length - 1; i++) {
-                if (!obj[parts[i]]) obj[parts[i]] = {};
-                obj = obj[parts[i]];
-            }
-
-            const key = parts[parts.length - 1];
-
-            if (input.type === 'checkbox') {
-                obj[key] = input.checked;
-            } else if (input.type === 'number') {
-                obj[key] = Number(input.value);
-            } else if (input.classList.contains('array-input')) {
-                try {
-                    obj[key] = JSON.parse(input.value);
-                } catch {
-                    obj[key] = input.value;
-                }
-            } else {
-                obj[key] = input.value;
-            }
-        });
-
-        return result;
+    async addPosePrompt() {
+        const prompts = [...(this.config?.picture?.pose_prompts || [])];
+        prompts.push('New prompt!');
+        await this.patchConfigField('picture', 'pose_prompts', prompts);
+        this.renderConfigForm(this.config);
     }
 
     /* ── Gallery Tab ─────────────────────────────────────────────── */
