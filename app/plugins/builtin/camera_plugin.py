@@ -68,9 +68,11 @@ class CameraPlugin:
 
         try:
             if session.mode in ("gif", "boomerang"):
-                # Rapid burst capture for GIF/boomerang with per-frame progress
+                # Rapid burst capture for GIF/boomerang
                 frame_count = 8
                 import asyncio as _asyncio
+                import io as _io
+
                 for i in range(frame_count):
                     await self._broadcast({
                         "type": "capture_progress",
@@ -78,20 +80,21 @@ class CameraPlugin:
                         "total": frame_count,
                     })
                     path = raw_dir / f"frame_{i:03d}.jpg"
-                    # Grab frame from running preview
-                    frame = await _asyncio.to_thread(
-                        self._camera._picam2.capture_array, "main"
+                    # Use capture_file for correct colors (same as preview stream)
+                    buf = _io.BytesIO()
+                    await _asyncio.to_thread(
+                        self._camera._picam2.capture_file,
+                        buf, format="jpeg",
                     )
-                    from PIL import Image as PILImage
-                    img = PILImage.fromarray(frame, "RGB")
-                    img.save(str(path), quality=90)
+                    path.write_bytes(buf.getvalue())
                     session.captures.append(path)
-                    await _asyncio.sleep(0.15)  # ~6.6fps
+                    await _asyncio.sleep(0.1)
 
+                # Go straight to processing — broadcast complete and advance
                 await self._broadcast({
-                    "type": "capture_complete",
-                    "index": frame_count,
-                    "total": frame_count,
+                    "type": "processing_progress",
+                    "step": "compositing",
+                    "percent": 10,
                 })
             else:
                 # Single still capture
@@ -117,16 +120,17 @@ class CameraPlugin:
         if not session:
             return BoothState.IDLE
 
-        # Auto-advance after capture_enter completes
+        # GIF/boomerang: always go straight to processing (burst already done)
+        if session.mode in ("gif", "boomerang"):
+            return BoothState.PROCESSING
+
+        # Photo mode: advance on frontend event
         if event in ("auto_advance", "capture_advance"):
-            # GIF/boomerang captures all frames at once — go straight to processing
-            if session.mode in ("gif", "boomerang"):
-                return BoothState.PROCESSING
             if len(session.captures) < session.capture_count:
                 return BoothState.PREVIEW
             return BoothState.PROCESSING
 
         # Fallback
-        if session.mode in ("gif", "boomerang") or len(session.captures) >= session.capture_count:
+        if len(session.captures) >= session.capture_count:
             return BoothState.PROCESSING
-        return BoothState.PREVIEW
+        return None
