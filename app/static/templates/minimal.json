@@ -1,0 +1,28 @@
+{
+    "name": "minimal",
+    "width_inches": 4,
+    "height_inches": 6,
+    "dpi": 600,
+    "background": "#ffffff",
+    "slots": [
+        {"x": 0.06, "y": 0.06, "width": 0.88, "height": 0.78, "rotation": 0}
+    ],
+    "text_overlays": [
+        {
+            "text": "{event_name}",
+            "x": 0.5,
+            "y": 0.88,
+            "font_size": 16,
+            "color": "#333333",
+            "align": "center"
+        },
+        {
+            "text": "{date}",
+            "x": 0.5,
+            "y": 0.93,
+            "font_size": 10,
+            "color": "#999999",
+            "align": "center"
+        }
+    ]
+}

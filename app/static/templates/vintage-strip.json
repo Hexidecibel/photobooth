@@ -1,0 +1,24 @@
+{
+    "name": "vintage-strip",
+    "width_inches": 2,
+    "height_inches": 6,
+    "dpi": 600,
+    "background": "#f5f0e8",
+    "slots": [
+        {"x": 0.06, "y": 0.02, "width": 0.88, "height": 0.22, "rotation": 0},
+        {"x": 0.06, "y": 0.25, "width": 0.88, "height": 0.22, "rotation": 0},
+        {"x": 0.06, "y": 0.48, "width": 0.88, "height": 0.22, "rotation": 0},
+        {"x": 0.06, "y": 0.71, "width": 0.88, "height": 0.22, "rotation": 0}
+    ],
+    "text_overlays": [
+        {
+            "text": "{event_name}",
+            "x": 0.5,
+            "y": 0.95,
+            "font_size": 12,
+            "color": "#8b7355",
+            "align": "center",
+            "font": "Humor-Sans"
+        }
+    ]
+}

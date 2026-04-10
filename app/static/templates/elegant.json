@@ -1,0 +1,30 @@
+{
+    "name": "elegant",
+    "width_inches": 4,
+    "height_inches": 6,
+    "dpi": 600,
+    "background": "#0a0a0a",
+    "slots": [
+        {"x": 0.04, "y": 0.08, "width": 0.92, "height": 0.75, "rotation": 0}
+    ],
+    "text_overlays": [
+        {
+            "text": "{event_name}",
+            "x": 0.5,
+            "y": 0.03,
+            "font_size": 20,
+            "color": "#d4af37",
+            "align": "center",
+            "font": "DejaVuSans"
+        },
+        {
+            "text": "{date}",
+            "x": 0.5,
+            "y": 0.90,
+            "font_size": 14,
+            "color": "#888888",
+            "align": "center"
+        }
+    ],
+    "footer": null
+}

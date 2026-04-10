@@ -1,0 +1,129 @@
+#!/usr/bin/env python3
+"""Generate decorative PNG overlay assets using PIL."""
+
+import math
+import random
+from pathlib import Path
+
+from PIL import Image, ImageDraw
+
+OVERLAY_DIR = Path(__file__).parent.parent / "app" / "static" / "overlays"
+# Standard overlay size (will be resized by the layout engine)
+WIDTH = 2400
+HEIGHT = 3600
+
+
+def generate_corner_gold():
+    """Generate gold corner decorations on a transparent background."""
+    img = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+
+    gold = (212, 175, 55, 200)
+    corner_size = 200
+    line_width = 6
+
+    # Top-left corner
+    draw.line([(0, corner_size), (0, 0), (corner_size, 0)], fill=gold, width=line_width)
+    draw.line([(20, corner_size - 30), (20, 20), (corner_size - 30, 20)], fill=gold, width=3)
+
+    # Top-right corner
+    draw.line([(WIDTH - corner_size, 0), (WIDTH, 0), (WIDTH, corner_size)], fill=gold, width=line_width)
+    draw.line([(WIDTH - corner_size + 30, 20), (WIDTH - 20, 20), (WIDTH - 20, corner_size - 30)], fill=gold, width=3)
+
+    # Bottom-left corner
+    draw.line([(0, HEIGHT - corner_size), (0, HEIGHT), (corner_size, HEIGHT)], fill=gold, width=line_width)
+    draw.line([(20, HEIGHT - corner_size + 30), (20, HEIGHT - 20), (corner_size - 30, HEIGHT - 20)], fill=gold, width=3)
+
+    # Bottom-right corner
+    draw.line([(WIDTH - corner_size, HEIGHT), (WIDTH, HEIGHT), (WIDTH, HEIGHT - corner_size)], fill=gold, width=line_width)
+    draw.line([(WIDTH - corner_size + 30, HEIGHT - 20), (WIDTH - 20, HEIGHT - 20), (WIDTH - 20, HEIGHT - corner_size + 30)], fill=gold, width=3)
+
+    # Small diamond accents at each corner
+    diamond_size = 12
+    for cx, cy in [(corner_size // 2, corner_size // 2),
+                   (WIDTH - corner_size // 2, corner_size // 2),
+                   (corner_size // 2, HEIGHT - corner_size // 2),
+                   (WIDTH - corner_size // 2, HEIGHT - corner_size // 2)]:
+        draw.polygon([
+            (cx, cy - diamond_size),
+            (cx + diamond_size, cy),
+            (cx, cy + diamond_size),
+            (cx - diamond_size, cy),
+        ], fill=gold)
+
+    return img
+
+
+def generate_border_thin():
+    """Generate a thin white border frame on a transparent background."""
+    img = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+
+    white = (255, 255, 255, 180)
+    margin = 60
+    line_width = 4
+
+    # Outer rectangle
+    draw.rectangle(
+        [(margin, margin), (WIDTH - margin, HEIGHT - margin)],
+        outline=white,
+        width=line_width,
+    )
+
+    # Inner rectangle (double-line effect)
+    inner_margin = margin + 16
+    draw.rectangle(
+        [(inner_margin, inner_margin), (WIDTH - inner_margin, HEIGHT - inner_margin)],
+        outline=(255, 255, 255, 100),
+        width=2,
+    )
+
+    return img
+
+
+def generate_stars():
+    """Generate scattered star decorations on a transparent background."""
+    img = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+
+    random.seed(42)  # Reproducible
+
+    for _ in range(30):
+        cx = random.randint(50, WIDTH - 50)
+        cy = random.randint(50, HEIGHT - 50)
+        size = random.randint(8, 24)
+        alpha = random.randint(80, 200)
+        color = (255, 255, 255, alpha)
+
+        # Draw a 4-pointed star
+        points = []
+        for j in range(8):
+            angle = j * math.pi / 4 - math.pi / 2
+            r = size if j % 2 == 0 else size * 0.4
+            px = cx + r * math.cos(angle)
+            py = cy + r * math.sin(angle)
+            points.append((px, py))
+
+        draw.polygon(points, fill=color)
+
+    return img
+
+
+def main():
+    OVERLAY_DIR.mkdir(parents=True, exist_ok=True)
+
+    overlays = {
+        "corner-gold.png": generate_corner_gold,
+        "border-thin.png": generate_border_thin,
+        "stars.png": generate_stars,
+    }
+
+    for name, generator in overlays.items():
+        path = OVERLAY_DIR / name
+        img = generator()
+        img.save(str(path), "PNG")
+        print(f"Generated: {path}")
+
+
+if __name__ == "__main__":
+    main()

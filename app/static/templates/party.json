@@ -1,0 +1,30 @@
+{
+    "name": "party",
+    "width_inches": 4,
+    "height_inches": 6,
+    "dpi": 600,
+    "background": "#1a0a2e",
+    "slots": [
+        {"x": 0.03, "y": 0.03, "width": 0.94, "height": 0.78, "rotation": 0}
+    ],
+    "text_overlays": [
+        {
+            "text": "{event_name}",
+            "x": 0.5,
+            "y": 0.85,
+            "font_size": 28,
+            "color": "#ff6b9d",
+            "align": "center",
+            "font": "Humor-Sans"
+        },
+        {
+            "text": "#photobooth",
+            "x": 0.85,
+            "y": 0.15,
+            "font_size": 14,
+            "color": "#ffffff",
+            "rotation": -90,
+            "opacity": 0.4
+        }
+    ]
+}

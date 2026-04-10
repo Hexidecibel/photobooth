@@ -1609,6 +1609,9 @@ class TemplateEditor {
         this.slots = [];
         this.selectedSlot = null;
         this.footer = null;
+        this.textOverlays = [];
+        this.imageOverlays = [];
+        this.selectedTextOverlay = null;
         this.isDragging = false;
         this.isResizing = false;
         this.dragOffset = { x: 0, y: 0 };
@@ -1673,6 +1676,9 @@ class TemplateEditor {
             this.currentName = name;
             this.slots = (data.slots || []).map(s => ({...s}));
             this.footer = data.footer ? {...data.footer} : null;
+            this.textOverlays = (data.text_overlays || []).map(t => ({...t}));
+            this.imageOverlays = (data.image_overlays || []).map(i => ({...i}));
+            this.selectedTextOverlay = null;
             this.renderEditorUI();
             this.loadTemplateList();
         } catch (e) {
@@ -1693,7 +1699,10 @@ class TemplateEditor {
             { x: 0.05, y: 0.05, width: 0.9, height: 0.4, rotation: 0 }
         ];
         this.footer = null;
+        this.textOverlays = [];
+        this.imageOverlays = [];
         this.selectedSlot = null;
+        this.selectedTextOverlay = null;
         this.renderEditorUI();
     }
 
@@ -1722,6 +1731,7 @@ class TemplateEditor {
                 </div>
                 <div class="template-actions">
                     <button class="btn-secondary" id="add-slot-btn">+ Add Photo Slot</button>
+                    <button class="btn-secondary" id="add-text-btn">+ Add Text</button>
                     <button class="btn-secondary" id="toggle-footer-btn">${this.footer ? 'Remove Footer' : 'Add Footer'}</button>
                     <button class="btn btn-primary" id="save-template-btn">Save</button>
                 </div>
@@ -1745,6 +1755,22 @@ class TemplateEditor {
                 <label>Color: <input type="color" id="footer-color" value="#333333"></label>
                 <label>Y Position: <input type="range" id="footer-y" min="70" max="99" step="1"> <span id="footer-y-val"></span>%</label>
             </div>
+            <div class="text-overlay-properties" id="text-overlay-properties" style="display:none">
+                <h4>Text Overlay</h4>
+                <label>Text: <input type="text" id="tov-text" class="input-field" placeholder="{event_name}"></label>
+                <label>X: <input type="range" id="tov-x" min="0" max="100" step="1"> <span id="tov-x-val"></span>%</label>
+                <label>Y: <input type="range" id="tov-y" min="0" max="100" step="1"> <span id="tov-y-val"></span>%</label>
+                <label>Font Size: <input type="number" id="tov-font-size" value="18" min="6" max="72" class="input-small"></label>
+                <label>Color: <input type="color" id="tov-color" value="#ffffff"></label>
+                <label>Align: <select id="tov-align" class="input-small">
+                    <option value="left">Left</option>
+                    <option value="center" selected>Center</option>
+                    <option value="right">Right</option>
+                </select></label>
+                <label>Rotation: <input type="range" id="tov-rot" min="-180" max="180" step="1" value="0"> <span id="tov-rot-val">0</span>&deg;</label>
+                <label>Opacity: <input type="range" id="tov-opacity" min="0" max="100" step="1" value="100"> <span id="tov-opacity-val">100</span>%</label>
+                <button class="btn-text" id="delete-text-overlay-btn" style="color:#f44336">Delete Text Overlay</button>
+            </div>
         `;
 
         // Bind size change to re-render canvas
@@ -1754,8 +1780,12 @@ class TemplateEditor {
 
         // Bind buttons
         document.getElementById('add-slot-btn')?.addEventListener('click', () => this.addSlot());
+        document.getElementById('add-text-btn')?.addEventListener('click', () => this.addTextOverlay());
         document.getElementById('toggle-footer-btn')?.addEventListener('click', () => this.toggleFooter());
         document.getElementById('save-template-btn')?.addEventListener('click', () => this.save());
+        document.getElementById('delete-text-overlay-btn')?.addEventListener('click', () => {
+            if (this.selectedTextOverlay !== null) this.deleteTextOverlay(this.selectedTextOverlay);
+        });
         document.getElementById('delete-slot-btn')?.addEventListener('click', () => {
             if (this.selectedSlot !== null) this.deleteSlot(this.selectedSlot);
         });
@@ -1773,6 +1803,14 @@ class TemplateEditor {
             const el = document.getElementById(id);
             if (el) {
                 el.addEventListener('input', () => this.onFooterInputChange());
+            }
+        });
+
+        // Bind text overlay property inputs
+        ['tov-text', 'tov-x', 'tov-y', 'tov-font-size', 'tov-color', 'tov-align', 'tov-rot', 'tov-opacity'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', () => this.onTextOverlayInputChange());
             }
         });
 
@@ -1834,6 +1872,38 @@ class TemplateEditor {
             footerEl.style.color = this.footer.color || '#333';
             canvas.appendChild(footerEl);
         }
+
+        // Render text overlays
+        this.textOverlays.forEach((tov, i) => {
+            const el = document.createElement('div');
+            el.className = 'canvas-text-overlay' + (this.selectedTextOverlay === i ? ' selected' : '');
+            el.dataset.textIndex = i;
+            el.style.left = `${tov.x * 100}%`;
+            el.style.top = `${tov.y * 100}%`;
+            el.style.color = tov.color || '#ffffff';
+            el.style.fontSize = `${(tov.font_size || 18) * 0.6}px`;
+            el.style.opacity = tov.opacity !== undefined ? tov.opacity : 1;
+            el.style.textAlign = tov.align || 'center';
+            if (tov.rotation) el.style.transform = `rotate(${tov.rotation}deg)`;
+            if (tov.align === 'center') el.style.transform = (el.style.transform || '') + ' translateX(-50%)';
+            else if (tov.align === 'right') el.style.transform = (el.style.transform || '') + ' translateX(-100%)';
+            el.textContent = tov.text || 'Text';
+            el.style.position = 'absolute';
+            el.style.cursor = 'move';
+            el.style.whiteSpace = 'nowrap';
+            el.style.userSelect = 'none';
+            el.style.zIndex = '10';
+            if (this.selectedTextOverlay === i) {
+                el.style.outline = '2px dashed #00bcd4';
+                el.style.outlineOffset = '2px';
+            }
+
+            el.addEventListener('mousedown', (e) => this.startTextDrag(e, i));
+            el.addEventListener('touchstart', (e) => this.startTextDrag(e, i), {passive: false});
+            el.addEventListener('click', (e) => { e.stopPropagation(); this.selectTextOverlay(i); });
+
+            canvas.appendChild(el);
+        });
 
         // Clicking canvas background deselects
         canvas.addEventListener('click', (e) => {
@@ -1924,6 +1994,8 @@ class TemplateEditor {
 
     selectSlot(index) {
         this.selectedSlot = index;
+        this.selectedTextOverlay = null;
+        document.getElementById('text-overlay-properties').style.display = 'none';
         this.renderCanvas();
         this.updateSlotProperties();
         document.getElementById('slot-properties').style.display = 'block';
@@ -1931,7 +2003,9 @@ class TemplateEditor {
 
     deselectAll() {
         this.selectedSlot = null;
+        this.selectedTextOverlay = null;
         document.getElementById('slot-properties').style.display = 'none';
+        document.getElementById('text-overlay-properties').style.display = 'none';
         this.renderCanvas();
     }
 
@@ -1991,6 +2065,130 @@ class TemplateEditor {
         this.selectedSlot = null;
         document.getElementById('slot-properties').style.display = 'none';
         this.renderCanvas();
+    }
+
+    addTextOverlay() {
+        this.textOverlays.push({
+            text: '{event_name}',
+            x: 0.5,
+            y: 0.85 + this.textOverlays.length * 0.05,
+            font_size: 18,
+            color: '#ffffff',
+            align: 'center',
+            rotation: 0,
+            opacity: 1.0,
+        });
+        this.selectedTextOverlay = this.textOverlays.length - 1;
+        this.renderCanvas();
+        this.updateTextOverlayProperties();
+    }
+
+    deleteTextOverlay(index) {
+        this.textOverlays.splice(index, 1);
+        this.selectedTextOverlay = null;
+        document.getElementById('text-overlay-properties').style.display = 'none';
+        this.renderCanvas();
+    }
+
+    selectTextOverlay(index) {
+        this.selectedTextOverlay = index;
+        this.selectedSlot = null;
+        document.getElementById('slot-properties').style.display = 'none';
+        document.getElementById('text-overlay-properties').style.display = 'block';
+        this.updateTextOverlayProperties();
+        this.renderCanvas();
+    }
+
+    updateTextOverlayProperties() {
+        if (this.selectedTextOverlay === null) return;
+        const tov = this.textOverlays[this.selectedTextOverlay];
+        if (!tov) return;
+
+        const setText = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+        const setSlider = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.value = val;
+            const valEl = document.getElementById(id + '-val');
+            if (valEl) valEl.textContent = Math.round(val);
+        };
+
+        setText('tov-text', tov.text || '');
+        setSlider('tov-x', Math.round(tov.x * 100));
+        setSlider('tov-y', Math.round(tov.y * 100));
+        setText('tov-font-size', tov.font_size || 18);
+        setText('tov-color', tov.color || '#ffffff');
+        setText('tov-align', tov.align || 'center');
+        setSlider('tov-rot', tov.rotation || 0);
+        setSlider('tov-opacity', Math.round((tov.opacity !== undefined ? tov.opacity : 1) * 100));
+    }
+
+    onTextOverlayInputChange() {
+        if (this.selectedTextOverlay === null) return;
+        const tov = this.textOverlays[this.selectedTextOverlay];
+
+        const getText = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
+        const getNum = (id) => { const el = document.getElementById(id); return el ? parseFloat(el.value) : 0; };
+
+        tov.text = getText('tov-text');
+        tov.x = getNum('tov-x') / 100;
+        tov.y = getNum('tov-y') / 100;
+        tov.font_size = getNum('tov-font-size') || 18;
+        tov.color = getText('tov-color') || '#ffffff';
+        tov.align = getText('tov-align') || 'center';
+        tov.rotation = getNum('tov-rot');
+        tov.opacity = getNum('tov-opacity') / 100;
+
+        // Update display values
+        ['tov-x', 'tov-y', 'tov-rot', 'tov-opacity'].forEach(id => {
+            const el = document.getElementById(id);
+            const valEl = document.getElementById(id + '-val');
+            if (el && valEl) valEl.textContent = Math.round(parseFloat(el.value));
+        });
+
+        this.renderCanvas();
+    }
+
+    startTextDrag(e, index) {
+        e.preventDefault();
+        this.isDragging = true;
+        this.selectedTextOverlay = index;
+        this.selectedSlot = null;
+        const canvas = document.getElementById('template-canvas');
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const tov = this.textOverlays[index];
+        this.dragOffset = {
+            x: (clientX - rect.left) / rect.width - tov.x,
+            y: (clientY - rect.top) / rect.height - tov.y,
+        };
+
+        const onMove = (e) => {
+            if (!this.isDragging) return;
+            const cx = e.touches ? e.touches[0].clientX : e.clientX;
+            const cy = e.touches ? e.touches[0].clientY : e.clientY;
+            tov.x = Math.max(0, Math.min(1, (cx - rect.left) / rect.width - this.dragOffset.x));
+            tov.y = Math.max(0, Math.min(1, (cy - rect.top) / rect.height - this.dragOffset.y));
+            tov.x = Math.round(tov.x * 100) / 100;
+            tov.y = Math.round(tov.y * 100) / 100;
+            this.renderCanvas();
+            this.updateTextOverlayProperties();
+        };
+
+        const onUp = () => {
+            this.isDragging = false;
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+            document.removeEventListener('touchmove', onMove);
+            document.removeEventListener('touchend', onUp);
+        };
+
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+        document.addEventListener('touchmove', onMove, {passive: false});
+        document.addEventListener('touchend', onUp);
+
+        this.selectTextOverlay(index);
     }
 
     toggleFooter() {
@@ -2075,6 +2273,12 @@ class TemplateEditor {
         };
         if (this.footer) {
             template.footer = { ...this.footer };
+        }
+        if (this.textOverlays.length > 0) {
+            template.text_overlays = this.textOverlays.map(t => ({...t}));
+        }
+        if (this.imageOverlays.length > 0) {
+            template.image_overlays = this.imageOverlays.map(i => ({...i}));
         }
 
         try {
