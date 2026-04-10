@@ -22,13 +22,13 @@ TRANSITIONS: dict[BoothState, list[BoothState]] = {
     BoothState.IDLE:       [BoothState.CHOOSE],
     BoothState.CHOOSE:     [BoothState.PREVIEW, BoothState.IDLE],
     BoothState.PREVIEW:    [BoothState.CAPTURE, BoothState.IDLE],
-    BoothState.CAPTURE:    [BoothState.PREVIEW, BoothState.PROCESSING],
-    BoothState.PROCESSING: [BoothState.REVIEW],
+    BoothState.CAPTURE:    [BoothState.PREVIEW, BoothState.PROCESSING, BoothState.IDLE],
+    BoothState.PROCESSING: [BoothState.REVIEW, BoothState.IDLE],
+    BoothState.PRINT:      [BoothState.THANKYOU, BoothState.IDLE],
     BoothState.REVIEW:     [
         BoothState.PRINT, BoothState.PREVIEW,
         BoothState.IDLE, BoothState.THANKYOU,
     ],
-    BoothState.PRINT:      [BoothState.THANKYOU],
     BoothState.THANKYOU:   [BoothState.IDLE],
 }
 

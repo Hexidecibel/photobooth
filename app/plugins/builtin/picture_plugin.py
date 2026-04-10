@@ -87,9 +87,14 @@ class PicturePlugin:
                 "type": "error",
                 "message": f"Processing failed: {e}",
             })
+            # Mark session so _on_processing_do returns IDLE instead of stuck
+            if session:
+                session._processing_failed = True
 
     async def _on_processing_do(self, session, event=None, **kwargs):
-        """Auto-transition to review when processing is done."""
+        """Auto-transition to review when processing is done, or idle on failure."""
+        if session and getattr(session, "_processing_failed", False):
+            return BoothState.IDLE
         if session and session.composite_path:
             return BoothState.REVIEW
         return None

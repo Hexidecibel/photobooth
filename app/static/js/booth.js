@@ -230,6 +230,7 @@ class BoothApp {
             case 'error':
                 console.error('[booth] error:', msg.message);
                 if (this.sounds) this.sounds.play('error');
+                this.showError(msg.message);
                 break;
         }
     }
@@ -253,6 +254,9 @@ class BoothApp {
 
         // Reset idle timer on every state change
         this.resetIdleTimer();
+
+        // Reset safety timer on every state change
+        this.resetSafetyTimer();
 
         // Reset choose screen when entering it
         if (state === 'choose') {
@@ -660,6 +664,45 @@ class BoothApp {
         if (picker) picker.style.display = 'none';
         if (grid) grid.style.display = '';
         if (heading) heading.style.display = '';
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  Safety timeout — prevent booth from freezing in any state          */
+    /* ------------------------------------------------------------------ */
+
+    resetSafetyTimer() {
+        clearTimeout(this.safetyTimer);
+        // If stuck in any non-idle state for 60s, force back to idle
+        if (this.state !== 'idle') {
+            var self = this;
+            this.safetyTimer = setTimeout(function () {
+                console.warn('[booth] Safety timeout — returning to idle');
+                self.send('cancel');
+                // Force UI back even if server doesn't respond
+                setTimeout(function () {
+                    if (self.state !== 'idle') {
+                        self.showState('idle');
+                    }
+                }, 3000);
+            }, 60000);
+        }
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  Error toast                                                        */
+    /* ------------------------------------------------------------------ */
+
+    showError(message) {
+        var toast = document.getElementById('error-toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'error-toast';
+            toast.className = 'error-toast';
+            document.body.appendChild(toast);
+        }
+        toast.textContent = message;
+        toast.classList.add('visible');
+        setTimeout(function () { toast.classList.remove('visible'); }, 4000);
     }
 
     /* ------------------------------------------------------------------ */

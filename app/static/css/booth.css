@@ -919,6 +919,30 @@ section[data-state="capture"] {
 }
 
 /* ===================================================================
+   Error toast
+   =================================================================== */
+
+.error-toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--pb-error);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 1rem;
+    z-index: 10000;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+}
+
+.error-toast.visible {
+    opacity: 1;
+}
+
+/* ===================================================================
    Offline indicator
    =================================================================== */
 

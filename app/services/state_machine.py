@@ -41,10 +41,16 @@ class StateMachine:
         old = self._state
         logger.info(f"Transition: {old} \u2192 {target}")
         # Exit current state
-        await self._fire_hook(f"state_{old}_exit")
+        try:
+            await self._fire_hook(f"state_{old}_exit")
+        except Exception as e:
+            logger.error(f"Error in state_{old}_exit: {e}")
         self._state = target
         # Enter new state
-        await self._fire_hook(f"state_{target}_enter")
+        try:
+            await self._fire_hook(f"state_{target}_enter")
+        except Exception as e:
+            logger.error(f"Error in state_{target}_enter: {e}")
         # Broadcast to all WebSocket clients
         await self._broadcast({
             "type": "state_change",
@@ -55,10 +61,25 @@ class StateMachine:
     async def trigger(self, event: str, **kwargs: Any) -> None:
         """Handle an external event (button press, touch, timer)."""
         logger.debug(f"Event '{event}' in state {self._state}")
-        handler_key = f"state_{self._state}_do"
-        result = await self._fire_hook(handler_key, event=event, **kwargs)
-        if result and isinstance(result, BoothState) and result != self._state:
-            await self.transition(result)
+        try:
+            handler_key = f"state_{self._state}_do"
+            result = await self._fire_hook(handler_key, event=event, **kwargs)
+            if result and isinstance(result, BoothState) and result != self._state:
+                await self.transition(result)
+        except Exception as e:
+            logger.error(f"Error handling event '{event}' in {self._state}: {e}")
+            await self._broadcast({"type": "error", "message": str(e)})
+            # Recovery: return to idle after error
+            if self._state != BoothState.IDLE:
+                try:
+                    await self.transition(BoothState.IDLE)
+                except Exception:
+                    self._state = BoothState.IDLE
+                    await self._broadcast({
+                        "type": "state_change",
+                        "state": "idle",
+                        "previous": None,
+                    })
 
     def register_hook(self, name: str, handler: Callable) -> None:
         """Register a hook handler. Used by plugin manager."""

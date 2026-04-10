@@ -85,6 +85,13 @@ class CameraPlugin:
             await self._broadcast(
                 {"type": "error", "message": f"Capture failed: {e}"}
             )
+            # Ensure camera preview restarts after failure
+            try:
+                await self._camera.start_preview(
+                    self._config.camera.preview_resolution
+                )
+            except Exception:
+                pass
 
     async def _on_capture_do(self, session, event=None, **kwargs):
         """After capture, go to next preview or processing."""
