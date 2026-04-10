@@ -126,18 +126,9 @@ class ServerConfig(BaseModel):
 
 
 class NetworkConfig(BaseModel):
-    """Tunnel and hotspot settings for remote access."""
+    """Network settings."""
 
     tunnel_enabled: bool = False
-    tunnel_provider: str = "localhost.run"  # "localhost.run" or "custom"
-    tunnel_custom_command: str = ""  # Only used when provider = "custom"
-    tunnel_name: str = "photobooth"
-    # For custom provider URL derivation
-    tunnel_url_pattern: str = "https://{name}.tunnel.cush.rocks"
-    # Hotspot settings
-    hotspot_enabled: bool = False
-    hotspot_ssid: str = "PhotoBooth"
-    hotspot_password: str = "photobooth"
 
 
 class SoundConfig(BaseModel):
