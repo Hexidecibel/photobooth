@@ -426,6 +426,12 @@ class BoothApp {
 
         // Play applause when the result is ready
         if (this.sounds) this.sounds.play('applause');
+
+        // Advance to review state
+        var self = this;
+        setTimeout(function () {
+            self.send('result_ready');
+        }, 500);
     }
 
     /* ------------------------------------------------------------------ */

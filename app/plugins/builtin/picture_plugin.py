@@ -92,9 +92,9 @@ class PicturePlugin:
                 session._processing_failed = True
 
     async def _on_processing_do(self, session, event=None, **kwargs):
-        """Auto-transition to review when processing is done, or idle on failure."""
+        """Transition to review when processing is done, or idle on failure."""
         if session and getattr(session, "_processing_failed", False):
             return BoothState.IDLE
-        if session and session.composite_path:
+        if event == "result_ready" or (session and session.composite_path):
             return BoothState.REVIEW
         return None
