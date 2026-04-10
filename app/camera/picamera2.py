@@ -6,6 +6,7 @@ for full-resolution stills.
 """
 
 import asyncio
+import io
 import logging
 import threading
 from collections.abc import AsyncIterator
@@ -16,17 +17,21 @@ from app.camera.base import CameraBase, CropRegion
 logger = logging.getLogger(__name__)
 
 
-class StreamingOutput:
-    """Thread-safe buffer for MJPEG frames from picamera2."""
+class StreamingOutput(io.BufferedIOBase):
+    """Thread-safe buffer for MJPEG frames from picamera2.
+
+    Inherits from io.BufferedIOBase so picamera2's FileOutput accepts it.
+    """
 
     def __init__(self) -> None:
         self.frame: bytes | None = None
         self.condition = threading.Condition()
 
-    def write(self, buf: bytes) -> None:
+    def write(self, buf: bytes) -> int:
         with self.condition:
             self.frame = buf
             self.condition.notify_all()
+        return len(buf)
 
     def wait_for_frame(self, timeout: float = 1.0) -> bytes | None:
         with self.condition:
@@ -97,8 +102,12 @@ class PiCamera2Backend(CameraBase):
         if not self._picam2:
             raise RuntimeError("Camera not started")
         path.parent.mkdir(parents=True, exist_ok=True)
+        # Use the sensor's native resolution for best quality
+        sensor_res = self._picam2.camera_properties.get(
+            "PixelArraySize", (3280, 2464)
+        )
         still_config = self._picam2.create_still_configuration(
-            main={"size": (4608, 2592)}
+            main={"size": sensor_res}
         )
         image = await asyncio.to_thread(
             self._picam2.switch_mode_and_capture_image,
