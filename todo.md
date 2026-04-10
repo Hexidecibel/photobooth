@@ -1,17 +1,27 @@
 # Todo
 
-- [ ] Review pibooth feature analysis and finalize modernization priorities
-- [ ] Design system architecture (state machine, camera abstraction, plugin hooks, web UI)
-- [ ] Implement core state machine with pluggy hooks
-- [ ] Build camera abstraction layer (picamera2 + gPhoto2 + webcam)
-- [ ] Create web UI framework (FastAPI + WebSocket + Svelte/vanilla JS)
-- [ ] Implement MJPEG camera preview streaming
-- [ ] Build image processing pipeline (layouts, overlays, effects)
-- [ ] Add CUPS printer integration
-- [ ] Add GPIO button/LED support via gpiozero
-- [ ] Implement QR code sharing flow
-- [ ] Build green screen / chromakey feature
-- [ ] Add GIF / boomerang capture mode
-- [ ] Create pibooth config import tool
-- [ ] Build web admin panel
-- [ ] Chromium kiosk mode + systemd service setup
+## Done
+- [x] Core architecture (config, state machine, plugins, camera, MJPEG, WebSocket)
+- [x] Kiosk frontend (8 screens, CSS theming, 14 languages)
+- [x] Image pipeline (9 effects, layout engine, templates, chromakey, GIF/boomerang)
+- [x] Hardware (GPIO buttons/LEDs, CUPS printing)
+- [x] Sharing (QR codes, email, social, event gallery)
+- [x] Admin panel (config editor, camera framing, analytics, backup, template editor)
+- [x] Operations (watchdog, idle timeout, tunnel, offline resilience)
+- [x] Branding (logo upload, CSS theming)
+- [x] 9 layout templates + guest template picker
+- [x] Pibooth config import
+- [x] Deploy scripts (systemd, setup.sh, bin/sync)
+- [x] Documentation (README, plugins, config, migration, deployment, templates)
+
+## Backlog
+- [ ] AI photo effects — post-capture AI editing (style transfer, background replacement, face filters, cartoonize, aging, etc.) using on-device models or API
+- [ ] Video message mode — record short video clips with countdown
+- [ ] Photo strip printing — 2 copies side-by-side on 4x6 for tear-apart strips
+- [ ] Multi-booth management — control multiple booths from one admin panel
+- [ ] Event presets — save/load complete event configs (template + theme + branding)
+- [ ] Guest data collection — optional form before/after photo (name, email, survey)
+- [ ] Photo approval workflow — operator reviews before printing
+- [ ] Animated overlays — GIF/video overlays on the preview screen
+- [ ] AI background removal — automatic subject extraction without green screen
+- [ ] Face detection — auto-framing, smile detection trigger
