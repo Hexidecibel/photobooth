@@ -94,7 +94,6 @@ class PiCamera2Backend(CameraBase):
                     self._picam2.capture_file,
                     buf,
                     format="jpeg",
-                    quality=70,
                 )
                 yield buf.getvalue()
             except Exception as e:
