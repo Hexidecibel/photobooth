@@ -797,24 +797,31 @@ class BoothApp {
         // Force container above sections (sections are z-index:0/1)
         container.style.cssText = 'position:fixed;inset:0;overflow:hidden;z-index:5;pointer-events:none;';
 
-        // Fixed positions around the edges — no overlap
-        var positions = [
-            { x: 3, y: 5, rot: -5 },     // top-left
-            { x: 72, y: 3, rot: 4 },     // top-right
-            { x: 1, y: 45, rot: -3 },    // mid-left
-            { x: 74, y: 48, rot: 6 },    // mid-right
-            { x: 5, y: 75, rot: 3 },     // bottom-left
-            { x: 70, y: 78, rot: -4 },   // bottom-right
-        ];
-        var cardCount = Math.min(positions.length, this.slidePhotos.length);
+        // Random positions but no overlap — divide screen into zones
+        var cardCount = Math.min(6, this.slidePhotos.length);
         this._floatCards = [];
+        var placed = []; // Track placed card positions
 
         for (var i = 0; i < cardCount; i++) {
             var card = document.createElement('div');
-            var pos = positions[i];
-            var x = pos.x;
-            var y = pos.y;
-            var rot = pos.rot;
+
+            // Keep trying random positions until no overlap
+            var x, y, attempts = 0;
+            do {
+                x = Math.random() * 75 + 3;
+                y = Math.random() * 70 + 5;
+                attempts++;
+                var overlaps = false;
+                for (var p = 0; p < placed.length; p++) {
+                    if (Math.abs(x - placed[p].x) < 22 && Math.abs(y - placed[p].y) < 25) {
+                        overlaps = true;
+                        break;
+                    }
+                }
+            } while ((overlaps || (x > 25 && x < 65 && y > 25 && y < 65)) && attempts < 50);
+            placed.push({ x: x, y: y });
+
+            var rot = (Math.random() * 20 - 10);
             // ALL inline styles — no CSS classes needed
             card.style.cssText = 'position:absolute;width:200px;border-radius:8px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.4);border:3px solid rgba(255,255,255,0.15);opacity:0.7;left:' + x + '%;top:' + y + '%;transform:rotate(' + rot + 'deg);transition:opacity 1s;';
 
