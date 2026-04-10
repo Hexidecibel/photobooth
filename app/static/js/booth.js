@@ -307,21 +307,29 @@ class BoothApp {
             return;
         }
 
-        // Find current highlighted item
+        // Auto-highlight first item if nothing highlighted
         var currentIdx = items.findIndex(function(el) { return el.classList.contains('btn-highlighted'); });
+        if (currentIdx < 0) {
+            items[0].classList.add('btn-highlighted');
+            currentIdx = 0;
+        }
 
         if (action === 'cycle') {
             // Red button: move highlight to next item
-            if (currentIdx >= 0) items[currentIdx].classList.remove('btn-highlighted');
-            var nextIdx = (currentIdx + 1) % items.length;
+            items[currentIdx].classList.remove('btn-highlighted');
+            var nextIdx = currentIdx + 1;
+            if (nextIdx >= items.length) {
+                // Wrapped past end — cancel/go back
+                this.send('cancel');
+                return;
+            }
             items[nextIdx].classList.add('btn-highlighted');
             items[nextIdx].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             if (this.sounds) this.sounds.play('click');
         } else if (action === 'select') {
-            // Green button: click the highlighted item (or first if none highlighted)
-            var target = currentIdx >= 0 ? items[currentIdx] : items[0];
+            // Green button: click the highlighted item
             if (this.sounds) this.sounds.play('click');
-            target.click();
+            items[currentIdx].click();
         }
     }
 
@@ -449,7 +457,7 @@ class BoothApp {
 
         var hints = {
             idle:       { green: 'Press to start!', red: 'Press to start!' },
-            choose:     { green: 'Select', red: 'Next' },
+            choose:     { green: 'Select', red: 'Next / Cancel' },
             preview:    { green: 'Cancel', red: 'Cancel' },
             capture:    { green: '', red: '' },
             processing: { green: '', red: '' },
@@ -1186,7 +1194,7 @@ class BoothApp {
             validSlots = [1]; // GIF/boomerang always single
         } else if (mode === 'photo') {
             // "single" mode = 1 slot, "multi" = 2+ slots
-            var isSingle = (this.pendingTemplate === 'single');
+            var isSingle = (this.pendingTemplate === 'single' || this.pendingTemplate === 'pick-single');
             validSlots = isSingle ? [1] : null; // null = 2+ slots
         } else {
             validSlots = null;
