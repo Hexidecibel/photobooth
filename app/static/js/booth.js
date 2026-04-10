@@ -759,26 +759,56 @@ class BoothApp {
     /*  Template picker                                                    */
     /* ------------------------------------------------------------------ */
 
-    async showTemplatePicker(mode, count) {
+    async showTemplatePicker(mode) {
         this._pendingMode = mode;
-        this._pendingCount = count;
+
+        // Determine which slot counts are valid for this mode
+        var validSlots;
+        if (mode === 'gif' || mode === 'boomerang') {
+            validSlots = [1]; // GIF/boomerang always single
+        } else if (mode === 'photo') {
+            // "single" mode = 1 slot, "multi" = 2+ slots
+            var isSingle = (this.pendingTemplate === 'single');
+            validSlots = isSingle ? [1] : null; // null = 2+ slots
+        } else {
+            validSlots = null;
+        }
 
         var res = await fetch('/api/admin/templates');
         var data = await res.json();
-        var grid = document.getElementById('template-picker-grid');
-        grid.innerHTML = '';
         var self = this;
 
+        // Load all templates and filter
+        var matching = [];
         for (var i = 0; i < data.templates.length; i++) {
-            await (async function (name) {
-                var tplRes = await fetch('/api/admin/templates/' + name);
-                var tpl = await tplRes.json();
+            var tplRes = await fetch('/api/admin/templates/' + data.templates[i]);
+            var tpl = await tplRes.json();
+            tpl._name = data.templates[i];
+            var slots = tpl.slots ? tpl.slots.length : 1;
+            if (validSlots === null) {
+                if (slots >= 2) matching.push(tpl);
+            } else if (validSlots.indexOf(slots) !== -1) {
+                matching.push(tpl);
+            }
+        }
 
+        // If only 1 matching template, skip picker
+        if (matching.length <= 1) {
+            this.pendingTemplate = matching.length ? matching[0]._name : 'single';
+            this.showEffectPicker();
+            return;
+        }
+
+        var grid = document.getElementById('template-picker-grid');
+        grid.innerHTML = '';
+
+        for (var j = 0; j < matching.length; j++) {
+            (function (tpl) {
+                var name = tpl._name;
                 var card = document.createElement('button');
                 card.className = 'template-card';
                 card.dataset.template = name;
 
-                // Create mini canvas preview
                 var preview = document.createElement('div');
                 preview.className = 'template-mini-preview';
                 preview.style.aspectRatio = tpl.width_inches + ' / ' + tpl.height_inches;
@@ -799,22 +829,19 @@ class BoothApp {
                 card.appendChild(preview);
                 var label = document.createElement('span');
                 label.className = 'template-card-name';
-                label.textContent = name.replace(/-/g, ' ');
+                label.textContent = name.replace(/-/g, ' ').replace('4x6', '').trim();
                 card.appendChild(label);
 
                 card.addEventListener('click', function () {
                     if (self.sounds) self.sounds.play('click');
-                    self.send('select_template', { template: name });
-                    self.pendingMode = self._pendingMode;
                     self.pendingTemplate = name;
-                    // Hide template picker, show effect picker
                     document.getElementById('template-picker').style.display = 'none';
                     document.querySelector('.choose-grid').style.display = '';
                     self.showEffectPicker();
                 });
 
                 grid.appendChild(card);
-            })(data.templates[i]);
+            })(matching[j]);
         }
 
         // Show picker, hide mode chooser
@@ -923,13 +950,16 @@ class BoothApp {
                     var mode = btn.dataset.mode;
                     var template = btn.dataset.template || 'single';
 
-                    // Check if guest picks template
-                    var guestPicks = self.config && self.config.picture && self.config.picture.guest_picks_template;
-                    if (guestPicks) {
+                    self.pendingMode = mode;
+                    self.pendingTemplate = template;
+
+                    // "multi" = show template picker, "single" = skip to effects
+                    if (template === 'multi') {
                         self.showTemplatePicker(mode);
+                    } else if (template === 'single' || mode === 'gif' || mode === 'boomerang') {
+                        self.pendingTemplate = 'single';
+                        self.showEffectPicker();
                     } else {
-                        self.pendingMode = mode;
-                        self.pendingTemplate = template;
                         self.showEffectPicker();
                     }
                 });
