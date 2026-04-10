@@ -1,0 +1,17 @@
+{
+    "name": "polaroid-4x6",
+    "width_inches": 4,
+    "height_inches": 6,
+    "dpi": 600,
+    "background": "#ffffff",
+    "slots": [
+        {"x": 0.08, "y": 0.05, "width": 0.84, "height": 0.7, "rotation": 0}
+    ],
+    "footer": {
+        "y": 0.80,
+        "height": 0.15,
+        "text": "{event_name}",
+        "font_size": 28,
+        "color": "#333333"
+    }
+}

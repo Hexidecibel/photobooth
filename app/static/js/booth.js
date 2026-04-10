@@ -249,6 +249,11 @@ class BoothApp {
         // Reset idle timer on every state change
         this.resetIdleTimer();
 
+        // Reset choose screen when entering it
+        if (state === 'choose') {
+            this.resetChooseScreen();
+        }
+
         // State-specific setup / teardown
         if (state === 'preview') {
             this.startPreview();
@@ -573,6 +578,86 @@ class BoothApp {
     }
 
     /* ------------------------------------------------------------------ */
+    /*  Template picker                                                    */
+    /* ------------------------------------------------------------------ */
+
+    async showTemplatePicker(mode, count) {
+        this._pendingMode = mode;
+        this._pendingCount = count;
+
+        var res = await fetch('/api/admin/templates');
+        var data = await res.json();
+        var grid = document.getElementById('template-picker-grid');
+        grid.innerHTML = '';
+        var self = this;
+
+        for (var i = 0; i < data.templates.length; i++) {
+            await (async function (name) {
+                var tplRes = await fetch('/api/admin/templates/' + name);
+                var tpl = await tplRes.json();
+
+                var card = document.createElement('button');
+                card.className = 'template-card';
+                card.dataset.template = name;
+
+                // Create mini canvas preview
+                var preview = document.createElement('div');
+                preview.className = 'template-mini-preview';
+                preview.style.aspectRatio = tpl.width_inches + ' / ' + tpl.height_inches;
+                preview.style.background = tpl.background || '#fff';
+
+                for (var s = 0; s < tpl.slots.length; s++) {
+                    var slot = tpl.slots[s];
+                    var slotEl = document.createElement('div');
+                    slotEl.className = 'mini-slot';
+                    slotEl.style.left = (slot.x * 100) + '%';
+                    slotEl.style.top = (slot.y * 100) + '%';
+                    slotEl.style.width = (slot.width * 100) + '%';
+                    slotEl.style.height = (slot.height * 100) + '%';
+                    if (slot.rotation) slotEl.style.transform = 'rotate(' + slot.rotation + 'deg)';
+                    preview.appendChild(slotEl);
+                }
+
+                card.appendChild(preview);
+                var label = document.createElement('span');
+                label.className = 'template-card-name';
+                label.textContent = name.replace(/-/g, ' ');
+                card.appendChild(label);
+
+                card.addEventListener('click', function () {
+                    if (self.sounds) self.sounds.play('click');
+                    self.send('select_template', { template: name });
+                    self.send('choose', {
+                        mode: self._pendingMode,
+                        count: self._pendingCount,
+                        template: name
+                    });
+                    // Hide picker, show mode chooser again for next time
+                    document.getElementById('template-picker').style.display = 'none';
+                    document.querySelector('.choose-grid').style.display = '';
+                });
+
+                grid.appendChild(card);
+            })(data.templates[i]);
+        }
+
+        // Show picker, hide mode chooser
+        document.querySelector('.choose-grid').style.display = 'none';
+        document.querySelector('[data-state="choose"] .section-heading').style.display = 'none';
+        document.getElementById('template-picker').style.display = '';
+    }
+
+    resetChooseScreen() {
+        // Reset template picker visibility when re-entering choose
+        var picker = document.getElementById('template-picker');
+        var grid = document.querySelector('.choose-grid');
+        var heading = document.querySelector('[data-state="choose"] .section-heading');
+        if (picker) picker.style.display = 'none';
+        if (grid) grid.style.display = '';
+        if (heading) heading.style.display = '';
+    }
+
+    /* ------------------------------------------------------------------ */
     /*  Event binding                                                      */
     /* ------------------------------------------------------------------ */
 
@@ -598,10 +683,16 @@ class BoothApp {
             (function (btn) {
                 btn.addEventListener('click', function () {
                     if (self.sounds) self.sounds.play('click');
-                    self.send('choose', {
-                        mode: btn.dataset.mode,
-                        count: parseInt(btn.dataset.count, 10)
-                    });
+                    var mode = btn.dataset.mode;
+                    var count = parseInt(btn.dataset.count, 10);
+
+                    // Check if guest picks template
+                    var guestPicks = self.config && self.config.picture && self.config.picture.guest_picks_template;
+                    if (guestPicks) {
+                        self.showTemplatePicker(mode, count);
+                    } else {
+                        self.send('choose', { mode: mode, count: count });
+                    }
                 });
             })(options[i]);
         }

@@ -44,6 +44,7 @@ pose_prompts = [
     "One more!",
 ]
 layout_template = "classic-4x6"
+guest_picks_template = false
 overlay_path = ""
 background_color = "#ffffff"
 background_image = ""

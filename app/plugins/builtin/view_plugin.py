@@ -32,11 +32,19 @@ class ViewPlugin:
     async def _on_choose_do(self, session, event=None, **kwargs):
         if event == "cancel":
             return BoothState.IDLE
+        if event == "select_template":
+            # Guest picked a template; store it but stay in choose state
+            # (the choose event with template will follow immediately)
+            return None
         if event == "choose":
             # Create a new capture session with the chosen mode/count
             mode = kwargs.get("mode", "photo")
             count = kwargs.get("count", self._config.picture.capture_count)
             self._sm.new_session(mode=mode, capture_count=int(count))
+            # Apply guest-selected template if provided
+            template = kwargs.get("template")
+            if template and self._sm.session:
+                self._sm.session.layout_template = template
             return BoothState.PREVIEW
         return None
 

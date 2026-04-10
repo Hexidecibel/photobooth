@@ -1,0 +1,19 @@
+{
+    "name": "triple-4x6",
+    "width_inches": 4,
+    "height_inches": 6,
+    "dpi": 600,
+    "background": "#ffffff",
+    "slots": [
+        {"x": 0.05, "y": 0.02, "width": 0.9, "height": 0.28, "rotation": 0},
+        {"x": 0.05, "y": 0.32, "width": 0.9, "height": 0.28, "rotation": 0},
+        {"x": 0.05, "y": 0.62, "width": 0.9, "height": 0.28, "rotation": 0}
+    ],
+    "footer": {
+        "y": 0.93,
+        "height": 0.05,
+        "text": "{event_name}",
+        "font_size": 18,
+        "color": "#333333"
+    }
+}

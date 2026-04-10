@@ -56,6 +56,8 @@ class PictureConfig(BaseModel):
         "One more!",
     ]
     layout_template: str = "classic-4x6"
+    # When true, guests choose template on the choose screen
+    guest_picks_template: bool = False
     overlay_path: str = ""
     background_color: str = "#ffffff"
     background_image: str = ""

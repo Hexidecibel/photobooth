@@ -236,6 +236,61 @@ section[data-state="choose"] {
 }
 
 /* ===================================================================
+   TEMPLATE PICKER — Guest layout selection
+   =================================================================== */
+
+.template-picker {
+    text-align: center;
+    padding: var(--pb-spacing);
+}
+.template-picker h2 {
+    margin-bottom: 1.5rem;
+    color: var(--pb-text-primary);
+}
+.template-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    max-width: 800px;
+    margin: 0 auto;
+}
+.template-card {
+    background: var(--pb-bg-card);
+    border: 2px solid transparent;
+    border-radius: var(--pb-border-radius);
+    padding: 1rem;
+    cursor: pointer;
+    transition: all var(--pb-transition);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+.template-card:hover, .template-card:active {
+    border-color: var(--pb-accent);
+    transform: scale(1.05);
+}
+.template-mini-preview {
+    position: relative;
+    width: 100%;
+    max-width: 120px;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+.mini-slot {
+    position: absolute;
+    background: rgba(108, 99, 255, 0.3);
+    border: 1px solid rgba(108, 99, 255, 0.6);
+    border-radius: 2px;
+}
+.template-card-name {
+    font-size: 0.8rem;
+    color: var(--pb-text-secondary);
+    text-transform: capitalize;
+}
+
+/* ===================================================================
    PREVIEW — Camera preview + countdown
    =================================================================== */
 

@@ -56,7 +56,8 @@ var TRANSLATIONS = {
         filter_none: "Normal",
         filter_bw: "B&W",
         filter_sepia: "Sepia",
-        filter_vintage: "Vintage"
+        filter_vintage: "Vintage",
+        pick_layout: "Pick Your Layout"
     },
     es: {
         idle_title: "Fotomatón",
@@ -104,7 +105,8 @@ var TRANSLATIONS = {
         filter_none: "Normal",
         filter_bw: "B/N",
         filter_sepia: "Sepia",
-        filter_vintage: "Vintage"
+        filter_vintage: "Vintage",
+        pick_layout: "Elige tu Diseño"
     },
     fr: {
         idle_title: "Photomaton",
@@ -152,7 +154,8 @@ var TRANSLATIONS = {
         filter_none: "Normal",
         filter_bw: "N/B",
         filter_sepia: "Sépia",
-        filter_vintage: "Vintage"
+        filter_vintage: "Vintage",
+        pick_layout: "Choisissez votre Mise en Page"
     },
     de: {
         idle_title: "Fotobox",
@@ -200,7 +203,8 @@ var TRANSLATIONS = {
         filter_none: "Normal",
         filter_bw: "S/W",
         filter_sepia: "Sepia",
-        filter_vintage: "Vintage"
+        filter_vintage: "Vintage",
+        pick_layout: "Wähle dein Layout"
     },
     it: {
         idle_title: "Cabina Fotografica",
@@ -241,7 +245,8 @@ var TRANSLATIONS = {
         filter_none: "Normale",
         filter_bw: "B/N",
         filter_sepia: "Seppia",
-        filter_vintage: "Vintage"
+        filter_vintage: "Vintage",
+        pick_layout: "Scegli il tuo Layout"
     },
     pt: {
         idle_title: "Cabine de Fotos",
@@ -282,7 +287,8 @@ var TRANSLATIONS = {
         filter_none: "Normal",
         filter_bw: "P/B",
         filter_sepia: "Sépia",
-        filter_vintage: "Vintage"
+        filter_vintage: "Vintage",
+        pick_layout: "Escolha seu Layout"
     },
     ja: {
         idle_title: "フォトブース",
@@ -323,7 +329,8 @@ var TRANSLATIONS = {
         filter_none: "ノーマル",
         filter_bw: "モノクロ",
         filter_sepia: "セピア",
-        filter_vintage: "ヴィンテージ"
+        filter_vintage: "ヴィンテージ",
+        pick_layout: "レイアウトを選択"
     },
     zh: {
         idle_title: "拍照亭",
@@ -364,7 +371,8 @@ var TRANSLATIONS = {
         filter_none: "普通",
         filter_bw: "黑白",
         filter_sepia: "复古",
-        filter_vintage: "怀旧"
+        filter_vintage: "怀旧",
+        pick_layout: "选择布局"
     },
     ko: {
         idle_title: "포토부스",
@@ -405,7 +413,8 @@ var TRANSLATIONS = {
         filter_none: "일반",
         filter_bw: "흑백",
         filter_sepia: "세피아",
-        filter_vintage: "빈티지"
+        filter_vintage: "빈티지",
+        pick_layout: "레이아웃 선택"
     },
     nl: {
         idle_title: "Fotohokje",
@@ -446,7 +455,8 @@ var TRANSLATIONS = {
         filter_none: "Normaal",
         filter_bw: "Z/W",
         filter_sepia: "Sepia",
-        filter_vintage: "Vintage"
+        filter_vintage: "Vintage",
+        pick_layout: "Kies je Layout"
     },
     pl: {
         idle_title: "Fotobudka",
@@ -487,7 +497,8 @@ var TRANSLATIONS = {
         filter_none: "Normalny",
         filter_bw: "Cz/B",
         filter_sepia: "Sepia",
-        filter_vintage: "Vintage"
+        filter_vintage: "Vintage",
+        pick_layout: "Wybierz Układ"
     },
     sv: {
         idle_title: "Fotobås",
@@ -528,7 +539,8 @@ var TRANSLATIONS = {
         filter_none: "Normal",
         filter_bw: "S/V",
         filter_sepia: "Sepia",
-        filter_vintage: "Vintage"
+        filter_vintage: "Vintage",
+        pick_layout: "Välj din Layout"
     },
     ru: {
         idle_title: "Фотобудка",
@@ -569,7 +581,8 @@ var TRANSLATIONS = {
         filter_none: "Обычный",
         filter_bw: "Ч/Б",
         filter_sepia: "Сепия",
-        filter_vintage: "Винтаж"
+        filter_vintage: "Винтаж",
+        pick_layout: "Выберите Макет"
     },
     ar: {
         idle_title: "كشك الصور",
@@ -610,7 +623,8 @@ var TRANSLATIONS = {
         filter_none: "عادي",
         filter_bw: "أبيض/أسود",
         filter_sepia: "بني",
-        filter_vintage: "كلاسيكي"
+        filter_vintage: "كلاسيكي",
+        pick_layout: "اختر التخطيط"
     }
 };
 

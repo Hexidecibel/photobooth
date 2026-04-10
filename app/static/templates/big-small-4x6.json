@@ -1,0 +1,19 @@
+{
+    "name": "big-small-4x6",
+    "width_inches": 4,
+    "height_inches": 6,
+    "dpi": 600,
+    "background": "#ffffff",
+    "slots": [
+        {"x": 0.03, "y": 0.02, "width": 0.94, "height": 0.55, "rotation": 0},
+        {"x": 0.03, "y": 0.60, "width": 0.45, "height": 0.30, "rotation": 0},
+        {"x": 0.52, "y": 0.60, "width": 0.45, "height": 0.30, "rotation": 0}
+    ],
+    "footer": {
+        "y": 0.93,
+        "height": 0.05,
+        "text": "{event_name}",
+        "font_size": 16,
+        "color": "#333333"
+    }
+}

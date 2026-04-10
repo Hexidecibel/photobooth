@@ -44,6 +44,11 @@ async def booth_ws(ws: WebSocket):
     if hasattr(ws.app.state, "config") and hasattr(ws.app.state.config, "general"):
         language = ws.app.state.config.general.language or "en"
 
+    # Build guest_picks_template flag from config
+    guest_picks_template = False
+    if hasattr(ws.app.state, "config") and hasattr(ws.app.state.config, "picture"):
+        guest_picks_template = ws.app.state.config.picture.guest_picks_template
+
     # Send current state on connect
     await ws.send_json({
         "type": "state_change",
@@ -51,6 +56,9 @@ async def booth_ws(ws: WebSocket):
         "previous": None,
         "sound_config": sound_config,
         "language": language,
+        "config": {
+            "guest_picks_template": guest_picks_template,
+        },
     })
 
     try:
