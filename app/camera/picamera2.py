@@ -64,70 +64,82 @@ class PiCamera2Backend(CameraBase):
         self, resolution: tuple[int, int] = (1280, 720)
     ) -> None:
         from picamera2 import Picamera2
+        from picamera2.encoders import MJPEGEncoder
+        from picamera2.outputs import FileOutput
 
         self._preview_resolution = resolution
         self._picam2 = await asyncio.to_thread(
             Picamera2, self._camera_index
         )
-        # Use lower resolution for smooth streaming
-        config = self._picam2.create_preview_configuration(
+        # Video config for hardware MJPEG encoding (smooth streaming)
+        config = self._picam2.create_video_configuration(
             main={"size": resolution},
         )
         await asyncio.to_thread(self._picam2.configure, config)
-        await asyncio.to_thread(self._picam2.start)
+
+        # Hardware MJPEG encoder — runs in its own thread, doesn't block
+        self._output = StreamingOutput()
+        encoder = MJPEGEncoder(10_000_000)  # 10Mbps for good quality
+        await asyncio.to_thread(
+            self._picam2.start_recording, encoder, FileOutput(self._output)
+        )
+
         # Let AWB and AE converge before streaming
         await asyncio.sleep(2)
         self._running = True
-        logger.info("PiCamera2 preview started at %s", resolution)
+        logger.info("PiCamera2 preview started at %s (hardware MJPEG)", resolution)
 
     async def stop_preview(self) -> None:
         self._running = False
         if self._picam2:
-            await asyncio.to_thread(self._picam2.stop)
+            try:
+                await asyncio.to_thread(self._picam2.stop_recording)
+            except Exception:
+                pass
 
     async def stream_mjpeg(self) -> AsyncIterator[bytes]:
-        """Capture JPEG frames for MJPEG streaming."""
-        while self._running and self._picam2:
-            try:
-                buf = io.BytesIO()
-                await asyncio.to_thread(
-                    self._picam2.capture_file,
-                    buf,
-                    format="jpeg",
-                )
-                yield buf.getvalue()
-            except Exception as e:
-                logger.debug("Frame capture error: %s", e)
-                await asyncio.sleep(0.05)
+        """Stream JPEG frames from hardware MJPEG encoder."""
+        while self._running and self._output:
+            frame = await asyncio.to_thread(
+                self._output.wait_for_frame, 1.0
+            )
+            if frame:
+                yield frame
 
     async def capture_still(self, path: Path) -> Path:
         if not self._picam2:
             raise RuntimeError("Camera not started")
         path.parent.mkdir(parents=True, exist_ok=True)
 
-        # switch_mode_and_capture_file handles mode switch + full-res capture
+        from picamera2.encoders import MJPEGEncoder
+        from picamera2.outputs import FileOutput
+
         sensor_res = self._picam2.camera_properties.get(
             "PixelArraySize", (3280, 2464)
         )
         still_config = self._picam2.create_still_configuration(
             main={"size": sensor_res}
         )
-        # Stop preview, capture full-res still, restart preview
+        # Stop recording, switch to still mode, capture, switch back
         self._running = False
-        await asyncio.to_thread(self._picam2.stop)
+        await asyncio.to_thread(self._picam2.stop_recording)
         await asyncio.to_thread(self._picam2.configure, still_config)
         await asyncio.to_thread(self._picam2.start)
         image = await asyncio.to_thread(
             self._picam2.capture_image, "main"
         )
         await asyncio.to_thread(image.save, str(path), quality=95)
-        # Restart preview
+        # Restart preview with hardware encoder
         await asyncio.to_thread(self._picam2.stop)
-        preview_config = self._picam2.create_preview_configuration(
-            main={"size": self._preview_resolution, "format": "RGB888"},
+        video_config = self._picam2.create_video_configuration(
+            main={"size": self._preview_resolution},
         )
-        await asyncio.to_thread(self._picam2.configure, preview_config)
-        await asyncio.to_thread(self._picam2.start)
+        await asyncio.to_thread(self._picam2.configure, video_config)
+        self._output = StreamingOutput()
+        encoder = MJPEGEncoder(10_000_000)
+        await asyncio.to_thread(
+            self._picam2.start_recording, encoder, FileOutput(self._output)
+        )
         self._running = True
         logger.info("Still captured: %s", path)
         return path
@@ -190,7 +202,7 @@ class PiCamera2Backend(CameraBase):
         self._running = False
         if self._picam2:
             try:
-                await asyncio.to_thread(self._picam2.stop)
+                await asyncio.to_thread(self._picam2.stop_recording)
             except Exception:
                 pass
             try:
