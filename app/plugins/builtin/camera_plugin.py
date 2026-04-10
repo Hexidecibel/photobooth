@@ -1,5 +1,6 @@
 """Built-in camera plugin -- handles preview countdown and capture logic."""
 
+import asyncio
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -93,9 +94,11 @@ class CameraPlugin:
 
         try:
             if session.mode in ("gif", "boomerang"):
-                # Rapid burst capture for GIF/boomerang
+                # Stop MJPEG stream so we can use capture_file exclusively
+                self._camera._running = False
+                await asyncio.sleep(0.3)  # Let stream loop exit
+
                 frame_count = 8
-                import asyncio as _asyncio
                 import io as _io
 
                 for i in range(frame_count):
@@ -113,13 +116,15 @@ class CameraPlugin:
                     )
                     path.write_bytes(buf.getvalue())
                     session.captures.append(path)
-                    await _asyncio.sleep(0.2)  # Give WebSocket time to flush
+                    await asyncio.sleep(0.2)  # Give WebSocket time to flush
 
-                # Go straight to processing — broadcast complete and advance
+                # Re-enable stream for later
+                self._camera._running = True
+
                 await self._broadcast({
-                    "type": "processing_progress",
-                    "step": "compositing",
-                    "percent": 10,
+                    "type": "capture_complete",
+                    "index": frame_count,
+                    "total": frame_count,
                 })
             else:
                 # Single still capture

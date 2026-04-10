@@ -432,6 +432,7 @@ class BoothApp {
     /* ------------------------------------------------------------------ */
 
     onCaptureProgress(msg) {
+        console.log('[booth] capture_progress:', msg.frame, '/', msg.total);
         var processingText = document.getElementById('processing-text');
         var processingStep = document.getElementById('processing-step');
         var fill = document.getElementById('progress');
