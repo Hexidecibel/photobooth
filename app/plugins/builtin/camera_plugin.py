@@ -1,6 +1,7 @@
 """Built-in camera plugin -- handles preview countdown and capture logic."""
 
 import asyncio
+import io
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -27,9 +28,7 @@ class CameraPlugin:
         sm.register_hook("state_capture_do", self._on_capture_do)
 
     async def _on_preview_enter(self, session, **kwargs):
-        """Camera preview is already running from startup. Just notify frontend."""
-
-        # Send pose prompt for multi-capture sessions
+        """Camera preview is already running from startup."""
         if session and session.capture_count > 1:
             capture_index = len(session.captures)
             prompts = self._config.picture.pose_prompts
@@ -42,7 +41,7 @@ class CameraPlugin:
                 })
 
     async def _on_preview_do(self, session, event=None, **kwargs):
-        """Handle countdown timer in preview state."""
+        """Handle events in preview state."""
         if event in ("countdown_complete", "capture"):
             return BoothState.CAPTURE
         if event == "cancel":
@@ -54,38 +53,11 @@ class CameraPlugin:
             return None
         return None
 
-    async def _record_burst(self, session):
-        """Record GIF/boomerang frames during preview state."""
-        import asyncio as _asyncio
-        import io as _io
-
-        date_str = datetime.now().strftime("%Y-%m-%d")
-        raw_dir = Path(self._config.general.save_dir) / "raw" / date_str / session.id
-        raw_dir.mkdir(parents=True, exist_ok=True)
-
-        frame_count = 8
-        for i in range(frame_count):
-            await self._broadcast({
-                "type": "capture_progress",
-                "frame": i + 1,
-                "total": frame_count,
-            })
-            path = raw_dir / f"frame_{i:03d}.jpg"
-            buf = _io.BytesIO()
-            await _asyncio.to_thread(
-                self._camera._picam2.capture_file,
-                buf, format="jpeg",
-            )
-            path.write_bytes(buf.getvalue())
-            session.captures.append(path)
-            await _asyncio.sleep(0.1)
-
     async def _on_capture_enter(self, session, **kwargs):
-        """Trigger a capture and auto-advance to next state."""
+        """Trigger capture and advance."""
         if not session or not self._camera:
             return
 
-        # Broadcast flash effect
         await self._broadcast({"type": "flash"})
 
         date_str = datetime.now().strftime("%Y-%m-%d")
@@ -94,13 +66,11 @@ class CameraPlugin:
 
         try:
             if session.mode in ("gif", "boomerang"):
-                # Stop MJPEG stream so we can use capture_file exclusively
+                # Stop MJPEG stream so capture_file doesn't conflict
                 self._camera._running = False
-                await asyncio.sleep(0.3)  # Let stream loop exit
+                await asyncio.sleep(0.3)
 
                 frame_count = 8
-                import io as _io
-
                 for i in range(frame_count):
                     await self._broadcast({
                         "type": "capture_progress",
@@ -108,17 +78,16 @@ class CameraPlugin:
                         "total": frame_count,
                     })
                     path = raw_dir / f"frame_{i:03d}.jpg"
-                    # Use capture_file for correct colors (same as preview stream)
-                    buf = _io.BytesIO()
-                    await _asyncio.to_thread(
+                    buf = io.BytesIO()
+                    await asyncio.to_thread(
                         self._camera._picam2.capture_file,
                         buf, format="jpeg",
                     )
                     path.write_bytes(buf.getvalue())
                     session.captures.append(path)
-                    await asyncio.sleep(0.2)  # Give WebSocket time to flush
+                    await asyncio.sleep(0.2)
 
-                # Re-enable stream for later
+                # Re-enable stream
                 self._camera._running = True
 
                 await self._broadcast({
@@ -138,21 +107,18 @@ class CameraPlugin:
                     "total": session.capture_count,
                 })
         except Exception as e:
-            logger.error(f"Capture failed: {e}")
+            logger.error("Capture failed: %s", e)
             await self._broadcast(
                 {"type": "error", "message": f"Capture failed: {e}"}
             )
 
-        # Frontend will send 'capture_advance' after receiving capture_complete
-
     async def _on_capture_do(self, session, event=None, **kwargs):
-        """After capture, go to next preview or processing."""
+        """After capture, advance to next state."""
         if not session:
             return BoothState.IDLE
 
         if event == "enter_complete":
-            # For GIF/boomerang: DON'T auto-advance — let capture_advance trigger it
-            # so the recording progress messages have time to display
+            # GIF: don't auto-advance, wait for frontend capture_advance
             if session.mode in ("gif", "boomerang"):
                 return None
             # Photo: auto-advance
