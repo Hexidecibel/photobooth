@@ -205,6 +205,9 @@ class BoothApp {
             case 'countdown':
                 this.updateCountdown(msg.seconds);
                 break;
+            case 'capture_progress':
+                this.onCaptureProgress(msg);
+                break;
             case 'capture_complete':
                 this.onCaptureComplete(msg);
                 break;
@@ -391,8 +394,9 @@ class BoothApp {
                 self.updateCountdown(remaining);
             } else {
                 self.stopCountdown();
-                self.updateCountdown(0);
-                // Trigger capture
+                // Show "Recording!" for GIF/boomerang, then trigger capture
+                var countdownEl = document.getElementById('countdown');
+                if (countdownEl) countdownEl.textContent = '';
                 if (self.sounds) self.sounds.play('shutter');
                 self.send('capture');
             }
@@ -411,6 +415,15 @@ class BoothApp {
     /* ------------------------------------------------------------------ */
     /*  Capture progress dots                                              */
     /* ------------------------------------------------------------------ */
+
+    onCaptureProgress(msg) {
+        // Show recording progress on the capture screen or countdown overlay
+        var captureText = document.getElementById('capture-text');
+        var countdownEl = document.getElementById('countdown');
+        var text = 'Recording ' + msg.frame + '/' + msg.total;
+        if (captureText) captureText.textContent = text;
+        if (countdownEl) countdownEl.textContent = text;
+    }
 
     onCaptureComplete(msg) {
         this.captureCount = msg.total || 1;

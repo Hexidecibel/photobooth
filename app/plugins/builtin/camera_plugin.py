@@ -68,18 +68,30 @@ class CameraPlugin:
 
         try:
             if session.mode in ("gif", "boomerang"):
-                # Rapid burst capture for GIF/boomerang
-                frame_count = 8  # 8 frames for a good GIF
-                paths = await self._camera.capture_sequence(
-                    count=frame_count,
-                    interval_ms=150,  # ~6.6fps burst
-                    output_dir=raw_dir,
-                )
-                session.captures.extend(paths)
+                # Rapid burst capture for GIF/boomerang with per-frame progress
+                frame_count = 8
+                import asyncio as _asyncio
+                for i in range(frame_count):
+                    await self._broadcast({
+                        "type": "capture_progress",
+                        "frame": i + 1,
+                        "total": frame_count,
+                    })
+                    path = raw_dir / f"frame_{i:03d}.jpg"
+                    # Grab frame from running preview
+                    frame = await _asyncio.to_thread(
+                        self._camera._picam2.capture_array, "main"
+                    )
+                    from PIL import Image as PILImage
+                    img = PILImage.fromarray(frame, "RGB")
+                    img.save(str(path), quality=90)
+                    session.captures.append(path)
+                    await _asyncio.sleep(0.15)  # ~6.6fps
+
                 await self._broadcast({
                     "type": "capture_complete",
-                    "index": len(paths),
-                    "total": len(paths),
+                    "index": frame_count,
+                    "total": frame_count,
                 })
             else:
                 # Single still capture
