@@ -21,6 +21,7 @@ class FooterSpec:
     text: str = ""
     font_size: int = 24
     color: str = "#000000"
+    font: str = ""
 
 
 @dataclass

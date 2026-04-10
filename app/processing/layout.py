@@ -123,9 +123,26 @@ class LayoutEngine:
         # Try to load a font, fall back to default
         try:
             font_size = int(footer.font_size * template.dpi / 72)
-            font = ImageFont.truetype(
-                "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", font_size
-            )
+            # Try template-specified font first, then fallback
+            font = None
+            if footer.font:
+                for font_dir in [
+                    "/usr/share/fonts/truetype",
+                    "/usr/share/fonts/opentype",
+                ]:
+                    import glob
+                    matches = glob.glob(
+                        f"{font_dir}/**/*{footer.font}*",
+                        recursive=True,
+                    )
+                    if matches:
+                        font = ImageFont.truetype(matches[0], font_size)
+                        break
+            if not font:
+                font = ImageFont.truetype(
+                    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+                    font_size,
+                )
         except (OSError, IOError):
             font = ImageFont.load_default()
 
