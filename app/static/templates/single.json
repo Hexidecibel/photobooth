@@ -3,15 +3,15 @@
     "width_inches": 4,
     "height_inches": 6,
     "dpi": 600,
-    "background": "#ffffff",
+    "background": "#1a1a1a",
     "slots": [
-        {"x": 0.05, "y": 0.03, "width": 0.9, "height": 0.85, "rotation": 0}
+        {"x": 0.02, "y": 0.02, "width": 0.96, "height": 0.90, "rotation": 0}
     ],
     "footer": {
-        "y": 0.90,
-        "height": 0.08,
-        "text": "{event_name} - {date}",
-        "font_size": 24,
-        "color": "#333333"
+        "y": 0.94,
+        "height": 0.04,
+        "text": "{event_name}",
+        "font_size": 14,
+        "color": "#999999"
     }
 }

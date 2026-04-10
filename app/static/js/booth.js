@@ -107,6 +107,14 @@ class BoothApp {
     /*  Branding / logo                                                    */
     /* ------------------------------------------------------------------ */
 
+    applyConfigUI() {
+        // Hide print button if no printer
+        var printBtn = document.querySelector('[data-action="print"]');
+        if (printBtn && this.wsConfig && !this.wsConfig.has_printer) {
+            printBtn.style.display = 'none';
+        }
+    }
+
     async loadBranding() {
         try {
             var res = await fetch('/api/admin/branding');
@@ -202,7 +210,10 @@ class BoothApp {
                 // Initialize sound manager from server config on first state_change
                 if (msg.sound_config && !this.sounds) {
                     this.sounds = new SoundManager(msg.sound_config);
-                    console.log('[booth] sound manager initialized');
+                }
+                if (msg.config) {
+                    this.wsConfig = msg.config;
+                    this.applyConfigUI();
                 }
                 this.showState(msg.state);
                 break;
@@ -422,6 +433,9 @@ class BoothApp {
         if (msg.qr_url) {
             var qr = document.getElementById('qr-code');
             if (qr) qr.src = msg.qr_url;
+            // Also show QR on review screen
+            var reviewQr = document.getElementById('review-qr-img');
+            if (reviewQr) reviewQr.src = msg.qr_url;
         }
 
         // Play applause when the result is ready

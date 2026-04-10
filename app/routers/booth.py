@@ -49,6 +49,10 @@ async def booth_ws(ws: WebSocket):
     if hasattr(ws.app.state, "config") and hasattr(ws.app.state.config, "picture"):
         guest_picks_template = ws.app.state.config.picture.guest_picks_template
 
+    # Check printer availability
+    printer = getattr(ws.app.state, "printer", None)
+    has_printer = printer is not None and printer.is_available if printer else False
+
     # Send current state on connect
     await ws.send_json({
         "type": "state_change",
@@ -58,6 +62,7 @@ async def booth_ws(ws: WebSocket):
         "language": language,
         "config": {
             "guest_picks_template": guest_picks_template,
+            "has_printer": has_printer,
         },
     })
 

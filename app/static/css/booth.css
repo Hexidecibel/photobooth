@@ -562,6 +562,26 @@ section[data-state="capture"] {
     gap: 1rem;
 }
 
+.review-qr {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: rgba(255,255,255,0.05);
+    border-radius: var(--pb-border-radius-sm);
+}
+.review-qr-image {
+    width: 100px;
+    height: 100px;
+    background: white;
+    padding: 4px;
+    border-radius: 6px;
+}
+.review-qr span {
+    font-size: 0.9rem;
+    color: var(--pb-text-secondary);
+}
+
 .review-filters {
     display: flex;
     gap: 8px;

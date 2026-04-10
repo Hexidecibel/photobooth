@@ -70,20 +70,25 @@ class LayoutEngine:
     def _fit_to_slot(
         self, image: Image.Image, slot_w: int, slot_h: int
     ) -> Image.Image:
-        """Resize image to fit slot while preserving aspect ratio."""
+        """Resize and crop image to fill slot completely (no letterboxing)."""
         img_ratio = image.width / image.height
         slot_ratio = slot_w / slot_h
 
         if img_ratio > slot_ratio:
-            # Image is wider -- fit to width
-            new_w = slot_w
-            new_h = int(slot_w / img_ratio)
-        else:
-            # Image is taller -- fit to height
+            # Image is wider than slot -- fit to height, crop sides
             new_h = slot_h
             new_w = int(slot_h * img_ratio)
+        else:
+            # Image is taller than slot -- fit to width, crop top/bottom
+            new_w = slot_w
+            new_h = int(slot_w / img_ratio)
 
-        return image.resize((new_w, new_h), Image.LANCZOS)
+        resized = image.resize((new_w, new_h), Image.LANCZOS)
+
+        # Center-crop to exact slot dimensions
+        left = (new_w - slot_w) // 2
+        top = (new_h - slot_h) // 2
+        return resized.crop((left, top, left + slot_w, top + slot_h))
 
     def _draw_footer(
         self,

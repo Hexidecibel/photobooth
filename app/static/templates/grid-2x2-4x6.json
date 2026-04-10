@@ -3,18 +3,18 @@
     "width_inches": 4,
     "height_inches": 6,
     "dpi": 600,
-    "background": "#1a1a2e",
+    "background": "#1a1a1a",
     "slots": [
-        {"x": 0.03, "y": 0.02, "width": 0.45, "height": 0.43, "rotation": 0},
-        {"x": 0.52, "y": 0.02, "width": 0.45, "height": 0.43, "rotation": 0},
-        {"x": 0.03, "y": 0.48, "width": 0.45, "height": 0.43, "rotation": 0},
-        {"x": 0.52, "y": 0.48, "width": 0.45, "height": 0.43, "rotation": 0}
+        {"x": 0.02, "y": 0.02, "width": 0.47, "height": 0.43, "rotation": 0},
+        {"x": 0.51, "y": 0.02, "width": 0.47, "height": 0.43, "rotation": 0},
+        {"x": 0.02, "y": 0.47, "width": 0.47, "height": 0.43, "rotation": 0},
+        {"x": 0.51, "y": 0.47, "width": 0.47, "height": 0.43, "rotation": 0}
     ],
     "footer": {
         "y": 0.93,
-        "height": 0.05,
+        "height": 0.04,
         "text": "{event_name}",
-        "font_size": 16,
-        "color": "#ffffff"
+        "font_size": 12,
+        "color": "#888888"
     }
 }
