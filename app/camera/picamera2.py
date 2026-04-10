@@ -125,42 +125,31 @@ class PiCamera2Backend(CameraBase):
             raise RuntimeError("Camera not started")
         path.parent.mkdir(parents=True, exist_ok=True)
 
-        sensor_res = self._picam2.camera_properties.get(
-            "PixelArraySize", (3280, 2464)
-        )
-        still_config = self._picam2.create_still_configuration(
-            main={"size": sensor_res}
-        )
-        # Stop preview stream and wait for it to exit
+        # Stop the stream loop so we have exclusive camera access
         self._running = False
-        await asyncio.sleep(0.5)  # Wait for stream_mjpeg loop to exit
-        await asyncio.to_thread(self._picam2.stop)
-        await asyncio.to_thread(self._picam2.configure, still_config)
-        await asyncio.to_thread(self._picam2.start)
-        # Re-apply crop/zoom for the capture
-        if hasattr(self, '_crop') and self._crop:
-            self._apply_hardware_crop(self._crop)
-            await asyncio.sleep(0.2)  # Let crop take effect
-        image = await asyncio.to_thread(
-            self._picam2.capture_image, "main"
-        )
-        await asyncio.to_thread(image.save, str(path), quality=95)
-        # Restart preview with same config as initial start
-        await asyncio.to_thread(self._picam2.stop)
-        sensor_full = self._picam2.camera_properties.get(
-            "PixelArraySize", (3280, 2464)
-        )
-        preview_config = self._picam2.create_preview_configuration(
-            main={"size": self._preview_resolution, "format": "RGB888"},
-            raw={"size": sensor_full},
-        )
-        await asyncio.to_thread(self._picam2.configure, preview_config)
-        await asyncio.to_thread(self._picam2.start)
-        # Re-apply crop/zoom if set
-        if hasattr(self, '_crop') and self._crop:
-            self._apply_hardware_crop(self._crop)
-        self._running = True
-        logger.info("Still captured: %s", path)
+        await asyncio.sleep(0.5)
+
+        try:
+            # Use switch_mode_and_capture_image — designed for this exact use case
+            # Temporarily switches to full-res, captures, switches back automatically
+            sensor_res = self._picam2.camera_properties.get(
+                "PixelArraySize", (3280, 2464)
+            )
+            still_config = self._picam2.create_still_configuration(
+                main={"size": sensor_res}
+            )
+            image = await asyncio.to_thread(
+                self._picam2.switch_mode_and_capture_image,
+                still_config, "main",
+            )
+            await asyncio.to_thread(image.save, str(path), quality=95)
+            logger.info("Still captured: %s", path)
+        finally:
+            # Re-apply crop after mode switch
+            if hasattr(self, '_crop') and self._crop:
+                self._apply_hardware_crop(self._crop)
+            self._running = True
+
         return path
 
     async def capture_sequence(
