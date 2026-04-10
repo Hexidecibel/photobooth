@@ -301,7 +301,11 @@ class BoothApp {
         }
 
         console.log('[booth] button action=' + action + ', items found=' + items.length);
-        if (items.length === 0) return;
+        if (items.length === 0) {
+            // No picker visible — cancel (e.g., during preview countdown)
+            this.send('cancel');
+            return;
+        }
 
         // Find current highlighted item
         var currentIdx = items.findIndex(function(el) { return el.classList.contains('btn-highlighted'); });
@@ -453,6 +457,15 @@ class BoothApp {
             print:      { green: 'Done', red: 'Done' },
             thankyou:   { green: 'Next', red: 'Next' },
         };
+
+        // Check if a picker is visible — override hints to Select/Next
+        var effectPicker = document.getElementById('effect-picker');
+        var templatePicker = document.getElementById('template-picker');
+        var bgPicker = document.getElementById('bg-picker');
+        function isVis(el) { return el && el.offsetParent !== null; }
+        if (isVis(effectPicker) || isVis(templatePicker) || isVis(bgPicker)) {
+            state = 'choose'; // Use choose hints for any picker
+        }
 
         var h = hints[state] || { green: '', red: '' };
         green.textContent = h.green;
@@ -1041,6 +1054,7 @@ class BoothApp {
             previewSection.appendChild(picker);
             picker.style.display = 'flex';
             this._perShotPicking = true;
+            this.updateButtonHints('choose'); // Show Select/Next hints
             // Auto-dismiss after 5 seconds — use the last selected effect
             var self = this;
             this._perShotTimer = setTimeout(function () {

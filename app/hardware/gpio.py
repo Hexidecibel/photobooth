@@ -107,8 +107,11 @@ class GPIOController:
             })
 
         elif state == BoothState.PREVIEW:
-            # Either button cancels during countdown
-            await self._sm.trigger("cancel")
+            # Send button event — frontend decides: cancel or cycle/select
+            await self._broadcast({
+                "type": "button",
+                "action": "select" if button == "capture" else "cycle",
+            })
 
         elif state in (BoothState.CAPTURE, BoothState.PROCESSING):
             pass
