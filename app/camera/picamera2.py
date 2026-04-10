@@ -139,6 +139,10 @@ class PiCamera2Backend(CameraBase):
         await asyncio.to_thread(self._picam2.stop)
         await asyncio.to_thread(self._picam2.configure, still_config)
         await asyncio.to_thread(self._picam2.start)
+        # Re-apply crop/zoom for the capture
+        if hasattr(self, '_crop') and self._crop:
+            self._apply_hardware_crop(self._crop)
+            await asyncio.sleep(0.2)  # Let crop take effect
         image = await asyncio.to_thread(
             self._picam2.capture_image, "main"
         )
