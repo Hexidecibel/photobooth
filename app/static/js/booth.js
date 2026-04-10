@@ -798,7 +798,7 @@ class BoothApp {
         container.style.cssText = 'position:fixed;inset:0;overflow:hidden;z-index:5;pointer-events:none;';
 
         // Random positions but no overlap — divide screen into zones
-        var cardCount = Math.min(6, this.slidePhotos.length);
+        var cardCount = Math.min(4, this.slidePhotos.length);
         this._floatCards = [];
         var placed = []; // Track placed card positions
 
@@ -813,7 +813,7 @@ class BoothApp {
                 attempts++;
                 var overlaps = false;
                 for (var p = 0; p < placed.length; p++) {
-                    if (Math.abs(x - placed[p].x) < 22 && Math.abs(y - placed[p].y) < 25) {
+                    if (Math.abs(x - placed[p].x) < 28 && Math.abs(y - placed[p].y) < 30) {
                         overlaps = true;
                         break;
                     }
