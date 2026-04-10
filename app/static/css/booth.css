@@ -698,11 +698,11 @@ section[data-state="capture"] {
     border-radius: var(--pb-border-radius-sm);
 }
 .review-qr-image {
-    width: 100px;
-    height: 100px;
+    width: 200px;
+    height: 200px;
     background: white;
-    padding: 4px;
-    border-radius: 6px;
+    padding: 8px;
+    border-radius: 8px;
 }
 .review-qr span {
     font-size: 0.9rem;
@@ -954,11 +954,11 @@ section[data-state="capture"] {
 }
 
 .qr-image-large {
-    width: clamp(200px, 35vw, 350px);
+    width: clamp(280px, 45vw, 450px);
     height: auto;
     border-radius: var(--pb-border-radius);
     background: white;
-    padding: 16px;
+    padding: 20px;
 }
 
 .qr-hint {

@@ -114,7 +114,7 @@ class SharingConfig(BaseModel):
 
     enabled: bool = True
     base_url: str = ""
-    qr_size: int = 200
+    qr_size: int = 400
     event_name: str = "Photo Booth"
 
 
