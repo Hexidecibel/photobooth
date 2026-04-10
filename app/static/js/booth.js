@@ -835,7 +835,7 @@ class BoothApp {
                         self.showState('idle');
                     }
                 }, 3000);
-            }, 60000);
+            }, 30000);
         }
     }
 

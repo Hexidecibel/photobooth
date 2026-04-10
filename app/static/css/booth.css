@@ -576,6 +576,17 @@ section[data-state="capture"] {
     transition: width 0.4s ease-out;
 }
 
+.processing-cancel {
+    margin-top: 2rem;
+    color: var(--pb-text-secondary);
+    opacity: 0;
+    animation: fade-in-delayed 3s forwards;
+}
+@keyframes fade-in-delayed {
+    0%, 70% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
 /* ===================================================================
    REVIEW — Result display + actions
    =================================================================== */
