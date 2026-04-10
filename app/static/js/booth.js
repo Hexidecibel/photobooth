@@ -399,7 +399,7 @@ class BoothApp {
 
     startCountdown() {
         this.stopCountdown();
-        var countdownSeconds = 5;
+        var countdownSeconds = 3;
         var remaining = countdownSeconds;
         var self = this;
         this.updateCountdown(remaining);
@@ -409,7 +409,6 @@ class BoothApp {
                 self.updateCountdown(remaining);
             } else {
                 self.stopCountdown();
-                // Show "Recording!" for GIF/boomerang, then trigger capture
                 var countdownEl = document.getElementById('countdown');
                 if (countdownEl) countdownEl.textContent = '';
                 if (self.sounds) self.sounds.play('shutter');
