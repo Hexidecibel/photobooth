@@ -284,18 +284,19 @@ class BoothApp {
         if (state === 'preview') {
             this.startPreview();
             // Multi-shot: pause between captures
-            var fromCapture = (previousState === 'processing' || previousState === 'capture');
-            if (fromCapture && this.captureCount > 1 && this.captureIndex < this.captureCount) {
-                // Show "Get ready!" message then countdown
-                var countdownEl = document.getElementById('countdown');
-                if (countdownEl) {
-                    countdownEl.textContent = 'Shot ' + (this.captureIndex + 1) + ' of ' + this.captureCount;
-                    countdownEl.classList.add('tick');
-                }
+            if (this.captureCount > 1 && this.captureIndex > 0 && this.captureIndex < this.captureCount) {
                 var self = this;
+                var countdownEl = document.getElementById('countdown');
+                var shotNum = (this.captureIndex || 0) + 1;
+                var totalShots = this.captureCount || 4;
+                if (countdownEl) {
+                    countdownEl.textContent = 'Shot ' + shotNum + ' of ' + totalShots + '!';
+                    countdownEl.style.fontSize = 'clamp(2rem, 5vw, 3rem)';
+                }
                 setTimeout(function () {
-                    self.showPerShotEffectPicker();
-                }, 2000);
+                    if (countdownEl) countdownEl.style.fontSize = '';
+                    self.startCountdown();
+                }, 3000);
             } else {
                 this.startCountdown();
             }
@@ -319,6 +320,7 @@ class BoothApp {
         if (state === 'idle') {
             this.stopPreview();
             this.hidePosePrompt();
+            this._multiShotActive = false;
         } else {
             this.hidePosePrompt();
         }
@@ -1038,6 +1040,7 @@ class BoothApp {
                         // Initial effect pick before first capture
                         self.hideEffectPicker();
                         self._isGifMode = (self.pendingMode === 'gif' || self.pendingMode === 'boomerang');
+                        self._multiShotActive = (self.pendingTemplate === 'multi' || (self.pendingTemplate && self.pendingTemplate !== 'single' && self.pendingTemplate !== 'polaroid-4x6'));
                         self.send('choose', {
                             mode: self.pendingMode,
                             template: self.pendingTemplate,
