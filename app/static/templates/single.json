@@ -1,0 +1,17 @@
+{
+    "name": "single",
+    "width_inches": 4,
+    "height_inches": 6,
+    "dpi": 600,
+    "background": "#ffffff",
+    "slots": [
+        {"x": 0.05, "y": 0.03, "width": 0.9, "height": 0.85, "rotation": 0}
+    ],
+    "footer": {
+        "y": 0.90,
+        "height": 0.08,
+        "text": "{event_name} - {date}",
+        "font_size": 24,
+        "color": "#333333"
+    }
+}

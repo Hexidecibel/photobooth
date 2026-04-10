@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Photobooth Admin</title>
+    <link rel="stylesheet" href="/static/css/theme.css" />
+    <style>
+        /* ── Admin Reset & Base ─────────────────────────── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #f0f2f5;
+            color: #1a1a2e;
+            min-height: 100vh;
+        }
+
+        a { color: #6c63ff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        /* ── Layout ─────────────────────────────────────── */
+        .admin-layout {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            grid-template-rows: auto 1fr;
+            min-height: 100vh;
+        }
+
+        /* ── Header ─────────────────────────────────────── */
+        .admin-header {
+            grid-column: 1 / -1;
+            background: #1a1a2e;
+            color: #fff;
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid #6c63ff;
+        }
+
+        .admin-header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .admin-header .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.85rem;
+            color: #a0a0b8;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4caf50;
+            display: inline-block;
+        }
+
+        .status-indicator.offline { background: #f44336; }
+
+        /* ── Sidebar ────────────────────────────────────── */
+        .admin-sidebar {
+            background: #fff;
+            border-right: 1px solid #e0e0e0;
+            padding: 1rem 0;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1.25rem;
+            cursor: pointer;
+            color: #555;
+            font-size: 0.9rem;
+            border-left: 3px solid transparent;
+            transition: all 0.15s ease;
+        }
+
+        .nav-item:hover {
+            background: #f5f5ff;
+            color: #1a1a2e;
+        }
+
+        .nav-item.active {
+            background: #f0f0ff;
+            color: #6c63ff;
+            border-left-color: #6c63ff;
+            font-weight: 600;
+        }
+
+        .nav-icon { font-size: 1.1rem; width: 24px; text-align: center; }
+
+        /* ── Main Content ───────────────────────────────── */
+        .admin-main {
+            padding: 1.5rem 2rem;
+            overflow-y: auto;
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* ── Cards ──────────────────────────────────────── */
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 10px;
+            padding: 1.25rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border: 1px solid #e8e8e8;
+        }
+
+        .card h3 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #888;
+            margin-bottom: 0.75rem;
+        }
+
+        .card-row {
+            padding: 0.35rem 0;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-wide { grid-column: 1 / -1; }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+
+        .status-ok { background: #4caf50; }
+        .status-err { background: #ccc; }
+
+        /* ── Progress Bars ──────────────────────────────── */
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e8e8e8;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #6c63ff, #8b83ff);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        /* ── Config Form ────────────────────────────────── */
+        .config-form {
+            max-width: 800px;
+        }
+
+        .config-section {
+            background: #fff;
+            border-radius: 10px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border: 1px solid #e8e8e8;
+        }
+
+        .config-section h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .config-section h4 {
+            font-size: 0.85rem;
+            color: #666;
+            margin: 0.75rem 0 0.5rem;
+        }
+
+        .field {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.4rem 0;
+            gap: 1rem;
+        }
+
+        .field label {
+            font-size: 0.875rem;
+            color: #444;
+            flex-shrink: 0;
+            min-width: 160px;
+        }
+
+        .field input[type="text"],
+        .field input[type="number"],
+        .field select {
+            flex: 1;
+            padding: 0.4rem 0.6rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            background: #fafafa;
+            max-width: 400px;
+        }
+
+        .field input:focus,
+        .field select:focus {
+            outline: none;
+            border-color: #6c63ff;
+            box-shadow: 0 0 0 2px rgba(108, 99, 255, 0.15);
+        }
+
+        .color-field {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .color-field input[type="color"] {
+            width: 36px;
+            height: 36px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 2px;
+            cursor: pointer;
+        }
+
+        .color-text {
+            flex: 1;
+        }
+
+        /* Toggle Switch */
+        .toggle {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+            flex-shrink: 0;
+            min-width: auto !important;
+        }
+
+        .toggle input { opacity: 0; width: 0; height: 0; }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background: #ccc;
+            border-radius: 24px;
+            transition: 0.2s;
+        }
+
+        .toggle-slider::before {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #fff;
+            left: 3px;
+            bottom: 3px;
+            transition: 0.2s;
+        }
+
+        .toggle input:checked + .toggle-slider { background: #6c63ff; }
+        .toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+        /* ── Buttons ────────────────────────────────────── */
+        .btn {
+            padding: 0.5rem 1.25rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .btn-primary {
+            background: #6c63ff;
+            color: #fff;
+        }
+
+        .btn-primary:hover { background: #5a52d5; }
+
+        .btn-sm {
+            padding: 0.25rem 0.75rem;
+            font-size: 0.8rem;
+        }
+
+        .btn-danger { background: #f44336; color: #fff; }
+        .btn-danger:hover { background: #d32f2f; }
+
+        .form-actions {
+            padding: 1rem 0;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* ── Gallery Grid ───────────────────────────────── */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .gallery-item {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            aspect-ratio: 1;
+            background: #eee;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .gallery-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            padding: 2rem 0.75rem 0.75rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .gallery-item:hover .gallery-overlay { opacity: 1; }
+
+        .gallery-date { color: #ddd; font-size: 0.75rem; margin-bottom: 0.5rem; }
+
+        .gallery-actions { display: flex; gap: 0.5rem; }
+
+        .gallery-actions .btn { font-size: 0.75rem; }
+
+        /* ── Templates & Effects ────────────────────────── */
+        .template-list, .effects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .template-item, .effect-item {
+            background: #f5f5ff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            transition: border-color 0.15s;
+        }
+
+        .template-item:hover, .effect-item:hover {
+            border-color: #6c63ff;
+        }
+
+        .template-icon { font-size: 2rem; margin-bottom: 0.5rem; color: #6c63ff; }
+        .template-name, .effect-name { font-size: 0.85rem; font-weight: 500; }
+
+        /* ── Theme Preview ──────────────────────────────── */
+        .theme-preview {
+            background: var(--pb-bg-primary, #0a0a1a);
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .preview-card {
+            background: var(--pb-bg-card, #252540);
+            border-radius: var(--pb-border-radius, 16px);
+            padding: 2rem;
+            max-width: 400px;
+            margin: 0 auto;
+            box-shadow: var(--pb-shadow, 0 4px 24px rgba(0,0,0,0.3));
+        }
+
+        .preview-card h2 {
+            color: var(--pb-text-primary, #fff);
+            font-family: var(--pb-font-display);
+            margin-bottom: 0.5rem;
+        }
+
+        .preview-card p {
+            color: var(--pb-text-secondary, #a0a0b8);
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .preview-card .btn-primary {
+            background: var(--pb-accent, #6c63ff);
+        }
+
+        /* ── QR Code ────────────────────────────────────── */
+        .qr-container { margin-top: 1rem; }
+
+        .qr-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .qr-label {
+            font-size: 0.8rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .qr-placeholder img {
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+
+        /* ── States ─────────────────────────────────────── */
+        .loading, .empty-state, .error {
+            text-align: center;
+            padding: 3rem;
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .error { color: #f44336; }
+
+        /* ── Bar Chart (Analytics) ─────────────────────── */
+        .bar-chart {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .bar-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+        }
+
+        .bar-label {
+            width: 50px;
+            text-align: right;
+            color: #888;
+            flex-shrink: 0;
+        }
+
+        .bar-track {
+            flex: 1;
+            height: 18px;
+            background: #e8e8e8;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #6c63ff, #8b83ff);
+            border-radius: 4px;
+            min-width: 2px;
+            transition: width 0.5s ease;
+        }
+
+        .bar-count {
+            width: 30px;
+            text-align: left;
+            font-weight: 600;
+            color: #444;
+            flex-shrink: 0;
+        }
+
+        /* ── Notification ───────────────────────────────── */
+        .notification {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #fff;
+            background: #333;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification.show { transform: translateY(0); opacity: 1; }
+        .notification-success { background: #388e3c; }
+        .notification-error { background: #d32f2f; }
+
+        /* ── Camera Framing ─────────────────────────────── */
+        .camera-framing-layout {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 1.5rem;
+            max-width: 1000px;
+        }
+
+        .camera-preview-wrap {
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            aspect-ratio: 16/9;
+        }
+
+        .camera-preview-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .camera-preview-wrap img.mirrored {
+            transform: scaleX(-1);
+        }
+
+        .camera-controls-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .control-group {
+            background: #fff;
+            border-radius: 10px;
+            padding: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border: 1px solid #e8e8e8;
+        }
+
+        .control-group h4 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #888;
+            margin-bottom: 0.75rem;
+        }
+
+        .slider-field {
+            margin-bottom: 0.75rem;
+        }
+
+        .slider-field label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: #444;
+            margin-bottom: 0.25rem;
+        }
+
+        .slider-field input[type="range"] {
+            width: 100%;
+            accent-color: #6c63ff;
+        }
+
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.4rem 0;
+        }
+
+        .toggle-row span {
+            font-size: 0.875rem;
+            color: #444;
+        }
+
+        .btn-reset {
+            background: #f5f5f5;
+            color: #666;
+            border: 1px solid #ddd;
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+
+        .btn-reset:hover {
+            background: #eee;
+            color: #333;
+        }
+
+        @media (max-width: 768px) {
+            .camera-framing-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ── Responsive ─────────────────────────────────── */
+        @media (max-width: 768px) {
+            .admin-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .admin-sidebar {
+                display: flex;
+                overflow-x: auto;
+                border-right: none;
+                border-bottom: 1px solid #e0e0e0;
+                padding: 0;
+            }
+
+            .nav-item {
+                border-left: none;
+                border-bottom: 3px solid transparent;
+                padding: 0.75rem 1rem;
+                white-space: nowrap;
+            }
+
+            .nav-item.active {
+                border-left-color: transparent;
+                border-bottom-color: #6c63ff;
+            }
+
+            .admin-main { padding: 1rem; }
+
+            .field {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .field input, .field select, .color-field {
+                max-width: 100% !important;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-layout">
+        <!-- Header -->
+        <header class="admin-header">
+            <h1>
+                <span>&#9881;</span>
+                Photobooth Admin
+            </h1>
+            <div class="header-right">
+                <span class="status-indicator" id="connection-status"></span>
+                <span id="status-text">Connected</span>
+            </div>
+        </header>
+
+        <!-- Sidebar -->
+        <nav class="admin-sidebar">
+            <div class="nav-item active" data-tab="system">
+                <span class="nav-icon">&#9881;</span>
+                <span>System</span>
+            </div>
+            <div class="nav-item" data-tab="camera">
+                <span class="nav-icon">&#128247;</span>
+                <span>Camera</span>
+            </div>
+            <div class="nav-item" data-tab="config">
+                <span class="nav-icon">&#9881;</span>
+                <span>Config</span>
+            </div>
+            <div class="nav-item" data-tab="gallery">
+                <span class="nav-icon">&#128247;</span>
+                <span>Gallery</span>
+            </div>
+            <div class="nav-item" data-tab="theme">
+                <span class="nav-icon">&#127912;</span>
+                <span>Theme</span>
+            </div>
+            <div class="nav-item" data-tab="templates">
+                <span class="nav-icon">&#9638;</span>
+                <span>Templates</span>
+            </div>
+            <div class="nav-item" data-tab="analytics">
+                <span class="nav-icon">&#128200;</span>
+                <span>Analytics</span>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="admin-main">
+            <div class="tab-content active" data-content="system">
+                <div id="system-content">
+                    <div class="loading">Loading system info...</div>
+                </div>
+            </div>
+
+            <div class="tab-content" data-content="camera">
+                <div id="camera-content">
+                    <div class="loading">Loading camera controls...</div>
+                </div>
+            </div>
+
+            <div class="tab-content" data-content="config">
+                <div id="config-content">
+                    <div class="loading">Loading configuration...</div>
+                </div>
+            </div>
+
+            <div class="tab-content" data-content="gallery">
+                <div id="gallery-content">
+                    <div class="loading">Loading gallery...</div>
+                </div>
+            </div>
+
+            <div class="tab-content" data-content="theme">
+                <div id="theme-content">
+                    <div class="loading">Loading theme editor...</div>
+                </div>
+            </div>
+
+            <div class="tab-content" data-content="templates">
+                <div id="templates-content">
+                    <div class="loading">Loading templates...</div>
+                </div>
+            </div>
+
+            <div class="tab-content" data-content="analytics">
+                <div id="analytics-content">
+                    <div class="loading">Loading analytics...</div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/static/js/admin.js"></script>
+</body>
+</html>

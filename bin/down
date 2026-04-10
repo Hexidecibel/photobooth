@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "Stopping photobooth server..."
+pkill -f "uvicorn app.main:app" 2>/dev/null && echo "Stopped." || echo "Not running."

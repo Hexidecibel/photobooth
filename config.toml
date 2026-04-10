@@ -1,0 +1,121 @@
+[general]
+language = "en"
+save_dir = "data"
+debug = false
+autostart_delay = 3
+
+[camera]
+backend = "auto"
+preview_resolution = [
+    1920,
+    1080,
+]
+still_resolution = [
+    4608,
+    2592,
+]
+webcam_index = 0
+flip_horizontal = false
+rotation = 0
+crop_x = 0.0
+crop_y = 0.0
+crop_width = 1.0
+crop_height = 1.0
+zoom = 1.0
+mirror_preview = true
+mirror_capture = false
+
+[picture]
+orientation = "portrait"
+capture_count = 4
+default_effect = "none"
+available_effects = [
+    "none",
+    "bw",
+    "sepia",
+    "vintage",
+    "warm",
+    "cool",
+]
+pose_prompts = [
+    "Strike a pose!",
+    "Silly face!",
+    "Say cheese!",
+    "One more!",
+]
+layout_template = "classic-4x6"
+overlay_path = ""
+background_color = "#ffffff"
+background_image = ""
+footer_text = "{event_name} - {date}"
+dpi = 600
+
+[chromakey]
+enabled = false
+hue_center = 120
+hue_range = 40
+backgrounds = []
+
+[printer]
+enabled = true
+printer_name = ""
+auto_print = false
+max_pages = 0
+copies = 1
+
+[controls]
+capture_button_pin = 11
+print_button_pin = 7
+capture_led_pin = 15
+print_led_pin = 13
+debounce_ms = 300
+
+[display]
+fullscreen = true
+width = 1024
+height = 600
+hide_cursor = true
+idle_timeout = 60
+
+[sharing]
+enabled = true
+base_url = ""
+qr_size = 200
+event_name = "Photo Booth"
+
+[server]
+host = "0.0.0.0"
+port = 8000
+
+[network]
+tunnel_enabled = false
+tunnel_command = ""
+tunnel_name = "photobooth"
+tunnel_url_pattern = "https://{name}.tunnel.cush.rocks"
+hotspot_enabled = false
+hotspot_ssid = "PhotoBooth"
+hotspot_password = "photobooth"
+
+[sound]
+enabled = true
+countdown_beep = "sounds/beep.mp3"
+shutter = "sounds/shutter.mp3"
+applause = "sounds/applause.mp3"
+click = "sounds/click.mp3"
+error = "sounds/error.mp3"
+volume = 0.8
+
+[plugin]
+enabled = []
+paths = []
+
+[email]
+enabled = false
+smtp_host = ""
+smtp_port = 587
+smtp_user = ""
+smtp_password = ""
+from_address = ""
+from_name = "Photo Booth"
+subject = "Your Photo Booth Photo!"
+body_template = "Here's your photo from {event_name}! Download it below."

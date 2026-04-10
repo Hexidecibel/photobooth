@@ -1,0 +1,18 @@
+[Unit]
+Description=Photobooth Backend Server
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+WorkingDirectory=/home/pi/photobooth
+Environment=PATH=/home/pi/photobooth/.venv/bin:/usr/bin:/bin
+ExecStart=/home/pi/photobooth/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

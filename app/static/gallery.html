@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Gallery</title>
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--pb-font-family);
+            background: var(--pb-bg-primary);
+            color: var(--pb-text-primary);
+            min-height: 100vh;
+        }
+
+        .gallery-header {
+            text-align: center;
+            padding: 2rem 1rem 1rem;
+            position: sticky;
+            top: 0;
+            background: var(--pb-bg-primary);
+            z-index: 10;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .gallery-header h1 {
+            font-family: var(--pb-font-display);
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            font-weight: 700;
+            margin-bottom: 0.25em;
+        }
+
+        .gallery-header p {
+            color: var(--pb-text-secondary);
+            font-size: var(--pb-font-size-body);
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 8px;
+            padding: 1rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .gallery-item {
+            aspect-ratio: 1;
+            overflow: hidden;
+            border-radius: var(--pb-border-radius-sm);
+            cursor: pointer;
+            position: relative;
+            background: var(--pb-bg-card);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .gallery-item:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .gallery-empty {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--pb-text-secondary);
+        }
+
+        .gallery-empty p {
+            font-size: var(--pb-font-size-subtitle);
+            margin-bottom: 0.5em;
+        }
+
+        /* Lightbox overlay */
+        .lightbox {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.92);
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 1.5rem;
+            padding: 1rem;
+        }
+
+        .lightbox.active {
+            display: flex;
+        }
+
+        .lightbox img {
+            max-width: 90vw;
+            max-height: 75vh;
+            object-fit: contain;
+            border-radius: var(--pb-border-radius);
+            box-shadow: var(--pb-shadow);
+        }
+
+        .lightbox-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .lightbox-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5em;
+            padding: 0.75em 1.5em;
+            border: none;
+            border-radius: var(--pb-border-radius-sm);
+            font-family: var(--pb-font-family);
+            font-size: var(--pb-font-size-body);
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .lightbox-btn.download {
+            background: var(--pb-accent);
+            color: #fff;
+        }
+
+        .lightbox-btn.download:hover {
+            background: var(--pb-accent-hover);
+        }
+
+        .lightbox-btn.close {
+            background: var(--pb-bg-card);
+            color: var(--pb-text-primary);
+        }
+
+        .lightbox-btn.close:hover {
+            background: var(--pb-bg-secondary);
+        }
+
+        @media (max-width: 600px) {
+            .gallery-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+                gap: 4px;
+                padding: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="gallery-header">
+        <h1 id="event-name">Photo Gallery</h1>
+        <p id="photo-count"></p>
+    </div>
+
+    <div class="gallery-grid" id="gallery-grid"></div>
+
+    <div class="gallery-empty" id="gallery-empty" style="display:none;">
+        <p>No photos yet</p>
+        <span>Photos will appear here as they are taken</span>
+    </div>
+
+    <div class="lightbox" id="lightbox">
+        <img id="lightbox-img" src="" alt="Photo">
+        <div class="lightbox-actions">
+            <a class="lightbox-btn download" id="lightbox-download" href="" download>Download</a>
+            <button class="lightbox-btn close" id="lightbox-close">Close</button>
+        </div>
+    </div>
+
+    <script src="/static/js/gallery.js"></script>
+</body>
+</html>

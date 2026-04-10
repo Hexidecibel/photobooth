@@ -1,0 +1,865 @@
+/* booth.css — Core kiosk styles for the photobooth UI
+   Relies on design tokens defined in theme.css */
+
+/* ===================================================================
+   Reset & Base
+   =================================================================== */
+
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: var(--pb-font-family);
+    color: var(--pb-text-primary);
+    background: var(--pb-bg-primary);
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    user-select: none;
+}
+
+/* ===================================================================
+   Section state management
+   =================================================================== */
+
+section[data-state] {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--pb-transition), visibility var(--pb-transition);
+    z-index: 0;
+}
+
+section[data-state].active {
+    opacity: 1;
+    visibility: visible;
+    z-index: 1;
+}
+
+/* ===================================================================
+   IDLE — Attract screen
+   =================================================================== */
+
+.idle-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    text-align: center;
+    padding: var(--pb-spacing);
+    background: radial-gradient(ellipse at center, var(--pb-bg-secondary) 0%, var(--pb-bg-primary) 70%);
+}
+
+.event-title {
+    font-family: var(--pb-font-display);
+    font-size: var(--pb-font-size-title);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    margin-bottom: 0.3em;
+}
+
+.idle-subtitle {
+    font-size: var(--pb-font-size-subtitle);
+    color: var(--pb-text-secondary);
+    margin-bottom: 2em;
+    animation: subtitlePulse 2.5s ease-in-out infinite;
+}
+
+.idle-animation {
+    position: relative;
+    width: clamp(80px, 15vw, 140px);
+    height: clamp(80px, 15vw, 140px);
+}
+
+/* CSS camera icon */
+.camera-icon {
+    display: block;
+    width: 100%;
+    height: 70%;
+    margin-top: 15%;
+    background: var(--pb-accent);
+    border-radius: var(--pb-border-radius);
+    position: relative;
+    animation: cameraFloat 3s ease-in-out infinite;
+    box-shadow: 0 0 40px var(--pb-accent-glow);
+}
+
+.camera-icon::before {
+    content: '';
+    position: absolute;
+    top: -20%;
+    left: 25%;
+    width: 30%;
+    height: 25%;
+    background: var(--pb-accent);
+    border-radius: var(--pb-border-radius-sm) var(--pb-border-radius-sm) 0 0;
+}
+
+.camera-icon::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 40%;
+    height: 55%;
+    background: var(--pb-bg-primary);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    border: 3px solid rgba(255, 255, 255, 0.15);
+}
+
+@keyframes cameraFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+}
+
+@keyframes subtitlePulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+/* ===================================================================
+   CHOOSE — Mode selection
+   =================================================================== */
+
+section[data-state="choose"] {
+    flex-direction: column;
+    background: var(--pb-bg-primary);
+    padding: var(--pb-spacing);
+}
+
+.section-heading {
+    font-family: var(--pb-font-display);
+    font-size: var(--pb-font-size-subtitle);
+    font-weight: 600;
+    margin-bottom: var(--pb-spacing);
+    color: var(--pb-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.choose-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--pb-spacing);
+    width: 100%;
+    max-width: 560px;
+}
+
+.choose-option {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75em;
+    min-height: clamp(120px, 20vh, 200px);
+    padding: var(--pb-spacing);
+    background: var(--pb-bg-card);
+    border: 2px solid transparent;
+    border-radius: var(--pb-border-radius);
+    color: var(--pb-text-primary);
+    font-family: var(--pb-font-family);
+    font-size: var(--pb-font-size-body);
+    cursor: pointer;
+    transition: border-color var(--pb-transition), transform var(--pb-transition), box-shadow var(--pb-transition);
+}
+
+.choose-option:hover,
+.choose-option:focus-visible {
+    border-color: var(--pb-accent);
+    box-shadow: 0 0 24px var(--pb-accent-glow);
+    transform: translateY(-2px);
+}
+
+.choose-option:active {
+    transform: scale(0.97);
+}
+
+.option-preview {
+    font-family: var(--pb-font-display);
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    font-weight: 700;
+    color: var(--pb-accent);
+    line-height: 1;
+}
+
+.btn-cancel {
+    margin-top: var(--pb-spacing);
+    padding: 0.75em 2em;
+    min-height: 48px;
+    background: transparent;
+    border: 1px solid var(--pb-text-secondary);
+    border-radius: var(--pb-border-radius-sm);
+    color: var(--pb-text-secondary);
+    font-family: var(--pb-font-family);
+    font-size: var(--pb-font-size-body);
+    cursor: pointer;
+    transition: color var(--pb-transition), border-color var(--pb-transition);
+}
+
+.btn-cancel:hover {
+    color: var(--pb-text-primary);
+    border-color: var(--pb-text-primary);
+}
+
+/* ===================================================================
+   PREVIEW — Camera preview + countdown
+   =================================================================== */
+
+.preview-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#camera-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+#camera-preview.mirrored {
+    transform: scaleX(-1);
+}
+
+.countdown-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--pb-font-display);
+    font-size: var(--pb-font-size-countdown);
+    font-weight: 800;
+    color: var(--pb-text-primary);
+    text-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
+    pointer-events: none;
+    transition: transform 0.15s ease-out;
+}
+
+.countdown-overlay.tick {
+    animation: countdownPop 0.35s ease-out;
+}
+
+@keyframes countdownPop {
+    0% { transform: scale(1.5); opacity: 0.5; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.capture-progress {
+    position: absolute;
+    bottom: clamp(16px, 4vh, 40px);
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 12px;
+}
+
+.capture-progress .dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.25);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    transition: background var(--pb-transition);
+}
+
+.capture-progress .dot.filled {
+    background: var(--pb-accent);
+    border-color: var(--pb-accent);
+    box-shadow: 0 0 10px var(--pb-accent-glow);
+}
+
+/* Live filter preview strip */
+.preview-filters {
+    position: absolute;
+    bottom: 60px;
+    left: 0;
+    right: 0;
+    display: flex;
+    gap: 8px;
+    padding: 8px 16px;
+    overflow-x: auto;
+    z-index: 10;
+    scrollbar-width: none;
+}
+
+.preview-filters::-webkit-scrollbar {
+    display: none;
+}
+
+.filter-btn {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 20px;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    font-family: var(--pb-font-family);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filter-btn:hover {
+    border-color: rgba(255, 255, 255, 0.6);
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.filter-btn.active {
+    border-color: var(--pb-accent);
+    background: var(--pb-accent);
+}
+
+/* Pose prompt overlay */
+.pose-prompt {
+    position: absolute;
+    top: 15%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: var(--pb-font-size-subtitle);
+    font-weight: bold;
+    color: white;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+    opacity: 0;
+    transition: opacity 0.5s;
+    z-index: 15;
+    pointer-events: none;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.pose-prompt.visible {
+    opacity: 1;
+}
+
+/* No-camera fallback message */
+.no-camera-message {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--pb-text-secondary);
+    font-size: var(--pb-font-size-subtitle);
+    text-align: center;
+}
+
+/* Preview section layout — stack preview container + cancel button */
+section[data-state="preview"] {
+    flex-direction: column;
+}
+
+section[data-state="preview"] .btn-cancel {
+    position: absolute;
+    bottom: clamp(16px, 4vh, 40px);
+    right: clamp(16px, 4vw, 40px);
+    z-index: 2;
+    background: rgba(0, 0, 0, 0.5);
+    border-color: rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+section[data-state="preview"] .btn-cancel:hover {
+    background: rgba(0, 0, 0, 0.7);
+    border-color: #fff;
+    color: #fff;
+}
+
+/* ===================================================================
+   CAPTURE — Flash effect
+   =================================================================== */
+
+section[data-state="capture"] {
+    z-index: 2;
+    pointer-events: none;
+}
+
+.flash-overlay {
+    position: absolute;
+    inset: 0;
+    background: #fff;
+    animation: flash 0.5s ease-out forwards;
+}
+
+@keyframes flash {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* ===================================================================
+   PROCESSING — Wait screen
+   =================================================================== */
+
+.processing-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5em;
+    text-align: center;
+    padding: var(--pb-spacing);
+}
+
+.processing-content h2 {
+    font-size: var(--pb-font-size-subtitle);
+    font-weight: 500;
+    color: var(--pb-text-secondary);
+}
+
+/* CSS-only spinner */
+.spinner {
+    width: clamp(48px, 8vw, 72px);
+    height: clamp(48px, 8vw, 72px);
+    border: 4px solid var(--pb-bg-card);
+    border-top-color: var(--pb-accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Progress bar */
+.progress-bar {
+    width: min(80%, 400px);
+    height: 6px;
+    background: var(--pb-bg-card);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--pb-accent), var(--pb-accent-hover));
+    border-radius: 3px;
+    transition: width 0.4s ease-out;
+}
+
+/* ===================================================================
+   REVIEW — Result display + actions
+   =================================================================== */
+
+.review-layout {
+    display: flex;
+    height: 100vh;
+    gap: var(--pb-spacing);
+    padding: var(--pb-spacing);
+}
+
+.review-photo-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.review-image {
+    max-width: 100%;
+    max-height: 80vh;
+    border-radius: var(--pb-border-radius);
+    box-shadow: var(--pb-shadow);
+}
+
+.review-actions-panel {
+    width: 320px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.review-filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.review-primary-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.btn-large {
+    padding: 1.25rem 2rem;
+    font-size: 1.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.btn-large .btn-icon {
+    font-size: 1.8rem;
+}
+
+.btn-text {
+    background: none;
+    border: none;
+    color: var(--pb-text-secondary);
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 0.75rem;
+    text-decoration: underline;
+}
+
+.btn-accent {
+    background: var(--pb-success);
+}
+
+.btn-accent:hover {
+    filter: brightness(1.1);
+}
+
+/* ===================================================================
+   PRINT — QR hero + print status
+   =================================================================== */
+
+.print-layout {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    gap: 1.5rem;
+    padding: var(--pb-spacing);
+}
+
+.print-result {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.qr-hero {
+    text-align: center;
+}
+
+.qr-image-large {
+    width: clamp(200px, 35vw, 350px);
+    height: auto;
+    border-radius: var(--pb-border-radius);
+    background: white;
+    padding: 16px;
+}
+
+.qr-hint {
+    color: var(--pb-text-secondary);
+    font-size: var(--pb-font-size-body);
+    margin-top: 0.5rem;
+}
+
+.print-thumbnail {
+    max-width: 150px;
+    border-radius: 8px;
+    opacity: 0.8;
+}
+
+.print-status-area {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.print-spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid var(--pb-bg-card);
+    border-top-color: var(--pb-accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.print-status-text {
+    font-size: var(--pb-font-size-body);
+    color: var(--pb-text-secondary);
+    transition: color var(--pb-transition);
+}
+
+.print-status-text.done {
+    color: var(--pb-success);
+}
+
+.print-status-text.error {
+    color: var(--pb-error);
+}
+
+.print-status-text.no_printer {
+    color: var(--pb-accent, #fbbf24);
+}
+
+.print-status-text.limit_reached {
+    color: var(--pb-warning, #ff9800);
+}
+
+/* Auto-advance ring */
+.auto-advance {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+}
+
+.progress-ring {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 3px solid var(--pb-text-secondary);
+    border-top-color: var(--pb-accent);
+    animation: spin 1s linear infinite;
+}
+
+/* ===================================================================
+   THANKYOU — Thank you screen
+   =================================================================== */
+
+.thankyou-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: var(--pb-spacing);
+    animation: thankyouFade 5s ease-in-out;
+}
+
+.thankyou-check {
+    font-size: 5rem;
+    color: var(--pb-success);
+    margin-bottom: 1rem;
+}
+
+.thankyou-content h1 {
+    font-family: var(--pb-font-display);
+    font-size: var(--pb-font-size-title);
+    font-weight: 700;
+    margin-bottom: 0.3em;
+}
+
+.thankyou-content p {
+    font-size: var(--pb-font-size-subtitle);
+    color: var(--pb-text-secondary);
+}
+
+@keyframes thankyouFade {
+    0%, 80% { opacity: 1; }
+    100% { opacity: 0.4; }
+}
+
+/* ===================================================================
+   Buttons
+   =================================================================== */
+
+.btn-primary,
+.btn-secondary {
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5em;
+    min-height: 56px;
+    padding: 0.75em 1.5em;
+    border: none;
+    border-radius: var(--pb-border-radius-sm);
+    font-family: var(--pb-font-family);
+    font-size: var(--pb-font-size-body);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--pb-transition), transform var(--pb-transition), box-shadow var(--pb-transition);
+}
+
+.btn-primary {
+    background: var(--pb-accent);
+    color: #fff;
+    box-shadow: 0 4px 16px var(--pb-accent-glow);
+}
+
+.btn-primary:hover {
+    background: var(--pb-accent-hover);
+    box-shadow: 0 6px 24px var(--pb-accent-glow);
+}
+
+.btn-primary:active {
+    transform: scale(0.97);
+}
+
+.btn-secondary {
+    background: var(--pb-bg-card);
+    color: var(--pb-text-primary);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.btn-secondary:hover {
+    background: var(--pb-bg-secondary);
+}
+
+.btn-secondary:active {
+    transform: scale(0.97);
+}
+
+.btn-icon {
+    font-size: 1.1em;
+    line-height: 1;
+}
+
+/* Ripple effect */
+.ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.25);
+    width: 0;
+    height: 0;
+    transform: translate(-50%, -50%);
+    animation: rippleExpand 0.6s ease-out forwards;
+    pointer-events: none;
+}
+
+@keyframes rippleExpand {
+    to {
+        width: 300px;
+        height: 300px;
+        opacity: 0;
+    }
+}
+
+/* ===================================================================
+   Responsive — portrait (iPad, vertical Pi screens)
+   =================================================================== */
+
+@media (orientation: portrait) {
+    .review-layout {
+        flex-direction: column;
+    }
+
+    .review-photo-container {
+        flex: 1;
+    }
+
+    .review-image {
+        max-height: 50vh;
+    }
+
+    .review-actions-panel {
+        width: 100%;
+    }
+
+    .review-primary-actions {
+        flex-direction: row;
+    }
+
+    .review-primary-actions .btn-large {
+        flex: 1;
+    }
+}
+
+/* ===================================================================
+   Small screens (7" Pi display ~800x480)
+   =================================================================== */
+
+@media (max-width: 900px) and (orientation: landscape) {
+    .choose-grid {
+        max-width: 480px;
+    }
+
+    .choose-option {
+        min-height: 100px;
+    }
+
+
+}
+
+@media (max-height: 500px) {
+    .choose-grid {
+        gap: 8px;
+    }
+
+    .choose-option {
+        min-height: 80px;
+        padding: 0.5em;
+    }
+
+    .section-heading {
+        margin-bottom: 8px;
+        font-size: clamp(0.875rem, 2vw, 1.125rem);
+    }
+
+    .btn-primary,
+    .btn-secondary {
+        min-height: 48px;
+        padding: 0.5em 1em;
+    }
+}
+
+/* ===================================================================
+   Slideshow attract mode
+   =================================================================== */
+
+.slideshow-bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    transition: opacity 1s ease, background-image 1s ease;
+    filter: blur(8px) brightness(0.3);
+    z-index: 0;
+}
+
+.slideshow-bg.visible {
+    opacity: 1;
+}
+
+.idle-content {
+    position: relative;
+    z-index: 1;
+}
+
+/* Photo counter on idle screen */
+.photo-counter {
+    margin-top: 1.5em;
+    font-size: var(--pb-font-size-body);
+    color: var(--pb-text-secondary);
+    opacity: 0.8;
+    letter-spacing: 0.05em;
+}
+
+/* ===================================================================
+   Offline indicator
+   =================================================================== */
+
+.offline::after {
+    content: 'Reconnecting...';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: var(--pb-error, #f44336);
+    color: white;
+    text-align: center;
+    padding: 4px;
+    font-size: 0.8rem;
+    z-index: 9999;
+}
+
+

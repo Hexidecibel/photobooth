@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PI_HOST="${PI_HOST:-pi@raspberrypi.local}"
+
+echo "Tailing photobooth logs on ${PI_HOST}..."
+ssh "${PI_HOST}" "journalctl -u photobooth -f --no-pager" 2>/dev/null || \
+ssh "${PI_HOST}" "tail -f ~/photobooth/data/photobooth.log" 2>/dev/null || \
+echo "No log source found. Is the service running?"

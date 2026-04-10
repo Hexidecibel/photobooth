@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Photo Booth</title>
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <link rel="stylesheet" href="/static/css/booth.css">
+</head>
+<body>
+    <!-- IDLE: Attract screen -->
+    <section data-state="idle" class="active">
+        <div class="idle-content">
+            <h1 class="event-title" data-i18n="idle_title">Photo Booth</h1>
+            <p class="idle-subtitle" data-i18n="idle_subtitle">Tap anywhere to start!</p>
+            <div class="idle-animation" aria-hidden="true">
+                <span class="camera-icon"></span>
+            </div>
+        </div>
+    </section>
+
+    <!-- CHOOSE: Pick capture count / mode -->
+    <section data-state="choose">
+        <h2 class="section-heading" data-i18n="choose_title">Choose Your Style</h2>
+        <div class="choose-grid">
+            <button class="choose-option" data-count="1" data-mode="photo">
+                <div class="option-preview">1</div>
+                <span data-i18n="single_shot">Single Shot</span>
+            </button>
+            <button class="choose-option" data-count="4" data-mode="photo">
+                <div class="option-preview">4</div>
+                <span data-i18n="classic_strip">Classic Strip</span>
+            </button>
+            <button class="choose-option" data-count="1" data-mode="gif">
+                <div class="option-preview">GIF</div>
+                <span data-i18n="animated_gif">Animated GIF</span>
+            </button>
+            <button class="choose-option" data-count="1" data-mode="boomerang">
+                <div class="option-preview">&cularr;</div>
+                <span data-i18n="boomerang">Boomerang</span>
+            </button>
+        </div>
+        <button class="btn-cancel" data-action="cancel" data-i18n="cancel">Cancel</button>
+    </section>
+
+    <!-- PREVIEW: Camera preview with countdown -->
+    <section data-state="preview">
+        <div class="preview-container">
+            <img id="camera-preview" src="/api/camera/stream" alt="Camera Preview">
+            <div class="no-camera-message" id="no-camera" style="display:none;">
+                <p data-i18n="no_camera">No Camera Detected</p>
+            </div>
+            <div class="countdown-overlay" id="countdown"></div>
+            <div class="capture-progress" id="capture-dots"></div>
+        </div>
+        <button class="btn-cancel" data-action="cancel" data-i18n="cancel">Cancel</button>
+    </section>
+
+    <!-- CAPTURE: Flash effect -->
+    <section data-state="capture">
+        <div class="flash-overlay"></div>
+    </section>
+
+    <!-- PROCESSING: Wait screen -->
+    <section data-state="processing">
+        <div class="processing-content">
+            <div class="spinner" aria-label="Processing"></div>
+            <h2 data-i18n="processing">Creating your photo...</h2>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- REVIEW: Show result, pick effects, retake -->
+    <section data-state="review">
+        <div class="review-layout">
+            <!-- Photo takes center stage -->
+            <div class="review-photo-container">
+                <img id="review-photo" src="" alt="Your Photo" class="review-image">
+            </div>
+
+            <!-- Clear action area -->
+            <div class="review-actions-panel">
+                <h2 data-i18n="review_title">Your Photo!</h2>
+
+                <!-- Filter strip (optional, for those who want it) -->
+                <div class="review-filters" id="review-filters">
+                    <button class="filter-btn active" data-filter="none" data-i18n="filter_none">Normal</button>
+                    <button class="filter-btn" data-filter="bw" data-i18n="filter_bw">B&W</button>
+                    <button class="filter-btn" data-filter="sepia" data-i18n="filter_sepia">Sepia</button>
+                    <button class="filter-btn" data-filter="vintage" data-i18n="filter_vintage">Vintage</button>
+                </div>
+
+                <!-- Primary actions — BIG and obvious -->
+                <div class="review-primary-actions">
+                    <button class="btn-primary btn-large" data-action="print">
+                        <span class="btn-icon">&#9113;</span>
+                        <span data-i18n="print_it">Print It!</span>
+                    </button>
+                    <button class="btn-primary btn-large btn-accent" data-action="done">
+                        <span class="btn-icon">&#10003;</span>
+                        <span data-i18n="get_qr">Get QR Code</span>
+                    </button>
+                </div>
+
+                <!-- Secondary action — small, out of the way -->
+                <button class="btn-text" data-action="retake">
+                    <span data-i18n="not_happy">Not happy? Retake</span>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRINT: Printing + QR code -->
+    <section data-state="print">
+        <div class="print-layout">
+            <div class="print-result">
+                <!-- QR code is the star of this screen -->
+                <div class="qr-hero" id="qr-hero">
+                    <img id="qr-code" src="" alt="QR Code" class="qr-image-large">
+                    <h2 data-i18n="scan_to_save">Scan to Save Your Photo!</h2>
+                    <p class="qr-hint" data-i18n="scan_hint">Open your phone's camera and point it here</p>
+                </div>
+
+                <!-- Print status (shows alongside QR if printing) -->
+                <div class="print-status-area" id="print-status-area">
+                    <div class="print-spinner" id="print-spinner"></div>
+                    <p class="print-status-text" id="print-status">Printing...</p>
+                </div>
+
+                <!-- Small preview of the photo -->
+                <img id="print-photo" src="" alt="Your Photo" class="print-thumbnail">
+            </div>
+
+            <!-- Auto-advance indicator -->
+            <div class="auto-advance" id="auto-advance">
+                <div class="progress-ring" id="progress-ring"></div>
+            </div>
+
+            <button class="btn-text" data-action="done" data-i18n="done_tap">Tap when done</button>
+        </div>
+    </section>
+
+    <!-- THANKYOU: Thank you screen -->
+    <section data-state="thankyou">
+        <div class="thankyou-content">
+            <div class="thankyou-check">&#10003;</div>
+            <h1 data-i18n="thank_you">Thanks!</h1>
+            <p data-i18n="enjoy_photo">Enjoy your photo!</p>
+        </div>
+    </section>
+
+    <script src="/static/js/i18n.js"></script>
+    <script src="/static/js/booth.js"></script>
+</body>
+</html>

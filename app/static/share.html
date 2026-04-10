@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Booth</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0f;
+            color: #e8e8f0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .container {
+            max-width: 480px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .event-name {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #9590ff;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-bottom: 1.5rem;
+        }
+
+        .photo-frame {
+            position: relative;
+            width: 100%;
+            border-radius: 16px;
+            overflow: hidden;
+            background: #16161f;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
+                        0 0 0 1px rgba(255, 255, 255, 0.06);
+        }
+
+        .photo-frame img {
+            width: 100%;
+            display: block;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .photo-frame img.loaded {
+            opacity: 1;
+        }
+
+        .photo-frame .loading {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        .photo-frame .loading.hidden {
+            display: none;
+        }
+
+        .actions {
+            margin-top: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.9rem 1.5rem;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6c63ff, #5a52d5);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(108, 99, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 6px 24px rgba(108, 99, 255, 0.45);
+        }
+
+        /* Email section */
+        .email-section {
+            margin-top: 1.25rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .email-section p {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 0.6rem;
+        }
+
+        .email-form {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .email-form input[type="email"] {
+            flex: 1;
+            padding: 0.7rem 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.06);
+            color: #e8e8f0;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .email-form input[type="email"]:focus {
+            border-color: #6c63ff;
+        }
+
+        .email-form input[type="email"]::placeholder {
+            color: #555;
+        }
+
+        .email-form button {
+            padding: 0.7rem 1.2rem;
+            border: none;
+            border-radius: 8px;
+            background: #6c63ff;
+            color: #fff;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: opacity 0.2s;
+        }
+
+        .email-form button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .email-status {
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            min-height: 1.2em;
+        }
+
+        .email-status.success { color: #4caf50; }
+        .email-status.error { color: #ff6b6b; }
+
+        /* Social share section */
+        .share-section {
+            margin-top: 1rem;
+        }
+
+        .share-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .share-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.6rem 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.06);
+            color: #e8e8f0;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .share-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .share-btn svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+
+        .share-btn.whatsapp { color: #25d366; border-color: rgba(37, 211, 102, 0.3); }
+        .share-btn.whatsapp:hover { background: rgba(37, 211, 102, 0.1); }
+        .share-btn.native-share { color: #6c63ff; border-color: rgba(108, 99, 255, 0.3); }
+        .share-btn.native-share:hover { background: rgba(108, 99, 255, 0.1); }
+
+        .date {
+            margin-top: 1.25rem;
+            font-size: 0.8rem;
+            color: #555;
+        }
+
+        .error {
+            padding: 2rem;
+            color: #ff6b6b;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="event-name" id="event-name"></div>
+        <div class="photo-frame">
+            <div class="loading" id="loading" data-i18n="loading_photo">Loading photo...</div>
+            <img id="photo" alt="Your Photo">
+        </div>
+        <div class="actions">
+            <a class="btn btn-primary" id="download-btn" download="photobooth.jpg">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                     stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                <span data-i18n="download">Save to Phone</span>
+            </a>
+        </div>
+
+        <!-- Email sharing -->
+        <div class="email-section" id="email-section" style="display:none;">
+            <p data-i18n="email_get_inbox">Get it in your inbox:</p>
+            <form class="email-form" id="email-form">
+                <input type="email" id="email-input"
+                       data-i18n-placeholder="email_placeholder"
+                       placeholder="your@email.com" required>
+                <button type="submit" id="email-submit" data-i18n="email_send">Send</button>
+            </form>
+            <div class="email-status" id="email-status"></div>
+        </div>
+
+        <!-- Social share buttons -->
+        <div class="share-section" id="share-section">
+            <div class="share-buttons">
+                <!-- Native share (shown only if Web Share API available) -->
+                <button class="share-btn native-share" id="native-share-btn" style="display:none;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/>
+                        <circle cx="18" cy="19" r="3"/>
+                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                    </svg>
+                    <span data-i18n="share">Share</span>
+                </button>
+
+                <!-- WhatsApp -->
+                <a class="share-btn whatsapp" id="whatsapp-btn" target="_blank" rel="noopener">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                    </svg>
+                    <span data-i18n="share_whatsapp">WhatsApp</span>
+                </a>
+
+                <!-- Copy link -->
+                <button class="share-btn" id="copy-link-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                        <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                    </svg>
+                    <span data-i18n="share_copy_link" id="copy-link-text">Copy Link</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="date" id="date"></div>
+    </div>
+
+    <script src="/static/js/i18n.js"></script>
+    <script>
+        (function () {
+            var path = window.location.pathname;
+            var token = path.split('/share/')[1];
+            if (!token) return;
+
+            var photoEl = document.getElementById('photo');
+            var loadingEl = document.getElementById('loading');
+            var eventNameEl = document.getElementById('event-name');
+            var downloadBtn = document.getElementById('download-btn');
+            var dateEl = document.getElementById('date');
+            var shareUrl = window.location.href;
+
+            // Detect language from query param or browser
+            var params = new URLSearchParams(window.location.search);
+            var lang = params.get('lang') || navigator.language.split('-')[0] || 'en';
+            var i18n = new I18n(lang);
+
+            // Apply translations
+            i18n.apply();
+
+            // Fetch photo info
+            fetch('/api/share/' + token)
+                .then(function (res) {
+                    if (!res.ok) throw new Error('Not found');
+                    return res.json();
+                })
+                .then(function (data) {
+                    eventNameEl.textContent = data.event_name || i18n.t('idle_title');
+                    document.title = data.event_name || i18n.t('idle_title');
+
+                    photoEl.src = data.photo_url;
+                    photoEl.onload = function () {
+                        photoEl.classList.add('loaded');
+                        loadingEl.classList.add('hidden');
+                    };
+
+                    downloadBtn.href = data.photo_url;
+
+                    if (data.created_at) {
+                        var d = new Date(data.created_at);
+                        dateEl.textContent = d.toLocaleDateString(undefined, {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                        });
+                    }
+
+                    // Check if email is available
+                    if (data.email_enabled) {
+                        document.getElementById('email-section').style.display = '';
+                    }
+                })
+                .catch(function () {
+                    loadingEl.textContent = i18n.t('photo_not_found');
+                    loadingEl.style.color = '#ff6b6b';
+                });
+
+            // ---- Email form ----
+            var emailForm = document.getElementById('email-form');
+            var emailInput = document.getElementById('email-input');
+            var emailSubmit = document.getElementById('email-submit');
+            var emailStatus = document.getElementById('email-status');
+
+            emailForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                var email = emailInput.value.trim();
+                if (!email) return;
+
+                emailSubmit.disabled = true;
+                emailSubmit.textContent = i18n.t('email_sending');
+                emailStatus.textContent = '';
+                emailStatus.className = 'email-status';
+
+                fetch('/api/share/' + token + '/email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                })
+                .then(function (res) { return res.json(); })
+                .then(function (data) {
+                    if (data.status === 'sent') {
+                        emailStatus.textContent = i18n.t('email_sent');
+                        emailStatus.className = 'email-status success';
+                        emailInput.value = '';
+                    } else {
+                        emailStatus.textContent = i18n.t('email_failed');
+                        emailStatus.className = 'email-status error';
+                    }
+                })
+                .catch(function () {
+                    emailStatus.textContent = i18n.t('email_failed');
+                    emailStatus.className = 'email-status error';
+                })
+                .finally(function () {
+                    emailSubmit.disabled = false;
+                    emailSubmit.textContent = i18n.t('email_send');
+                });
+            });
+
+            // ---- Social sharing ----
+            var shareText = i18n.t('share_check_out');
+
+            // Native Web Share API
+            if (navigator.share) {
+                var nativeBtn = document.getElementById('native-share-btn');
+                nativeBtn.style.display = '';
+                nativeBtn.addEventListener('click', function () {
+                    navigator.share({
+                        title: eventNameEl.textContent || i18n.t('idle_title'),
+                        text: shareText,
+                        url: shareUrl
+                    }).catch(function () {});
+                });
+            }
+
+            // WhatsApp
+            var whatsappBtn = document.getElementById('whatsapp-btn');
+            var waText = encodeURIComponent(shareText + ' ' + shareUrl);
+            whatsappBtn.href = 'https://wa.me/?text=' + waText;
+
+            // Copy link
+            var copyBtn = document.getElementById('copy-link-btn');
+            var copyText = document.getElementById('copy-link-text');
+            copyBtn.addEventListener('click', function () {
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(shareUrl).then(function () {
+                        copyText.textContent = i18n.t('share_copied');
+                        setTimeout(function () {
+                            copyText.textContent = i18n.t('share_copy_link');
+                        }, 2000);
+                    });
+                } else {
+                    // Fallback
+                    var ta = document.createElement('textarea');
+                    ta.value = shareUrl;
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta);
+                    copyText.textContent = i18n.t('share_copied');
+                    setTimeout(function () {
+                        copyText.textContent = i18n.t('share_copy_link');
+                    }, 2000);
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

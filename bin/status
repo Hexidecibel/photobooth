@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+echo "=== Photobooth Status ==="
+echo ""
+
+# Check if server is running locally
+if pgrep -f "uvicorn app.main:app" > /dev/null 2>&1; then
+    PID=$(pgrep -f "uvicorn app.main:app" | head -1)
+    echo "Server: RUNNING (PID $PID)"
+
+    # Try to hit the health endpoint
+    if curl -sf http://localhost:8000/health > /dev/null 2>&1; then
+        echo "Health: OK"
+    else
+        echo "Health: NOT RESPONDING"
+    fi
+else
+    echo "Server: NOT RUNNING"
+fi
+
+# Show IP addresses
+echo ""
+echo "Access URLs:"
+for ip in $(hostname -I 2>/dev/null); do
+    echo "  Booth: http://${ip}:8000/booth"
+    echo "  Admin: http://${ip}:8000/admin"
+done
+echo "  Local: http://localhost:8000/booth"

@@ -1,0 +1,77 @@
+import asyncio
+import logging
+from collections.abc import Awaitable, Callable
+from typing import Any
+
+from app.models.state import (
+    TRANSITIONS,
+    BoothState,
+    CaptureSession,
+    InvalidTransitionError,
+)
+
+logger = logging.getLogger(__name__)
+
+
+class StateMachine:
+    def __init__(self, broadcast: Callable[..., Awaitable[None]]):
+        self._state: BoothState = BoothState.IDLE
+        self._session: CaptureSession | None = None
+        self._broadcast = broadcast
+        self._hooks: dict[str, list[Callable]] = {}
+
+    @property
+    def state(self) -> BoothState:
+        return self._state
+
+    @property
+    def session(self) -> CaptureSession | None:
+        return self._session
+
+    def new_session(self, **kwargs: Any) -> CaptureSession:
+        self._session = CaptureSession(**kwargs)
+        return self._session
+
+    def clear_session(self) -> None:
+        self._session = None
+
+    async def transition(self, target: BoothState) -> None:
+        if target not in TRANSITIONS[self._state]:
+            raise InvalidTransitionError(self._state, target)
+        old = self._state
+        logger.info(f"Transition: {old} \u2192 {target}")
+        # Exit current state
+        await self._fire_hook(f"state_{old}_exit")
+        self._state = target
+        # Enter new state
+        await self._fire_hook(f"state_{target}_enter")
+        # Broadcast to all WebSocket clients
+        await self._broadcast({
+            "type": "state_change",
+            "state": str(self._state),
+            "previous": str(old),
+        })
+
+    async def trigger(self, event: str, **kwargs: Any) -> None:
+        """Handle an external event (button press, touch, timer)."""
+        logger.debug(f"Event '{event}' in state {self._state}")
+        handler_key = f"state_{self._state}_do"
+        result = await self._fire_hook(handler_key, event=event, **kwargs)
+        if result and isinstance(result, BoothState) and result != self._state:
+            await self.transition(result)
+
+    def register_hook(self, name: str, handler: Callable) -> None:
+        """Register a hook handler. Used by plugin manager."""
+        self._hooks.setdefault(name, []).append(handler)
+
+    async def _fire_hook(self, name: str, **kwargs: Any) -> Any:
+        """Fire all registered handlers for a hook."""
+        result = None
+        for handler in self._hooks.get(name, []):
+            if asyncio.iscoroutinefunction(handler):
+                r = await handler(session=self._session, **kwargs)
+            else:
+                r = await asyncio.to_thread(handler, session=self._session, **kwargs)
+            if r is not None:
+                result = r
+        return result

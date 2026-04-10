@@ -1,0 +1,36 @@
+/* theme.css — Branding & design tokens
+   Event organizers: customize these variables to match your event theme.
+   Everything else in the UI derives from these values. */
+
+:root {
+    /* Colors */
+    --pb-bg-primary: #0a0a1a;
+    --pb-bg-secondary: #1a1a2e;
+    --pb-bg-card: #252540;
+    --pb-accent: #6c63ff;
+    --pb-accent-hover: #5a52d5;
+    --pb-accent-glow: rgba(108, 99, 255, 0.3);
+    --pb-text-primary: #ffffff;
+    --pb-text-secondary: #a0a0b8;
+    --pb-success: #4caf50;
+    --pb-error: #f44336;
+    --pb-warning: #ff9800;
+
+    /* Typography */
+    --pb-font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    --pb-font-display: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    --pb-font-size-title: clamp(2rem, 5vw, 4rem);
+    --pb-font-size-subtitle: clamp(1rem, 2.5vw, 1.5rem);
+    --pb-font-size-body: clamp(0.875rem, 2vw, 1.125rem);
+    --pb-font-size-countdown: clamp(6rem, 20vw, 12rem);
+
+    /* Layout */
+    --pb-border-radius: 16px;
+    --pb-border-radius-sm: 8px;
+    --pb-spacing: clamp(1rem, 3vw, 2rem);
+    --pb-transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Effects */
+    --pb-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+    --pb-blur: blur(20px);
+}

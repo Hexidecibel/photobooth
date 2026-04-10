@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Default Pi connection
+PI_HOST="${PI_HOST:-pi@raspberrypi.local}"
+PI_DIR="${PI_DIR:-~/photobooth}"
+
+cd "$(dirname "$0")/.."
+
+usage() {
+    echo "Usage: bin/sync [--watch] [--host user@host] [--dir remote/path]"
+    echo ""
+    echo "Sync photobooth project to Raspberry Pi via rsync."
+    echo ""
+    echo "Options:"
+    echo "  --watch    Auto-sync on file changes (requires fswatch or inotifywait)"
+    echo "  --host     Pi SSH host (default: \$PI_HOST or pi@raspberrypi.local)"
+    echo "  --dir      Remote directory (default: \$PI_DIR or ~/photobooth)"
+    echo ""
+    echo "Environment:"
+    echo "  PI_HOST    SSH host (e.g., pi@192.168.1.100)"
+    echo "  PI_DIR     Remote path (e.g., ~/photobooth)"
+    exit 0
+}
+
+WATCH=false
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --watch) WATCH=true; shift ;;
+        --host) PI_HOST="$2"; shift 2 ;;
+        --dir) PI_DIR="$2"; shift 2 ;;
+        --help|-h) usage ;;
+        *) echo "Unknown option: $1"; usage ;;
+    esac
+done
+
+do_sync() {
+    echo "Syncing to ${PI_HOST}:${PI_DIR}..."
+    rsync -avz --delete \
+        --exclude '.venv/' \
+        --exclude '__pycache__/' \
+        --exclude '*.pyc' \
+        --exclude '.git/' \
+        --exclude 'data/' \
+        --exclude '.env' \
+        --exclude '.claude/' \
+        --exclude 'node_modules/' \
+        --exclude '.pytest_cache/' \
+        --exclude '.ruff_cache/' \
+        . "${PI_HOST}:${PI_DIR}/"
+    echo "Done! $(date '+%H:%M:%S')"
+}
+
+# Initial sync
+do_sync
+
+if [ "$WATCH" = true ]; then
+    echo "Watching for changes... (Ctrl+C to stop)"
+    if command -v fswatch &>/dev/null; then
+        fswatch -o -e '.venv' -e '__pycache__' -e '.git' -e 'data' . | while read; do
+            do_sync
+        done
+    elif command -v inotifywait &>/dev/null; then
+        while true; do
+            inotifywait -r -e modify,create,delete \
+                --exclude '(\.venv|__pycache__|\.git|data)' . 2>/dev/null
+            do_sync
+        done
+    else
+        echo "Error: fswatch or inotifywait required for --watch mode"
+        echo "  macOS: brew install fswatch"
+        echo "  Linux: sudo apt install inotify-tools"
+        exit 1
+    fi
+fi
