@@ -200,12 +200,16 @@ class BoothApp {
                     this.wsConfig = msg.config;
                     this.applyConfigUI();
                 }
-                // For GIF/boomerang: skip capture screen, show processing instead
+                // Always skip capture screen — show processing loader instead
                 var displayState = msg.state;
-                if (msg.state === 'capture' && this._isGifMode) {
+                if (msg.state === 'capture') {
                     displayState = 'processing';
                     var pt = document.getElementById('processing-text');
-                    if (pt) pt.textContent = 'Recording...';
+                    if (pt) pt.textContent = this._isGifMode ? 'Recording...' : 'Capturing...';
+                    var ps = document.getElementById('processing-step');
+                    if (ps) ps.textContent = '';
+                    var pf = document.getElementById('progress');
+                    if (pf) pf.style.width = '0%';
                 }
                 this.showState(displayState, msg.state);
                 break;
