@@ -797,20 +797,24 @@ class BoothApp {
         // Force container above sections (sections are z-index:0/1)
         container.style.cssText = 'position:fixed;inset:0;overflow:hidden;z-index:5;pointer-events:none;';
 
-        var cardCount = Math.min(6, this.slidePhotos.length);
+        // Fixed positions around the edges — no overlap
+        var positions = [
+            { x: 3, y: 5, rot: -5 },     // top-left
+            { x: 72, y: 3, rot: 4 },     // top-right
+            { x: 1, y: 45, rot: -3 },    // mid-left
+            { x: 74, y: 48, rot: 6 },    // mid-right
+            { x: 5, y: 75, rot: 3 },     // bottom-left
+            { x: 70, y: 78, rot: -4 },   // bottom-right
+        ];
+        var cardCount = Math.min(positions.length, this.slidePhotos.length);
         this._floatCards = [];
 
         for (var i = 0; i < cardCount; i++) {
             var card = document.createElement('div');
-
-            // Random position (avoid center where the text is)
-            var x, y;
-            do {
-                x = Math.random() * 80 + 5;
-                y = Math.random() * 70 + 10;
-            } while (x > 25 && x < 75 && y > 25 && y < 75);
-
-            var rot = (Math.random() * 20 - 10);
+            var pos = positions[i];
+            var x = pos.x;
+            var y = pos.y;
+            var rot = pos.rot;
             // ALL inline styles — no CSS classes needed
             card.style.cssText = 'position:absolute;width:200px;border-radius:8px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.4);border:3px solid rgba(255,255,255,0.15);opacity:0.7;left:' + x + '%;top:' + y + '%;transform:rotate(' + rot + 'deg);transition:opacity 1s;';
 
@@ -831,7 +835,7 @@ class BoothApp {
     }
 
     cycleSlidePhoto() {
-        // Swap one random card with a new photo
+        // Swap one random card's image (keep position)
         if (!this._floatCards || this._floatCards.length === 0 || this.slidePhotos.length <= 1) return;
 
         var cardIdx = Math.floor(Math.random() * this._floatCards.length);
@@ -839,23 +843,13 @@ class BoothApp {
         var photoIdx = Math.floor(Math.random() * this.slidePhotos.length);
         var photo = this.slidePhotos[photoIdx];
 
-        // Fade out, swap image, fade in at new position
-        card.el.classList.remove('visible');
-        var self = this;
+        // Fade out, swap image, fade back in (same position)
+        card.el.style.opacity = '0';
         setTimeout(function () {
             var img = card.el.querySelector('img');
             var isGif = photo.photo_path && photo.photo_path.endsWith('.gif');
             if (img) img.src = '/api/gallery/' + photo.id + (isGif ? '' : '/thumbnail');
-            // New random position (avoid center)
-            var x, y;
-            do {
-                x = Math.random() * 80 + 5;
-                y = Math.random() * 70 + 10;
-            } while (x > 25 && x < 75 && y > 25 && y < 75);
-            card.el.style.left = x + '%';
-            card.el.style.top = y + '%';
-            card.el.style.transform = 'rotate(' + (Math.random() * 20 - 10) + 'deg)';
-            card.el.classList.add('visible');
+            card.el.style.opacity = '0.7';
         }, 1000);
     }
 
