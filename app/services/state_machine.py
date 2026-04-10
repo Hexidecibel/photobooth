@@ -66,8 +66,8 @@ class StateMachine:
                 )
                 if result and isinstance(result, BoothState) and result != self._state:
                     await self.transition(result)
-        except Exception as e:
-            logger.debug(f"Auto-advance from {self._state}: {e}")
+            except Exception as e:
+                logger.debug(f"Auto-advance from {self._state}: {e}")
 
     async def trigger(self, event: str, **kwargs: Any) -> None:
         """Handle an external event (button press, touch, timer)."""
