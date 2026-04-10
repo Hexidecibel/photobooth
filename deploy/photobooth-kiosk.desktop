@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
 Name=Photobooth Kiosk
-Exec=/bin/bash -c 'sleep 5 && xset s off -dpms && unclutter -idle 0.1 -root & CHROMIUM=$(which chromium 2>/dev/null || which chromium-browser) && exec $CHROMIUM --kiosk --noerrdialogs --disable-infobars --disable-session-crashed-bubble --disable-component-update --check-for-update-interval=31536000 --autoplay-policy=no-user-gesture-required http://localhost:8000/booth'
+Exec=/bin/bash -c 'sleep 5 && xset s off -dpms && unclutter -idle 0.1 -root & CHROMIUM=$(which chromium 2>/dev/null || which chromium-browser) && exec $CHROMIUM --kiosk --noerrdialogs --disable-infobars --disable-session-crashed-bubble --disable-component-update --check-for-update-interval=31536000 --autoplay-policy=no-user-gesture-required --password-store=basic http://localhost:8000/booth'
 Hidden=false
 NoDisplay=false
 X-GNOME-Autostart-enabled=true
