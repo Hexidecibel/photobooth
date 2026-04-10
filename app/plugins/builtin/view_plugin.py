@@ -13,6 +13,7 @@ class ViewPlugin:
     def __init__(self, config, broadcast):
         self._config = config
         self._broadcast = broadcast
+        self._thankyou_task = None
 
     @hookimpl
     def booth_startup(self, app):
@@ -26,8 +27,11 @@ class ViewPlugin:
         self._sm.register_hook("state_thankyou_do", self._on_thankyou_do)
 
     async def _on_idle_enter(self, session, **kwargs):
-        """Clear session when returning to idle."""
+        """Clear session and cancel any pending timers."""
         self._sm.clear_session()
+        if self._thankyou_task and not self._thankyou_task.done():
+            self._thankyou_task.cancel()
+            self._thankyou_task = None
 
     async def _on_idle_do(self, session, event=None, **kwargs):
         if event == "start":
@@ -83,14 +87,19 @@ class ViewPlugin:
 
     async def _on_thankyou_enter(self, session, **kwargs):
         """Start auto-return timer."""
-        asyncio.create_task(self._auto_return_to_idle())
+        # Cancel any previous timer
+        if self._thankyou_task and not self._thankyou_task.done():
+            self._thankyou_task.cancel()
+        self._thankyou_task = asyncio.create_task(self._auto_return_to_idle())
 
     async def _auto_return_to_idle(self):
         await asyncio.sleep(5)
-        await self._broadcast({
-            "type": "auto_transition",
-            "target": "idle",
-        })
+        # Only fire if still in thankyou state
+        if self._sm.state == BoothState.THANKYOU:
+            await self._broadcast({
+                "type": "auto_transition",
+                "target": "idle",
+            })
 
     async def _on_thankyou_do(self, session, event=None, **kwargs):
         if event in ("auto_idle", "start", "cancel", "done"):
