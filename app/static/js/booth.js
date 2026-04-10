@@ -794,31 +794,32 @@ class BoothApp {
         if (!container || this.slidePhotos.length === 0) return;
         container.innerHTML = '';
 
-        // Place 5-6 cards at random positions
+        // Force container above sections (sections are z-index:0/1)
+        container.style.cssText = 'position:fixed;inset:0;overflow:hidden;z-index:5;pointer-events:none;';
+
         var cardCount = Math.min(6, this.slidePhotos.length);
         this._floatCards = [];
 
         for (var i = 0; i < cardCount; i++) {
             var card = document.createElement('div');
-            card.className = 'float-card';
 
             // Random position (avoid center where the text is)
             var x, y;
             do {
-                x = Math.random() * 80 + 5;  // 5-85%
-                y = Math.random() * 70 + 10;  // 10-80%
-            } while (x > 25 && x < 75 && y > 25 && y < 75); // Avoid center
+                x = Math.random() * 80 + 5;
+                y = Math.random() * 70 + 10;
+            } while (x > 25 && x < 75 && y > 25 && y < 75);
 
-            card.style.left = x + '%';
-            card.style.top = y + '%';
-            card.style.transform = 'rotate(' + (Math.random() * 20 - 10) + 'deg)';
-            card.style.animation = 'drift-' + ((i % 5) + 1) + ' ' + (15 + Math.random() * 10) + 's ease-in-out infinite';
+            var rot = (Math.random() * 20 - 10);
+            // ALL inline styles — no CSS classes needed
+            card.style.cssText = 'position:absolute;width:200px;border-radius:8px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.4);border:3px solid rgba(255,255,255,0.15);opacity:0.7;left:' + x + '%;top:' + y + '%;transform:rotate(' + rot + 'deg);transition:opacity 1s;';
 
             var img = document.createElement('img');
             var photo = this.slidePhotos[i % this.slidePhotos.length];
             var isGif = photo.photo_path && photo.photo_path.endsWith('.gif');
             img.src = '/api/gallery/' + photo.id + (isGif ? '' : '/thumbnail');
             img.alt = '';
+            img.style.cssText = 'width:100%;display:block;';
             card.appendChild(img);
 
             container.appendChild(card);
