@@ -121,14 +121,8 @@ class BoothApp {
     /* ------------------------------------------------------------------ */
 
     resetIdleTimer() {
+        // Safety timer handles timeouts now (90s warning, 120s reset)
         clearTimeout(this.idleTimer);
-        if (['choose', 'review'].includes(this.state)) {
-            var timeout = (this.config && this.config.display && this.config.display.idle_timeout) || 60;
-            var self = this;
-            this.idleTimer = setTimeout(function () {
-                self.send('cancel');
-            }, timeout * 1000);
-        }
     }
 
     /* ------------------------------------------------------------------ */
@@ -1278,19 +1272,23 @@ class BoothApp {
 
     resetSafetyTimer() {
         clearTimeout(this.safetyTimer);
-        // If stuck in any non-idle state for 60s, force back to idle
-        if (this.state !== 'idle') {
+        clearTimeout(this._warningTimer);
+        if (this.state !== 'idle' && this.state !== 'processing' && this.state !== 'capture') {
             var self = this;
+            // Show warning after 90 seconds
+            this._warningTimer = setTimeout(function () {
+                self.showError('Still there? Tap or press a button!');
+            }, 90000);
+            // Force reset after 120 seconds
             this.safetyTimer = setTimeout(function () {
                 console.warn('[booth] Safety timeout — returning to idle');
                 self.send('cancel');
-                // Force UI back even if server doesn't respond
                 setTimeout(function () {
                     if (self.state !== 'idle') {
                         self.showState('idle');
                     }
                 }, 3000);
-            }, 30000);
+            }, 120000);
         }
     }
 
