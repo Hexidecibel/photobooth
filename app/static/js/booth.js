@@ -200,7 +200,10 @@ class BoothApp {
                     this.wsConfig = msg.config;
                     this.applyConfigUI();
                 }
-                // Always skip capture screen — show processing loader instead
+                // Track the real server state (for logic checks)
+                this._serverState = msg.state;
+
+                // Show processing screen during capture (no separate capture screen)
                 var displayState = msg.state;
                 if (msg.state === 'capture') {
                     displayState = 'processing';
@@ -211,7 +214,7 @@ class BoothApp {
                     var pf = document.getElementById('progress');
                     if (pf) pf.style.width = '0%';
                 }
-                this.showState(displayState, msg.state);
+                this.showState(displayState);
                 break;
             case 'countdown':
                 this.updateCountdown(msg.seconds);
@@ -280,8 +283,9 @@ class BoothApp {
         // State-specific setup / teardown
         if (state === 'preview') {
             this.startPreview();
-            // Multi-shot: show effect picker before each capture (except first, already chosen)
-            if (previousState === 'capture' && this.captureCount > 1) {
+            // Multi-shot: show effect picker between captures
+            var fromCapture = (previousState === 'processing' || previousState === 'capture');
+            if (fromCapture && this.captureCount > 1 && this.captureIndex < this.captureCount) {
                 this.showPerShotEffectPicker();
             } else {
                 this.startCountdown();
