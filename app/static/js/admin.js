@@ -826,7 +826,7 @@ class AdminPanel {
                         <div class="gallery-date">${date}</div>
                         <div class="gallery-actions">
                             ${photo.share_token ? `<a href="/share/${photo.share_token}" target="_blank" class="btn btn-sm">Share</a>` : ''}
-                            <button class="btn btn-sm btn-danger" onclick="admin.deletePhoto('${photo.id}')">Delete</button>
+                            <button class="btn btn-sm btn-danger" data-delete-photo="${photo.id}">Delete</button>
                         </div>
                     </div>
                 </div>
@@ -835,6 +835,11 @@ class AdminPanel {
         html += '</div>';
 
         container.innerHTML = html;
+
+        // Bind delete buttons via event delegation
+        container.querySelectorAll('[data-delete-photo]').forEach(btn => {
+            btn.addEventListener('click', () => this.deletePhoto(btn.dataset.deletePhoto));
+        });
     }
 
     async deletePhoto(id) {
