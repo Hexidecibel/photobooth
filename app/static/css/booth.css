@@ -449,6 +449,16 @@ section[data-state="capture"] {
     pointer-events: none;
 }
 
+.capture-screen {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: var(--pb-bg-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .flash-overlay {
     position: absolute;
     inset: 0;
@@ -459,6 +469,28 @@ section[data-state="capture"] {
 @keyframes flash {
     0% { opacity: 1; }
     100% { opacity: 0; }
+}
+
+.capture-status {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: var(--pb-text-primary);
+    font-size: var(--pb-font-size-subtitle);
+    z-index: 5;
+}
+
+.capture-pulse {
+    width: 16px;
+    height: 16px;
+    background: #f44336;
+    border-radius: 50%;
+    animation: pulse-dot 1s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.3); }
 }
 
 /* ===================================================================

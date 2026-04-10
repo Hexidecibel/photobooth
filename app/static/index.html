@@ -119,9 +119,15 @@
         <button class="btn-cancel" data-action="cancel" data-i18n="cancel">Cancel</button>
     </section>
 
-    <!-- CAPTURE: Flash effect -->
+    <!-- CAPTURE: Flash + status -->
     <section data-state="capture">
-        <div class="flash-overlay"></div>
+        <div class="capture-screen">
+            <div class="flash-overlay"></div>
+            <div class="capture-status">
+                <div class="capture-pulse"></div>
+                <span>Capturing...</span>
+            </div>
+        </div>
     </section>
 
     <!-- PROCESSING: Wait screen -->
