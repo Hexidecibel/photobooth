@@ -43,10 +43,6 @@ class CameraPlugin:
     async def _on_preview_do(self, session, event=None, **kwargs):
         """Handle countdown timer in preview state."""
         if event in ("countdown_complete", "capture"):
-            # GIF/boomerang: record burst here then go straight to processing
-            if session and session.mode in ("gif", "boomerang"):
-                await self._record_burst(session)
-                return BoothState.PROCESSING
             return BoothState.CAPTURE
         if event == "cancel":
             return BoothState.IDLE
@@ -149,17 +145,13 @@ class CameraPlugin:
         if not session:
             return BoothState.IDLE
 
-        # GIF/boomerang: always go straight to processing (burst already done)
-        if session.mode in ("gif", "boomerang"):
-            return BoothState.PROCESSING
-
-        # Photo mode: advance on frontend event
-        if event in ("auto_advance", "capture_advance"):
+        if event in ("enter_complete", "capture_advance"):
+            # GIF/boomerang: straight to processing
+            if session.mode in ("gif", "boomerang"):
+                return BoothState.PROCESSING
+            # Multi-shot: more captures needed?
             if len(session.captures) < session.capture_count:
                 return BoothState.PREVIEW
             return BoothState.PROCESSING
 
-        # Fallback
-        if len(session.captures) >= session.capture_count:
-            return BoothState.PROCESSING
         return None

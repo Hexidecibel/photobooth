@@ -57,6 +57,16 @@ class StateMachine:
             "state": str(self._state),
             "previous": str(old),
         })
+        # Auto-fire _do with "enter_complete" so hooks can immediately transition
+        try:
+            handler_key = f"state_{self._state}_do"
+            result = await self._fire_hook(
+                handler_key, event="enter_complete"
+            )
+            if result and isinstance(result, BoothState) and result != self._state:
+                await self.transition(result)
+        except Exception as e:
+            logger.debug(f"Auto-advance from {self._state}: {e}")
 
     async def trigger(self, event: str, **kwargs: Any) -> None:
         """Handle an external event (button press, touch, timer)."""

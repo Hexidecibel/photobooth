@@ -144,6 +144,8 @@ class PicturePlugin:
         """Transition to review when processing is done, or idle on failure."""
         if session and getattr(session, "_processing_failed", False):
             return BoothState.IDLE
-        if event == "result_ready" or (session and session.composite_path):
+        if event in ("enter_complete", "result_ready") and session and session.composite_path:
+            return BoothState.REVIEW
+        if session and session.composite_path:
             return BoothState.REVIEW
         return None
