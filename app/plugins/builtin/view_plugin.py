@@ -17,12 +17,17 @@ class ViewPlugin:
     @hookimpl
     def booth_startup(self, app):
         self._sm = app.state.state_machine
+        self._sm.register_hook("state_idle_enter", self._on_idle_enter)
         self._sm.register_hook("state_idle_do", self._on_idle_do)
         self._sm.register_hook("state_choose_do", self._on_choose_do)
         self._sm.register_hook("state_review_do", self._on_review_do)
         self._sm.register_hook("state_print_do", self._on_print_do)
         self._sm.register_hook("state_thankyou_enter", self._on_thankyou_enter)
         self._sm.register_hook("state_thankyou_do", self._on_thankyou_do)
+
+    async def _on_idle_enter(self, session, **kwargs):
+        """Clear session when returning to idle."""
+        self._sm.clear_session()
 
     async def _on_idle_do(self, session, event=None, **kwargs):
         if event == "start":
