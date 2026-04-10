@@ -74,6 +74,8 @@ class PiCamera2Backend(CameraBase):
         )
         await asyncio.to_thread(self._picam2.configure, config)
         await asyncio.to_thread(self._picam2.start)
+        # Let AWB and AE converge before streaming
+        await asyncio.sleep(2)
         self._running = True
         logger.info("PiCamera2 preview started at %s", resolution)
 
@@ -83,19 +85,13 @@ class PiCamera2Backend(CameraBase):
             await asyncio.to_thread(self._picam2.stop)
 
     async def stream_mjpeg(self) -> AsyncIterator[bytes]:
-        """Capture frames and JPEG-encode them for MJPEG streaming."""
+        """Capture JPEG frames for MJPEG streaming."""
         while self._running and self._picam2:
             try:
-                # Capture frame as numpy array
-                frame = await asyncio.to_thread(
-                    self._picam2.capture_array, "main"
-                )
-                # Encode to JPEG with PIL
-                from PIL import Image as PILImage
-
-                img = PILImage.fromarray(frame, "RGB")
                 buf = io.BytesIO()
-                img.save(buf, format="JPEG", quality=90)
+                await asyncio.to_thread(
+                    self._picam2.capture_file, buf, format="jpeg"
+                )
                 yield buf.getvalue()
                 await asyncio.sleep(1 / 20)  # ~20fps
             except Exception as e:
