@@ -1,0 +1,50 @@
+{
+    "name": "vip",
+    "width_inches": 4,
+    "height_inches": 6,
+    "dpi": 600,
+    "background": "#0a0a0a",
+    "slots": [
+        {"x": 0.06, "y": 0.14, "width": 0.88, "height": 0.70, "rotation": 0}
+    ],
+    "text_overlays": [
+        {
+            "text": "VIP",
+            "x": 0.5,
+            "y": 0.02,
+            "font_size": 48,
+            "color": "#d4af37",
+            "align": "center",
+            "font": "DejaVuSans-Bold"
+        },
+        {
+            "text": "{event_name}",
+            "x": 0.5,
+            "y": 0.90,
+            "font_size": 14,
+            "color": "#d4af37",
+            "align": "center",
+            "font": "DejaVuSans"
+        },
+        {
+            "text": "{date}",
+            "x": 0.5,
+            "y": 0.95,
+            "font_size": 10,
+            "color": "#8b7a3e",
+            "align": "center",
+            "opacity": 0.7
+        }
+    ],
+    "image_overlays": [
+        {
+            "src": "corner-gold.png",
+            "x": 0.0,
+            "y": 0.0,
+            "width": 1.0,
+            "height": 1.0,
+            "opacity": 0.9
+        }
+    ],
+    "footer": null
+}

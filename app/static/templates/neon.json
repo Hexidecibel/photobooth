@@ -1,0 +1,41 @@
+{
+    "name": "neon",
+    "width_inches": 4,
+    "height_inches": 6,
+    "dpi": 600,
+    "background": "#0a0a15",
+    "slots": [
+        {"x": 0.05, "y": 0.12, "width": 0.90, "height": 0.74, "rotation": 0}
+    ],
+    "text_overlays": [
+        {
+            "text": "{event_name}",
+            "x": 0.5,
+            "y": 0.02,
+            "font_size": 28,
+            "color": "#00ffff",
+            "align": "center",
+            "font": "DejaVuSans-Bold"
+        },
+        {
+            "text": "#photobooth",
+            "x": 0.96,
+            "y": 0.5,
+            "font_size": 16,
+            "color": "#ff00ff",
+            "rotation": -90,
+            "align": "center",
+            "opacity": 0.35
+        },
+        {
+            "text": "{date}",
+            "x": 0.5,
+            "y": 0.93,
+            "font_size": 12,
+            "color": "#ffffff",
+            "align": "center",
+            "opacity": 0.6
+        }
+    ],
+    "footer": null
+}

@@ -1,0 +1,42 @@
+{
+    "name": "retro",
+    "width_inches": 4,
+    "height_inches": 6,
+    "dpi": 600,
+    "background": "#1a0a2e",
+    "slots": [
+        {"x": 0.04, "y": 0.04, "width": 0.92, "height": 0.76, "rotation": 0}
+    ],
+    "text_overlays": [
+        {
+            "text": "{event_name}",
+            "x": 0.5,
+            "y": 0.84,
+            "font_size": 30,
+            "color": "#ff6b9d",
+            "align": "center",
+            "font": "Humor-Sans"
+        },
+        {
+            "text": "EST. {date}",
+            "x": 0.15,
+            "y": 0.4,
+            "font_size": 22,
+            "color": "#9b59b6",
+            "rotation": -15,
+            "align": "center",
+            "opacity": 0.2,
+            "font": "DejaVuSans-Bold"
+        },
+        {
+            "text": "{date}",
+            "x": 0.5,
+            "y": 0.94,
+            "font_size": 10,
+            "color": "#ffffff",
+            "align": "center",
+            "opacity": 0.5
+        }
+    ],
+    "footer": null
+}

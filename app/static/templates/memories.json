@@ -1,0 +1,40 @@
+{
+    "name": "memories",
+    "width_inches": 3.5,
+    "height_inches": 4.2,
+    "dpi": 600,
+    "background": "#1a1815",
+    "slots": [
+        {"x": 0.065, "y": 0.055, "width": 0.87, "height": 0.65, "rotation": 0}
+    ],
+    "text_overlays": [
+        {
+            "text": "making memories",
+            "x": 0.5,
+            "y": 0.76,
+            "font_size": 24,
+            "color": "#e8d5b7",
+            "align": "center",
+            "font": "Humor-Sans"
+        },
+        {
+            "text": "{event_name}",
+            "x": 0.5,
+            "y": 0.88,
+            "font_size": 12,
+            "color": "#8b7355",
+            "align": "center",
+            "font": "DejaVuSans"
+        },
+        {
+            "text": "{date}",
+            "x": 0.5,
+            "y": 0.93,
+            "font_size": 9,
+            "color": "#665544",
+            "align": "center",
+            "opacity": 0.7
+        }
+    ],
+    "footer": null
+}

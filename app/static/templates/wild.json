@@ -1,0 +1,41 @@
+{
+    "name": "wild",
+    "width_inches": 4,
+    "height_inches": 6,
+    "dpi": 600,
+    "background": "#0d1117",
+    "slots": [
+        {"x": 0.03, "y": 0.14, "width": 0.94, "height": 0.74, "rotation": 0}
+    ],
+    "text_overlays": [
+        {
+            "text": "GET WILD!",
+            "x": 0.5,
+            "y": 0.01,
+            "font_size": 46,
+            "color": "#ff4500",
+            "align": "center",
+            "font": "DejaVuSans-Bold",
+            "rotation": -3
+        },
+        {
+            "text": "{event_name}",
+            "x": 0.5,
+            "y": 0.92,
+            "font_size": 16,
+            "color": "#ffaa00",
+            "align": "center",
+            "font": "Humor-Sans"
+        },
+        {
+            "text": "{date}",
+            "x": 0.5,
+            "y": 0.97,
+            "font_size": 10,
+            "color": "#ffffff",
+            "align": "center",
+            "opacity": 0.4
+        }
+    ],
+    "footer": null
+}

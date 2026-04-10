@@ -1,0 +1,52 @@
+{
+    "name": "celebration",
+    "width_inches": 4,
+    "height_inches": 6,
+    "dpi": 600,
+    "background": "#2d0a0a",
+    "slots": [
+        {"x": 0.03, "y": 0.12, "width": 0.94, "height": 0.48, "rotation": 0},
+        {"x": 0.03, "y": 0.62, "width": 0.46, "height": 0.26, "rotation": 0},
+        {"x": 0.51, "y": 0.62, "width": 0.46, "height": 0.26, "rotation": 0}
+    ],
+    "text_overlays": [
+        {
+            "text": "CELEBRATE!",
+            "x": 0.5,
+            "y": 0.02,
+            "font_size": 36,
+            "color": "#d4af37",
+            "align": "center",
+            "font": "DejaVuSans-Bold"
+        },
+        {
+            "text": "{event_name}",
+            "x": 0.5,
+            "y": 0.91,
+            "font_size": 14,
+            "color": "#d4af37",
+            "align": "center",
+            "font": "DejaVuSans"
+        },
+        {
+            "text": "{date}",
+            "x": 0.5,
+            "y": 0.96,
+            "font_size": 10,
+            "color": "#ffffff",
+            "align": "center",
+            "opacity": 0.5
+        }
+    ],
+    "image_overlays": [
+        {
+            "src": "stars.png",
+            "x": 0.0,
+            "y": 0.0,
+            "width": 1.0,
+            "height": 1.0,
+            "opacity": 0.4
+        }
+    ],
+    "footer": null
+}

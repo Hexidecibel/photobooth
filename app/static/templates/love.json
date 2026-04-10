@@ -1,0 +1,41 @@
+{
+    "name": "love",
+    "width_inches": 4,
+    "height_inches": 6,
+    "dpi": 600,
+    "background": "#2d1a1a",
+    "slots": [
+        {"x": 0.03, "y": 0.06, "width": 0.44, "height": 0.72, "rotation": 0},
+        {"x": 0.53, "y": 0.06, "width": 0.44, "height": 0.72, "rotation": 0}
+    ],
+    "text_overlays": [
+        {
+            "text": "\u2665",
+            "x": 0.5,
+            "y": 0.38,
+            "font_size": 36,
+            "color": "#e84057",
+            "align": "center",
+            "opacity": 0.8
+        },
+        {
+            "text": "{event_name}",
+            "x": 0.5,
+            "y": 0.84,
+            "font_size": 22,
+            "color": "#e8b4b8",
+            "align": "center",
+            "font": "DejaVuSans"
+        },
+        {
+            "text": "{date}",
+            "x": 0.5,
+            "y": 0.92,
+            "font_size": 10,
+            "color": "#c9a0a0",
+            "align": "center",
+            "opacity": 0.6
+        }
+    ],
+    "footer": null
+}

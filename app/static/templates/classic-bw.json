@@ -1,0 +1,44 @@
+{
+    "name": "classic-bw",
+    "width_inches": 2,
+    "height_inches": 6,
+    "dpi": 600,
+    "background": "#ffffff",
+    "slots": [
+        {"x": 0.06, "y": 0.02, "width": 0.88, "height": 0.215, "rotation": 0},
+        {"x": 0.06, "y": 0.245, "width": 0.88, "height": 0.215, "rotation": 0},
+        {"x": 0.06, "y": 0.47, "width": 0.88, "height": 0.215, "rotation": 0},
+        {"x": 0.06, "y": 0.695, "width": 0.88, "height": 0.215, "rotation": 0}
+    ],
+    "text_overlays": [
+        {
+            "text": "{event_name}",
+            "x": 0.5,
+            "y": 0.93,
+            "font_size": 11,
+            "color": "#222222",
+            "align": "center",
+            "font": "DejaVuSans"
+        },
+        {
+            "text": "{date}",
+            "x": 0.5,
+            "y": 0.96,
+            "font_size": 8,
+            "color": "#666666",
+            "align": "center",
+            "font": "DejaVuSans"
+        }
+    ],
+    "image_overlays": [
+        {
+            "src": "border-thin.png",
+            "x": 0.0,
+            "y": 0.0,
+            "width": 1.0,
+            "height": 1.0,
+            "opacity": 1.0
+        }
+    ],
+    "footer": null
+}

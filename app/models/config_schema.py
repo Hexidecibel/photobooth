@@ -60,7 +60,7 @@ class PictureConfig(BaseModel):
         "Say cheese!",
         "One more!",
     ]
-    layout_template: str = "classic-4x6"
+    layout_template: str = "lets-go"
     # When true, guests choose template on the choose screen
     guest_picks_template: bool = False
     overlay_path: str = ""
