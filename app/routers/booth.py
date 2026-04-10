@@ -34,7 +34,7 @@ async def booth_ws(ws: WebSocket):
     # Get state machine from app state
     sm: StateMachine = ws.app.state.state_machine
 
-    # Auto-reset to idle if stuck in a completed state
+    # Auto-reset to idle if stuck in a completed/end state
     from app.models.state import BoothState
     stale_states = {BoothState.REVIEW, BoothState.PRINT, BoothState.THANKYOU}
     if sm.state in stale_states:

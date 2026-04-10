@@ -72,34 +72,22 @@ class CameraPlugin:
 
                 frame_count = 8
 
-                # Capture ALL frames in one blocking call
-                # This frees the event loop completely during capture
-                def _burst_capture(picam2, output_dir, count):
-                    import time
-                    paths = []
-                    for i in range(count):
-                        path = output_dir / f"frame_{i:03d}.jpg"
-                        buf = io.BytesIO()
-                        picam2.capture_file(buf, format="jpeg")
-                        path.write_bytes(buf.getvalue())
-                        paths.append(path)
-                        time.sleep(0.1)
-                    return paths
-
-                # Send initial message before blocking
-                await self._broadcast({
-                    "type": "capture_progress",
-                    "frame": 0,
-                    "total": frame_count,
-                })
-
-                paths = await asyncio.to_thread(
-                    _burst_capture,
-                    self._camera._picam2,
-                    raw_dir,
-                    frame_count,
-                )
-                session.captures.extend(paths)
+                # Capture frame by frame with yields for WebSocket keepalive
+                for i in range(frame_count):
+                    await self._broadcast({
+                        "type": "capture_progress",
+                        "frame": i + 1,
+                        "total": frame_count,
+                    })
+                    path = raw_dir / f"frame_{i:03d}.jpg"
+                    buf = io.BytesIO()
+                    await asyncio.to_thread(
+                        self._camera._picam2.capture_file,
+                        buf, format="jpeg",
+                    )
+                    path.write_bytes(buf.getvalue())
+                    session.captures.append(path)
+                    await asyncio.sleep(0)  # Yield for WebSocket pings
 
                 # Re-enable stream
                 self._camera._running = True
