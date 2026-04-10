@@ -116,6 +116,7 @@ class PiCamera2Backend(CameraBase):
             try:
                 frame = await asyncio.to_thread(grab, self._picam2)
                 yield frame
+                await asyncio.sleep(0.01)  # Yield to let other requests through
             except Exception as e:
                 logger.debug("Frame capture error: %s", e)
                 await asyncio.sleep(0.05)
