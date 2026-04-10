@@ -58,6 +58,28 @@ class ShareService:
         session.share_token = token
         return token
 
+    def create_share_token(self, photo_id: str) -> str | None:
+        """Create a share token for an existing photo that doesn't have one."""
+        token = secrets.token_urlsafe(6)
+        with sqlite3.connect(self._db_path) as conn:
+            row = conn.execute(
+                "SELECT id FROM photos WHERE id = ?", (photo_id,)
+            ).fetchone()
+            if not row:
+                return None
+            conn.execute(
+                "UPDATE photos SET share_token = ?"
+                " WHERE id = ? AND share_token IS NULL",
+                (token, photo_id),
+            )
+            conn.commit()
+            # Return the actual token (might already have one)
+            conn.row_factory = sqlite3.Row
+            updated = conn.execute(
+                "SELECT share_token FROM photos WHERE id = ?", (photo_id,)
+            ).fetchone()
+            return dict(updated)["share_token"] if updated else token
+
     def get_by_token(self, token: str) -> dict | None:
         with sqlite3.connect(self._db_path) as conn:
             conn.row_factory = sqlite3.Row

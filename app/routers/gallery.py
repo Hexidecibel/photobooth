@@ -52,6 +52,16 @@ async def get_thumbnail(photo_id: str, request: Request, size: int = 400):
         return FileResponse(str(photo_path), media_type="image/jpeg")
 
 
+@router.post("/{photo_id}/share-token")
+async def create_share_token(photo_id: str, request: Request):
+    """Create a share token for a photo that doesn't have one."""
+    share_service = request.app.state.share_service
+    token = share_service.create_share_token(photo_id)
+    if not token:
+        raise HTTPException(404, "Photo not found")
+    return {"share_token": token}
+
+
 @router.delete("/{photo_id}")
 async def delete_photo(photo_id: str, request: Request):
     share_service = request.app.state.share_service

@@ -820,6 +820,15 @@ class AdminPanel {
         const container = document.getElementById('gallery-content');
         container.innerHTML = '<div class="loading">Loading gallery...</div>';
 
+        // Fetch connection info for share URLs
+        try {
+            const connRes = await fetch('/api/admin/connection');
+            const connInfo = await connRes.json();
+            this._shareBaseUrl = connInfo.tunnel_url || `http://${connInfo.ip}:${connInfo.port}`;
+        } catch (e) {
+            this._shareBaseUrl = window.location.origin;
+        }
+
         try {
             const res = await fetch('/api/gallery/?limit=100');
             const data = await res.json();
@@ -841,9 +850,13 @@ class AdminPanel {
             return;
         }
 
+        const baseUrl = this._shareBaseUrl || window.location.origin;
         let html = '<div class="gallery-grid">';
         for (const photo of photos) {
             const date = new Date(photo.created_at).toLocaleString();
+            const shareUrl = photo.share_token
+                ? `${baseUrl}/share/${photo.share_token}`
+                : null;
             html += `
                 <div class="gallery-item">
                     <img src="/api/gallery/${photo.id}" alt="Photo" loading="lazy" />
@@ -851,6 +864,7 @@ class AdminPanel {
                         <div class="gallery-date">${date}</div>
                         <div class="gallery-actions">
                             ${photo.share_token ? `<a href="/share/${photo.share_token}" target="_blank" class="btn btn-sm">Share</a>` : ''}
+                            <button class="btn btn-sm btn-copy-link" data-copy-url="${shareUrl || ''}" data-photo-id="${photo.id}">${shareUrl ? 'Copy Link' : 'Get Link'}</button>
                             <button class="btn btn-sm btn-danger" data-delete-photo="${photo.id}">Delete</button>
                         </div>
                     </div>
@@ -860,6 +874,49 @@ class AdminPanel {
         html += '</div>';
 
         container.innerHTML = html;
+
+        // Bind copy link buttons
+        container.querySelectorAll('.btn-copy-link').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                let url = btn.dataset.copyUrl;
+
+                // If no share token, create one first
+                if (!url) {
+                    const photoId = btn.dataset.photoId;
+                    try {
+                        btn.textContent = 'Creating...';
+                        const res = await fetch(`/api/gallery/${photoId}/share-token`, { method: 'POST' });
+                        const data = await res.json();
+                        if (data.share_token) {
+                            url = `${baseUrl}/share/${data.share_token}`;
+                            btn.dataset.copyUrl = url;
+                        }
+                    } catch (e) {
+                        btn.textContent = 'Failed';
+                        setTimeout(() => { btn.textContent = 'Get Link'; }, 2000);
+                        return;
+                    }
+                }
+
+                if (!url) return;
+
+                try {
+                    await navigator.clipboard.writeText(url);
+                    btn.textContent = 'Copied!';
+                    setTimeout(() => { btn.textContent = 'Copy Link'; }, 2000);
+                } catch (e) {
+                    // Fallback for non-HTTPS contexts
+                    const input = document.createElement('input');
+                    input.value = url;
+                    document.body.appendChild(input);
+                    input.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(input);
+                    btn.textContent = 'Copied!';
+                    setTimeout(() => { btn.textContent = 'Copy Link'; }, 2000);
+                }
+            });
+        });
 
         // Bind delete buttons via event delegation
         container.querySelectorAll('[data-delete-photo]').forEach(btn => {
