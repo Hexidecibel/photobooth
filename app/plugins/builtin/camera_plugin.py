@@ -49,7 +49,7 @@ class CameraPlugin:
         return None
 
     async def _on_capture_enter(self, session, **kwargs):
-        """Trigger a capture."""
+        """Trigger a capture and auto-advance to next state."""
         if not session or not self._camera:
             return
 
@@ -79,12 +79,21 @@ class CameraPlugin:
                 {"type": "error", "message": f"Capture failed: {e}"}
             )
 
+        # Frontend will send 'capture_advance' after receiving capture_complete
+
     async def _on_capture_do(self, session, event=None, **kwargs):
         """After capture, go to next preview or processing."""
         if not session:
             return BoothState.IDLE
 
+        # Auto-advance after capture_enter completes
+        if event in ("auto_advance", "capture_advance"):
+            if len(session.captures) < session.capture_count:
+                return BoothState.PREVIEW
+            else:
+                return BoothState.PROCESSING
+
         if len(session.captures) < session.capture_count:
-            return BoothState.PREVIEW  # More captures needed
+            return BoothState.PREVIEW
         else:
-            return BoothState.PROCESSING  # All captures done
+            return BoothState.PROCESSING

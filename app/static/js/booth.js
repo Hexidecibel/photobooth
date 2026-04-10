@@ -382,14 +382,19 @@ class BoothApp {
 
     onCaptureComplete(msg) {
         var dots = document.getElementById('capture-dots');
-        if (!dots) return;
-
-        dots.innerHTML = '';
-        for (var i = 0; i < msg.total; i++) {
-            var dot = document.createElement('span');
-            dot.className = 'dot' + (i < msg.index ? ' filled' : '');
-            dots.appendChild(dot);
+        if (dots) {
+            dots.innerHTML = '';
+            for (var i = 0; i < msg.total; i++) {
+                var dot = document.createElement('span');
+                dot.className = 'dot' + (i < msg.index ? ' filled' : '');
+                dots.appendChild(dot);
+            }
         }
+        // Auto-advance after a brief pause
+        var self = this;
+        setTimeout(function () {
+            self.send('capture_advance');
+        }, 500);
     }
 
     /* ------------------------------------------------------------------ */
