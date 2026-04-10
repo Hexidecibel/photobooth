@@ -57,11 +57,8 @@ class StateMachine:
             "state": str(self._state),
             "previous": str(old),
         })
-        # Auto-fire _do for states that need immediate transition (capture, processing)
-        # Skip for states that wait for user input (idle, choose, preview, review, print, thankyou)
-        wait_states = {BoothState.IDLE, BoothState.CHOOSE, BoothState.PREVIEW,
-                       BoothState.REVIEW, BoothState.PRINT, BoothState.THANKYOU}
-        if self._state not in wait_states:
+        # Auto-fire _do for capture and processing only
+        if self._state in (BoothState.CAPTURE, BoothState.PROCESSING):
             try:
                 handler_key = f"state_{self._state}_do"
                 result = await self._fire_hook(
