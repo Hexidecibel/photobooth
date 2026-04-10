@@ -16,13 +16,13 @@
     --pb-error: #f44336;
     --pb-warning: #ff9800;
 
-    /* Typography */
+    /* Typography — sized for reading from 3-5 feet away */
     --pb-font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     --pb-font-display: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    --pb-font-size-title: clamp(2rem, 5vw, 4rem);
-    --pb-font-size-subtitle: clamp(1rem, 2.5vw, 1.5rem);
-    --pb-font-size-body: clamp(0.875rem, 2vw, 1.125rem);
-    --pb-font-size-countdown: clamp(6rem, 20vw, 12rem);
+    --pb-font-size-title: clamp(3rem, 7vw, 5rem);
+    --pb-font-size-subtitle: clamp(1.5rem, 4vw, 2.5rem);
+    --pb-font-size-body: clamp(1.1rem, 3vw, 1.5rem);
+    --pb-font-size-countdown: clamp(8rem, 25vw, 15rem);
 
     /* Layout */
     --pb-border-radius: 16px;

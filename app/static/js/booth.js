@@ -562,7 +562,7 @@ class BoothApp {
     showRecordingOverlay() {
         var overlay = document.getElementById('recording-overlay');
         if (overlay) {
-            overlay.style.display = 'flex';
+            overlay.style.cssText = 'display:flex;position:fixed;inset:0;z-index:9999;background:#000;align-items:center;justify-content:center;';
             // Build dots for progress
             var dots = document.getElementById('recording-dots');
             if (dots) {
