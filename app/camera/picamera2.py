@@ -107,12 +107,9 @@ class PiCamera2Backend(CameraBase):
                     self._picam2.capture_array, "main"
                 )
                 if use_cv2:
-                    # OpenCV imencode is ~3x faster than PIL for JPEG
-                    rgb_to_bgr = await asyncio.to_thread(
-                        cv2.cvtColor, arr, cv2.COLOR_RGB2BGR
-                    )
+                    # Feed directly — picamera2 RGB888 may actually be BGR
                     _, jpeg = await asyncio.to_thread(
-                        cv2.imencode, ".jpg", rgb_to_bgr,
+                        cv2.imencode, ".jpg", arr,
                         [cv2.IMWRITE_JPEG_QUALITY, 60],
                     )
                     yield jpeg.tobytes()
