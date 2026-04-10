@@ -769,6 +769,8 @@ class BoothApp {
     /* ------------------------------------------------------------------ */
 
     startSlideshow() {
+        var vignette = document.getElementById('slideshow-vignette');
+        if (vignette) vignette.style.display = '';
         this.loadSlidePhotos();
         this.slideshowTimer = setInterval(() => this.cycleSlidePhoto(), 3000);
         this.loadPhotoCounter();
@@ -863,6 +865,8 @@ class BoothApp {
         }
         var container = document.getElementById('slideshow-float');
         if (container) container.innerHTML = '';
+        var vignette = document.getElementById('slideshow-vignette');
+        if (vignette) vignette.style.display = 'none';
         this._floatCards = [];
     }
 

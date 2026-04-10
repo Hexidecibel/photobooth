@@ -8,12 +8,12 @@
     <link rel="stylesheet" href="/static/css/booth.css">
 </head>
 <body>
+    <!-- Floating slideshow — outside sections to avoid stacking context -->
+    <div class="slideshow-float" id="slideshow-float"></div>
+    <div class="slideshow-vignette" id="slideshow-vignette" style="display:none"></div>
+
     <!-- IDLE: Attract screen -->
     <section data-state="idle" class="active">
-        <div class="slideshow-float" id="slideshow-float">
-            <!-- Floating photo cards injected by JS -->
-        </div>
-        <div class="slideshow-vignette"></div>
         <div class="idle-content">
             <div class="booth-logo" id="booth-logo">
                 <img id="logo-img" src="" alt="" style="display:none">
