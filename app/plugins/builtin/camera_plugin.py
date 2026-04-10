@@ -26,14 +26,7 @@ class CameraPlugin:
         sm.register_hook("state_capture_do", self._on_capture_do)
 
     async def _on_preview_enter(self, session, **kwargs):
-        """Start camera preview and countdown."""
-        if self._camera:
-            try:
-                await self._camera.start_preview(
-                    self._config.camera.preview_resolution
-                )
-            except Exception:
-                pass  # Preview may already be running
+        """Camera preview is already running from startup. Just notify frontend."""
 
         # Send pose prompt for multi-capture sessions
         if session and session.capture_count > 1:
@@ -85,13 +78,6 @@ class CameraPlugin:
             await self._broadcast(
                 {"type": "error", "message": f"Capture failed: {e}"}
             )
-            # Ensure camera preview restarts after failure
-            try:
-                await self._camera.start_preview(
-                    self._config.camera.preview_resolution
-                )
-            except Exception:
-                pass
 
     async def _on_capture_do(self, session, event=None, **kwargs):
         """After capture, go to next preview or processing."""
