@@ -432,16 +432,11 @@ class BoothApp {
     /* ------------------------------------------------------------------ */
 
     onCaptureProgress(msg) {
-        var text = 'Recording ' + msg.frame + '/' + msg.total;
-        // Update whichever screen is showing
-        var captureText = document.getElementById('capture-text');
         var processingText = document.getElementById('processing-text');
         var processingStep = document.getElementById('processing-step');
-        if (captureText) captureText.textContent = text;
-        if (processingText) processingText.textContent = 'Recording...';
-        if (processingStep) processingStep.textContent = text;
-        // Update progress bar
         var fill = document.getElementById('progress');
+        if (processingText) processingText.textContent = 'Hold that pose!';
+        if (processingStep) processingStep.textContent = msg.frame + ' of ' + msg.total;
         if (fill && msg.total) fill.style.width = (msg.frame / msg.total * 50) + '%';
     }
 
