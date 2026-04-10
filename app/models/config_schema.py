@@ -20,7 +20,7 @@ class CameraConfig(BaseModel):
     """Camera hardware and capture settings."""
 
     backend: str = "auto"
-    preview_resolution: tuple[int, int] = (1920, 1080)
+    preview_resolution: tuple[int, int] = (1280, 720)
     still_resolution: tuple[int, int] = (4608, 2592)
     webcam_index: int = 0
     flip_horizontal: bool = False

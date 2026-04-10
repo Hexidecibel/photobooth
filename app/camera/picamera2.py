@@ -61,7 +61,7 @@ class PiCamera2Backend(CameraBase):
             return False
 
     async def start_preview(
-        self, resolution: tuple[int, int] = (1920, 1080)
+        self, resolution: tuple[int, int] = (1280, 720)
     ) -> None:
         from picamera2 import Picamera2
 
@@ -69,8 +69,9 @@ class PiCamera2Backend(CameraBase):
         self._picam2 = await asyncio.to_thread(
             Picamera2, self._camera_index
         )
+        # Use lower resolution for smooth streaming
         config = self._picam2.create_preview_configuration(
-            main={"size": resolution, "format": "RGB888"},
+            main={"size": resolution},
         )
         await asyncio.to_thread(self._picam2.configure, config)
         await asyncio.to_thread(self._picam2.start)
@@ -90,13 +91,15 @@ class PiCamera2Backend(CameraBase):
             try:
                 buf = io.BytesIO()
                 await asyncio.to_thread(
-                    self._picam2.capture_file, buf, format="jpeg"
+                    self._picam2.capture_file,
+                    buf,
+                    format="jpeg",
+                    quality=70,
                 )
                 yield buf.getvalue()
-                await asyncio.sleep(1 / 20)  # ~20fps
             except Exception as e:
                 logger.debug("Frame capture error: %s", e)
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(0.05)
 
     async def capture_still(self, path: Path) -> Path:
         if not self._picam2:
