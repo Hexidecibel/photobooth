@@ -57,10 +57,12 @@ class OpenCVBackend(CameraBase):
                 cap.release()
 
             return False
-        except (ImportError, FileNotFoundError, subprocess.TimeoutExpired):
-            # Fallback: try index 0
+        except ImportError:
+            return False
+        except (FileNotFoundError, subprocess.TimeoutExpired, Exception):
+            # v4l2-ctl not available, fallback: try index 0
             try:
-                import cv2
+                import cv2  # noqa: F811
                 cap = cv2.VideoCapture(0)
                 available = cap.isOpened()
                 cap.release()
