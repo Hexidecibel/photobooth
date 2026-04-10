@@ -722,6 +722,61 @@ section[data-state="capture"] {
     line-height: 1;
 }
 
+.effect-hint {
+    text-align: center;
+    color: var(--pb-text-secondary);
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+}
+
+.effect-section-label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--pb-text-secondary);
+    margin: 1rem 0 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.effect-badge {
+    font-size: 0.7rem;
+    background: var(--pb-accent);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    text-transform: none;
+    letter-spacing: normal;
+}
+
+.effect-card.effect-slow {
+    border-color: rgba(108, 99, 255, 0.2);
+}
+
+.effect-back-btn {
+    display: block;
+    margin: 1.5rem auto 0;
+    background: none;
+    border: 1px solid rgba(255,255,255,0.2);
+    color: var(--pb-text-secondary);
+    padding: 0.6rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all var(--pb-transition);
+}
+.effect-back-btn:hover {
+    border-color: var(--pb-accent);
+    color: var(--pb-text-primary);
+}
+
+.thankyou-hint {
+    color: var(--pb-text-secondary);
+    font-size: 0.85rem;
+    margin-top: 1rem;
+}
+
 /* Preview effect label badge */
 .preview-effect-label {
     position: absolute;

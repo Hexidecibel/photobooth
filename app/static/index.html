@@ -54,6 +54,8 @@
         <div class="effect-picker-overlay" id="effect-picker" style="display:none">
             <div class="effect-picker-modal">
                 <h2 data-i18n="pick_effect">Choose an Effect</h2>
+                <p class="effect-hint">Instant effects are fast. AI effects take a moment to process.</p>
+                <div class="effect-section-label">Instant</div>
                 <div class="effect-grid">
                     <button class="effect-card" data-effect="none">
                         <div class="effect-icon">&#128247;</div>
@@ -61,7 +63,7 @@
                     </button>
                     <button class="effect-card" data-effect="bw">
                         <div class="effect-icon">&#9899;</div>
-                        <span>Black & White</span>
+                        <span>Black &amp; White</span>
                     </button>
                     <button class="effect-card" data-effect="sepia">
                         <div class="effect-icon">&#127811;</div>
@@ -70,26 +72,6 @@
                     <button class="effect-card" data-effect="vintage">
                         <div class="effect-icon">&#128249;</div>
                         <span>Vintage</span>
-                    </button>
-                    <button class="effect-card" data-effect="cartoon">
-                        <div class="effect-icon">&#127912;</div>
-                        <span>Cartoon</span>
-                    </button>
-                    <button class="effect-card" data-effect="pencil_sketch">
-                        <div class="effect-icon">&#9998;</div>
-                        <span>Pencil Sketch</span>
-                    </button>
-                    <button class="effect-card" data-effect="watercolor">
-                        <div class="effect-icon">&#127912;</div>
-                        <span>Watercolor</span>
-                    </button>
-                    <button class="effect-card" data-effect="pop_art">
-                        <div class="effect-icon">&#10036;</div>
-                        <span>Pop Art</span>
-                    </button>
-                    <button class="effect-card" data-effect="oil_painting">
-                        <div class="effect-icon">&#128396;</div>
-                        <span>Oil Painting</span>
                     </button>
                     <button class="effect-card" data-effect="warm">
                         <div class="effect-icon">&#9728;</div>
@@ -100,6 +82,30 @@
                         <span>Cool</span>
                     </button>
                 </div>
+                <div class="effect-section-label">AI Effects <span class="effect-badge">takes a moment</span></div>
+                <div class="effect-grid">
+                    <button class="effect-card effect-slow" data-effect="cartoon">
+                        <div class="effect-icon">&#127912;</div>
+                        <span>Cartoon</span>
+                    </button>
+                    <button class="effect-card effect-slow" data-effect="pencil_sketch">
+                        <div class="effect-icon">&#9998;</div>
+                        <span>Pencil Sketch</span>
+                    </button>
+                    <button class="effect-card effect-slow" data-effect="watercolor">
+                        <div class="effect-icon">&#127912;</div>
+                        <span>Watercolor</span>
+                    </button>
+                    <button class="effect-card effect-slow" data-effect="pop_art">
+                        <div class="effect-icon">&#10036;</div>
+                        <span>Pop Art</span>
+                    </button>
+                    <button class="effect-card effect-slow" data-effect="oil_painting">
+                        <div class="effect-icon">&#128396;</div>
+                        <span>Oil Painting</span>
+                    </button>
+                </div>
+                <button class="effect-back-btn" id="effect-back-btn">&#8592; Back</button>
             </div>
         </div>
         <button class="btn-cancel" data-action="cancel" data-i18n="cancel">Cancel</button>

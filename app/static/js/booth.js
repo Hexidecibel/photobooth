@@ -932,6 +932,21 @@ class BoothApp {
 
 
 
+        // Effect picker back button
+        var effectBack = document.getElementById('effect-back-btn');
+        if (effectBack) {
+            effectBack.addEventListener('click', function () {
+                if (self._perShotPicking) {
+                    // During multi-shot, back just dismisses and uses last effect
+                    self.onPerShotEffectPicked(self.selectedEffect || 'none');
+                } else {
+                    // Go back to mode selection
+                    self.hideEffectPicker();
+                    self.resetChooseScreen();
+                }
+            });
+        }
+
         // Effect picker card clicks
         var effectCards = document.querySelectorAll('.effect-card');
         for (var e = 0; e < effectCards.length; e++) {
