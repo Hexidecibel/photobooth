@@ -70,8 +70,13 @@ class PiCamera2Backend(CameraBase):
             Picamera2, self._camera_index
         )
         # Force RGB888 so capture_array returns clean 3-channel RGB
+        # Use full sensor output to match capture FOV (otherwise preview crops)
+        sensor_res = self._picam2.camera_properties.get(
+            "PixelArraySize", (3280, 2464)
+        )
         config = self._picam2.create_preview_configuration(
             main={"size": resolution, "format": "RGB888"},
+            raw={"size": sensor_res},
         )
         await asyncio.to_thread(self._picam2.configure, config)
         await asyncio.to_thread(self._picam2.start)
