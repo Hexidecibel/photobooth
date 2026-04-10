@@ -24,20 +24,49 @@ class OpenCVBackend(CameraBase):
 
     @classmethod
     def detect(cls) -> bool:
-        """Return True if an OpenCV-compatible camera is available."""
+        """Return True if a USB webcam (not Pi camera) is available."""
         try:
             import cv2
+            import subprocess
 
-            # Try indices 0-3 to find a USB webcam
-            for idx in range(4):
+            # Get list of USB webcam devices (exclude Pi camera)
+            result = subprocess.run(
+                ["v4l2-ctl", "--list-devices"],
+                capture_output=True, text=True, timeout=5,
+            )
+            usb_indices = []
+            lines = result.stdout.split("\n")
+            for i, line in enumerate(lines):
+                # USB cameras have "usb" in the device path
+                if "usb" in line.lower() and i + 1 < len(lines):
+                    for dev_line in lines[i + 1:]:
+                        dev_line = dev_line.strip()
+                        if dev_line.startswith("/dev/video"):
+                            idx = int(dev_line.replace("/dev/video", ""))
+                            usb_indices.append(idx)
+                            break
+                        if not dev_line:
+                            break
+
+            # Try USB webcam indices
+            for idx in usb_indices:
                 cap = cv2.VideoCapture(idx)
                 if cap.isOpened():
                     cap.release()
                     return True
                 cap.release()
+
             return False
-        except ImportError:
-            return False
+        except (ImportError, FileNotFoundError, subprocess.TimeoutExpired):
+            # Fallback: try index 0
+            try:
+                import cv2
+                cap = cv2.VideoCapture(0)
+                available = cap.isOpened()
+                cap.release()
+                return available
+            except ImportError:
+                return False
 
     async def start_preview(
         self, resolution: tuple[int, int] = (1920, 1080)
