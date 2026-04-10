@@ -125,6 +125,15 @@
         <button class="btn-cancel" data-action="cancel" data-i18n="cancel">Cancel</button>
     </section>
 
+    <!-- Recording overlay for GIF/boomerang — shows during burst capture -->
+    <div class="recording-overlay" id="recording-overlay" style="display:none">
+        <div class="recording-content">
+            <p class="recording-message">Keep moving!</p>
+            <div class="recording-counter" id="recording-counter">1</div>
+            <div class="recording-dots" id="recording-dots"></div>
+        </div>
+    </div>
+
     <!-- CAPTURE: Flash + status -->
     <section data-state="capture">
         <div class="capture-screen">

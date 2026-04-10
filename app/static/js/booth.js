@@ -206,13 +206,19 @@ class BoothApp {
                 // Show processing screen during capture (no separate capture screen)
                 var displayState = msg.state;
                 if (msg.state === 'capture') {
-                    displayState = 'processing';
-                    var pt = document.getElementById('processing-text');
-                    if (pt) pt.textContent = this._isGifMode ? 'Recording...' : 'Capturing...';
-                    var ps = document.getElementById('processing-step');
-                    if (ps) ps.textContent = '';
-                    var pf = document.getElementById('progress');
-                    if (pf) pf.style.width = '0%';
+                    if (this._isGifMode) {
+                        // GIF/boomerang: show energetic recording overlay instead of processing
+                        this.showRecordingOverlay();
+                        displayState = 'preview'; // Keep preview section active (hidden behind overlay)
+                    } else {
+                        displayState = 'processing';
+                        var pt = document.getElementById('processing-text');
+                        if (pt) pt.textContent = 'Capturing...';
+                        var ps = document.getElementById('processing-step');
+                        if (ps) ps.textContent = '';
+                        var pf = document.getElementById('progress');
+                        if (pf) pf.style.width = '0%';
+                    }
                 }
                 this.showState(displayState);
                 break;
@@ -263,6 +269,11 @@ class BoothApp {
             var isActive = s.dataset.state === state;
             s.classList.toggle('active', isActive);
         });
+
+        // Hide recording overlay when leaving capture/preview (GIF mode)
+        if (previousState === 'capture' || previousState === 'preview') {
+            this.hideRecordingOverlay();
+        }
 
         // Play sounds on state transitions
         if (this.sounds && state === 'capture' && previousState !== 'capture') {
@@ -448,27 +459,80 @@ class BoothApp {
     }
 
     /* ------------------------------------------------------------------ */
+    /*  Recording overlay (GIF/boomerang burst capture)                     */
+    /* ------------------------------------------------------------------ */
+
+    showRecordingOverlay() {
+        var overlay = document.getElementById('recording-overlay');
+        if (overlay) {
+            overlay.style.display = 'flex';
+            // Build dots for progress
+            var dots = document.getElementById('recording-dots');
+            if (dots) {
+                dots.innerHTML = '';
+                for (var i = 0; i < 8; i++) {
+                    var dot = document.createElement('span');
+                    dot.className = 'dot';
+                    dots.appendChild(dot);
+                }
+            }
+            // Reset counter
+            var counter = document.getElementById('recording-counter');
+            if (counter) {
+                counter.textContent = '1';
+                counter.classList.remove('pop');
+            }
+        }
+    }
+
+    hideRecordingOverlay() {
+        var overlay = document.getElementById('recording-overlay');
+        if (overlay) overlay.style.display = 'none';
+    }
+
+    /* ------------------------------------------------------------------ */
     /*  Capture progress dots                                              */
     /* ------------------------------------------------------------------ */
 
     onCaptureProgress(msg) {
-        // Show big frame counter on the processing screen
-        var processingText = document.getElementById('processing-text');
-        var processingStep = document.getElementById('processing-step');
-        var fill = document.getElementById('progress');
-        var icon = document.querySelector('.processing-icon');
+        if (this._isGifMode) {
+            // GIF/boomerang: update the recording overlay
+            var counter = document.getElementById('recording-counter');
+            var dots = document.getElementById('recording-dots');
 
-        if (icon) icon.textContent = msg.frame;
-        if (icon) icon.style.fontSize = '6rem';
-        if (processingText) processingText.textContent = 'Strike a pose!';
-        if (processingStep) processingStep.textContent = msg.frame + ' of ' + msg.total;
-        if (fill && msg.total) fill.style.width = (msg.frame / msg.total * 50) + '%';
+            if (counter) {
+                counter.textContent = msg.frame;
+                counter.classList.remove('pop');
+                void counter.offsetWidth; // Force reflow for re-animation
+                counter.classList.add('pop');
+            }
 
-        // Flash effect on each frame
-        if (icon) {
-            icon.classList.remove('tick');
-            void icon.offsetWidth;
-            icon.classList.add('tick');
+            // Fill in dots
+            if (dots) {
+                var dotEls = dots.querySelectorAll('.dot');
+                for (var i = 0; i < dotEls.length; i++) {
+                    if (i < msg.frame) dotEls[i].classList.add('filled');
+                }
+            }
+        } else {
+            // Single/multi photo: show progress on processing screen
+            var processingText = document.getElementById('processing-text');
+            var processingStep = document.getElementById('processing-step');
+            var fill = document.getElementById('progress');
+            var icon = document.querySelector('.processing-icon');
+
+            if (icon) icon.textContent = msg.frame;
+            if (icon) icon.style.fontSize = '6rem';
+            if (processingText) processingText.textContent = 'Strike a pose!';
+            if (processingStep) processingStep.textContent = msg.frame + ' of ' + msg.total;
+            if (fill && msg.total) fill.style.width = (msg.frame / msg.total * 50) + '%';
+
+            // Flash effect on each frame
+            if (icon) {
+                icon.classList.remove('tick');
+                void icon.offsetWidth;
+                icon.classList.add('tick');
+            }
         }
     }
 
