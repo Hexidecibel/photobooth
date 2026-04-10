@@ -7,7 +7,7 @@ Wants=photobooth.service
 Type=simple
 Environment=DISPLAY=:0
 ExecStartPre=/bin/sh -c 'xset s off -dpms 2>/dev/null || true'
-ExecStart=/usr/bin/chromium-browser \
+ExecStart=/bin/sh -c 'exec $(which chromium 2>/dev/null || which chromium-browser) \
     --kiosk \
     --noerrdialogs \
     --disable-infobars \
@@ -15,7 +15,7 @@ ExecStart=/usr/bin/chromium-browser \
     --disable-component-update \
     --check-for-update-interval=31536000 \
     --autoplay-policy=no-user-gesture-required \
-    http://localhost:8000/booth
+    http://localhost:8000/booth'
 Restart=always
 RestartSec=5
 
