@@ -64,39 +64,43 @@ class PiCamera2Backend(CameraBase):
         self, resolution: tuple[int, int] = (1920, 1080)
     ) -> None:
         from picamera2 import Picamera2
-        from picamera2.encoders import MJPEGEncoder
-        from picamera2.outputs import FileOutput
 
         self._preview_resolution = resolution
         self._picam2 = await asyncio.to_thread(
             Picamera2, self._camera_index
         )
-        config = self._picam2.create_video_configuration(
-            main={"size": resolution, "format": "YUV420"},
+        config = self._picam2.create_preview_configuration(
+            main={"size": resolution},
         )
         await asyncio.to_thread(self._picam2.configure, config)
-        self._output = StreamingOutput()
-        encoder = MJPEGEncoder(bitrate=8_000_000)
-        await asyncio.to_thread(
-            self._picam2.start_recording,
-            encoder,
-            FileOutput(self._output),
-        )
+        await asyncio.to_thread(self._picam2.start)
         self._running = True
         logger.info("PiCamera2 preview started at %s", resolution)
 
     async def stop_preview(self) -> None:
         self._running = False
         if self._picam2:
-            await asyncio.to_thread(self._picam2.stop_recording)
+            await asyncio.to_thread(self._picam2.stop)
 
     async def stream_mjpeg(self) -> AsyncIterator[bytes]:
-        while self._running and self._output:
-            frame = await asyncio.to_thread(
-                self._output.wait_for_frame, 1.0
-            )
-            if frame:
-                yield frame
+        """Capture frames and JPEG-encode them for MJPEG streaming."""
+        while self._running and self._picam2:
+            try:
+                # Capture frame as numpy array
+                frame = await asyncio.to_thread(
+                    self._picam2.capture_array, "main"
+                )
+                # Encode to JPEG with PIL (good quality)
+                from PIL import Image as PILImage
+
+                img = PILImage.fromarray(frame)
+                buf = io.BytesIO()
+                img.save(buf, format="JPEG", quality=85)
+                yield buf.getvalue()
+                await asyncio.sleep(1 / 15)  # ~15fps
+            except Exception as e:
+                logger.debug("Frame capture error: %s", e)
+                await asyncio.sleep(0.1)
 
     async def capture_still(self, path: Path) -> Path:
         if not self._picam2:
