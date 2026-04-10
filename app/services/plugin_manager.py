@@ -20,6 +20,7 @@ class PluginManager:
             return
 
         from app.plugins.builtin.camera_plugin import CameraPlugin
+        from app.plugins.builtin.cloud_plugin import CloudPlugin
         from app.plugins.builtin.lights_plugin import LightsPlugin
         from app.plugins.builtin.picture_plugin import PicturePlugin
         from app.plugins.builtin.printer_plugin import PrinterPlugin
@@ -30,6 +31,7 @@ class PluginManager:
         camera = getattr(app_state, "camera", None)
         printer = getattr(app_state, "printer", None)
         share_service = getattr(app_state, "share_service", None)
+        cloud_gallery = getattr(app_state, "cloud_gallery", None)
 
         self._pm.register(
             CameraPlugin(camera, config, broadcast), name="camera"
@@ -40,6 +42,7 @@ class PluginManager:
                 config, broadcast,
                 share_service=share_service,
                 counter_service=counter_service,
+                cloud_service=cloud_gallery,
             ),
             name="picture",
         )
@@ -54,6 +57,11 @@ class PluginManager:
             ),
             name="printer",
         )
+        if cloud_gallery and cloud_gallery.is_configured:
+            self._pm.register(
+                CloudPlugin(config, cloud_gallery, broadcast),
+                name="cloud",
+            )
 
     def load_external(
         self,

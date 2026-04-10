@@ -559,6 +559,44 @@ async def get_branding():
     return {"logo_url": logo_url}
 
 
+@router.get("/cloud-gallery/test")
+async def test_cloud_gallery(request: Request):
+    """Test cloud gallery connection by fetching gallery info."""
+    config = request.app.state.config
+    if not config.cloud_gallery.enabled:
+        return {"connected": False, "error": "Cloud gallery not enabled"}
+
+    if not (
+        config.cloud_gallery.api_url
+        and config.cloud_gallery.api_key
+        and config.cloud_gallery.gallery_id
+    ):
+        return {"connected": False, "error": "Missing API URL, key, or gallery ID"}
+
+    cloud_svc = getattr(request.app.state, "cloud_gallery", None)
+    if not cloud_svc:
+        # Create a temporary service for testing
+        from app.services.cloud_gallery import CloudGalleryService
+
+        cloud_svc = CloudGalleryService(
+            api_url=config.cloud_gallery.api_url,
+            api_key=config.cloud_gallery.api_key,
+            gallery_id=config.cloud_gallery.gallery_id,
+        )
+
+    try:
+        info = await cloud_svc.get_gallery_info()
+        if info:
+            return {
+                "connected": True,
+                "gallery_name": info.get("name", ""),
+                "slug": info.get("slug", ""),
+            }
+        return {"connected": False, "error": "Failed to fetch gallery info"}
+    except Exception as e:
+        return {"connected": False, "error": str(e)}
+
+
 def _deep_merge(base: dict, updates: dict) -> dict:
     """Deep merge updates into base dict."""
     for key, value in updates.items():

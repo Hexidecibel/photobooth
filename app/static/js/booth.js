@@ -606,7 +606,13 @@ class BoothApp {
         var printImg = document.getElementById('print-photo');
         if (printImg) printImg.src = msg.url;
 
-        if (msg.qr_url) {
+        if (msg.cloud_gallery_url) {
+            // Cloud gallery available — generate QR pointing to the cloud URL
+            var qr = document.getElementById('qr-code');
+            if (qr) qr.src = '/api/share/qr?url=' + encodeURIComponent(msg.cloud_gallery_url);
+            var reviewQr = document.getElementById('review-qr-img');
+            if (reviewQr) reviewQr.src = '/api/share/qr?url=' + encodeURIComponent(msg.cloud_gallery_url);
+        } else if (msg.qr_url) {
             var qr = document.getElementById('qr-code');
             if (qr) qr.src = msg.qr_url;
             // Also show QR on review screen

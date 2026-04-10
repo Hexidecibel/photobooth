@@ -10,12 +10,17 @@ logger = logging.getLogger(__name__)
 
 
 class PicturePlugin:
-    def __init__(self, config, broadcast, share_service=None, counter_service=None):
+    def __init__(
+        self, config, broadcast, share_service=None,
+        counter_service=None, cloud_service=None,
+    ):
         self._config = config
         self._broadcast = broadcast
         self._share_service = share_service
         self._counter_service = counter_service
+        self._cloud_service = cloud_service
         self._pipeline = None
+        self._cloud_gallery_slug = None
 
     @hookimpl
     def booth_startup(self, app):
@@ -25,6 +30,23 @@ class PicturePlugin:
         sm = app.state.state_machine
         sm.register_hook("state_processing_enter", self._on_processing_enter)
         sm.register_hook("state_processing_do", self._on_processing_do)
+
+        # Fetch cloud gallery slug at startup
+        if self._cloud_service and self._cloud_service.is_configured:
+            asyncio.create_task(self._fetch_cloud_slug())
+
+    async def _fetch_cloud_slug(self):
+        """Fetch cloud gallery slug for public URLs."""
+        try:
+            info = await self._cloud_service.get_gallery_info()
+            if info:
+                self._cloud_gallery_slug = info.get("slug", "")
+                logger.info(
+                    "Cloud gallery slug cached: %s",
+                    self._cloud_gallery_slug,
+                )
+        except Exception as e:
+            logger.warning("Failed to fetch cloud gallery slug: %s", e)
 
     async def _on_processing_enter(self, session, **kwargs):
         """Start processing the captures."""
@@ -146,7 +168,29 @@ class PicturePlugin:
                 except Exception as e:
                     logger.warning(f"Share token creation failed: {e}")
 
+            # If cloud gallery is configured, add the cloud URL for QR
+            if (
+                self._cloud_service
+                and self._cloud_service.is_configured
+                and self._cloud_gallery_slug
+            ):
+                cloud_url = self._cloud_service.get_public_url(
+                    self._cloud_gallery_slug
+                )
+                result_msg["cloud_gallery_url"] = cloud_url
+
             await self._broadcast(result_msg)
+
+            # Trigger cloud upload in background (non-blocking)
+            if (
+                self._cloud_service
+                and self._cloud_service.is_configured
+                and self._config.cloud_gallery.auto_upload
+                and session.composite_path
+            ):
+                asyncio.create_task(
+                    self._upload_to_cloud(session)
+                )
 
             # Increment photo counter
             if self._counter_service:
@@ -165,6 +209,27 @@ class PicturePlugin:
             # Mark session so _on_processing_do returns IDLE instead of stuck
             if session:
                 session._processing_failed = True
+
+    async def _upload_to_cloud(self, session):
+        """Upload photo to cloud gallery in background."""
+        try:
+            result = await self._cloud_service.upload_photo(
+                session.composite_path,
+                title=self._config.sharing.event_name,
+                description=f"Photo Booth \u2014 {session.mode}",
+            )
+            if result:
+                logger.info(
+                    "Photo uploaded to cloud gallery: %s",
+                    session.composite_path.name,
+                )
+                await self._broadcast({
+                    "type": "cloud_upload_complete",
+                    "media_id": result.get("id", ""),
+                    "photo_id": session.id,
+                })
+        except Exception as e:
+            logger.error("Cloud upload failed: %s", e)
 
     async def _on_processing_do(self, session, event=None, **kwargs):
         """Transition to review when processing is done, or idle on failure."""

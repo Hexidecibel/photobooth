@@ -89,6 +89,18 @@ async def lifespan(app: FastAPI):
     email_svc = EmailService(config.email)
     app.state.email_service = email_svc
 
+    # Cloud gallery service
+    cloud_svc = None
+    if config.cloud_gallery.enabled:
+        from app.services.cloud_gallery import CloudGalleryService
+
+        cloud_svc = CloudGalleryService(
+            api_url=config.cloud_gallery.api_url,
+            api_key=config.cloud_gallery.api_key,
+            gallery_id=config.cloud_gallery.gallery_id,
+        )
+    app.state.cloud_gallery = cloud_svc
+
     # Plugin manager
     pm = PluginManager()
     pm.load_builtins(app.state)

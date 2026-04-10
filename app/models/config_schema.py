@@ -155,6 +155,16 @@ class PluginConfig(BaseModel):
 
 
 
+class CloudGalleryConfig(BaseModel):
+    """Cloud gallery integration (gallery.cush.rocks)."""
+
+    enabled: bool = False
+    api_url: str = ""  # e.g. "https://gallery.cush.rocks/api/v1"
+    api_key: str = ""  # X-API-Key header value
+    gallery_id: str = ""  # Gallery to upload photos to
+    auto_upload: bool = True  # Upload every photo automatically
+
+
 class AdminConfig(BaseModel):
     """Admin panel authentication settings."""
 
@@ -203,4 +213,5 @@ class AppConfig(BaseModel):
     plugin: PluginConfig = PluginConfig()
     email: EmailConfig = EmailConfig()
     branding: BrandingConfig = BrandingConfig()
+    cloud_gallery: CloudGalleryConfig = CloudGalleryConfig()
     admin: AdminConfig = AdminConfig()

@@ -124,6 +124,20 @@ from_name = "Photo Booth"
 subject = "Your Photo Booth Photo!"
 body_template = "Here's your photo from {event_name}! Download it below."
 
+[cloud_gallery]
+# Upload photos to a cloud gallery for permanent, stable share URLs
+# Sign up at gallery.cush.rocks or self-host hexi-photo-gallery
+enabled = false
+api_url = ""
+api_key = ""
+gallery_id = ""
+auto_upload = true
+
+[admin]
+# Set a password hash to protect the admin panel
+# Generate with: python -c "from app.services.admin_auth import hash_password; print(hash_password('your-password'))"
+password_hash = ""
+
 [branding]
 logo_position = "top"
 logo_size = 120

@@ -759,7 +759,41 @@ class AdminPanel {
             textInput('email', 'subject', 'Subject Line', 'Email subject for photo deliveries', c.email?.subject || '', 'config-input-md')
         );
 
-        // 12. Advanced
+        // 12. Cloud Gallery
+        const cloudGalleryHtml = sectionCard('Cloud Gallery',
+            'Upload photos to a cloud gallery for permanent, stable share URLs. Works with gallery.cush.rocks or self-hosted hexi-photo-gallery.',
+            toggle('cloud_gallery', 'enabled', 'Enable Cloud Gallery', 'Automatically upload photos to the cloud gallery', c.cloud_gallery?.enabled) +
+            textInput('cloud_gallery', 'api_url', 'API URL', 'Gallery API endpoint, e.g. https://gallery.cush.rocks/api/v1', c.cloud_gallery?.api_url || '', 'config-input-md') +
+            `<div class="config-field">
+                <div class="config-field-info">
+                    <div class="config-field-label">API Key</div>
+                    <div class="config-field-desc">X-API-Key header value for authentication</div>
+                </div>
+                <div class="config-field-control">
+                    <input type="password" class="config-input config-input-md" value="${this.escAttr(c.cloud_gallery?.api_key || '')}"
+                           data-section="cloud_gallery" data-key="api_key"
+                           onchange="admin.patchConfigField('cloud_gallery', 'api_key', this.value)" />
+                </div>
+            </div>` +
+            textInput('cloud_gallery', 'gallery_id', 'Gallery ID', 'ID of the gallery to upload photos to', c.cloud_gallery?.gallery_id || '', 'config-input-md') +
+            toggle('cloud_gallery', 'auto_upload', 'Auto Upload', 'Upload every photo automatically after capture', c.cloud_gallery?.auto_upload !== false) +
+            `<div class="config-field">
+                <div class="config-field-info">
+                    <div class="config-field-label">Connection Status</div>
+                    <div class="config-field-desc">Test the cloud gallery connection</div>
+                </div>
+                <div class="config-field-control">
+                    <button type="button" class="btn btn-sm" id="cloud-gallery-test-btn"
+                            onclick="admin.testCloudGallery()"
+                            style="background:#f5f5ff; color:#6c63ff; border:1px solid #d0d0e8;">
+                        Test Connection
+                    </button>
+                    <span id="cloud-gallery-status" style="margin-left:0.75rem; font-size:0.85rem;"></span>
+                </div>
+            </div>`
+        );
+
+        // 13. Advanced
         const advancedHtml = sectionCard('Advanced',
             'Server, plugin, and debug settings. Most users will not need to change these.',
             toggle('general', 'debug', 'Debug Mode', 'Enable verbose logging for troubleshooting', c.general?.debug) +
@@ -781,6 +815,7 @@ class AdminPanel {
             ${gpioHtml}
             ${chromakeyHtml}
             ${emailHtml}
+            ${cloudGalleryHtml}
             ${advancedHtml}
         </div>`;
 
@@ -1090,6 +1125,37 @@ class AdminPanel {
         } catch (e) {
             this.showNotification(`Delete failed: ${e.message}`, 'error');
         }
+    }
+
+    /* ── Cloud Gallery ──────────────────────────────────────────── */
+
+    async testCloudGallery() {
+        const btn = document.getElementById('cloud-gallery-test-btn');
+        const status = document.getElementById('cloud-gallery-status');
+        if (!btn || !status) return;
+
+        btn.disabled = true;
+        btn.textContent = 'Testing...';
+        status.textContent = '';
+        status.style.color = '';
+
+        try {
+            const res = await fetch('/api/admin/cloud-gallery/test');
+            const data = await res.json();
+            if (data.connected) {
+                status.textContent = `Connected: ${data.gallery_name || data.slug || 'OK'}`;
+                status.style.color = '#22c55e';
+            } else {
+                status.textContent = data.error || 'Not connected';
+                status.style.color = '#ef4444';
+            }
+        } catch (e) {
+            status.textContent = `Error: ${e.message}`;
+            status.style.color = '#ef4444';
+        }
+
+        btn.disabled = false;
+        btn.textContent = 'Test Connection';
     }
 
     /* ── Theme Tab ───────────────────────────────────────────────── */
