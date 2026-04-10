@@ -31,8 +31,17 @@ async def booth_ws(ws: WebSocket):
     await ws.accept()
     _clients.add(ws)
 
-    # Get state machine from app state (can't use Depends in WebSocket easily)
+    # Get state machine from app state
     sm: StateMachine = ws.app.state.state_machine
+
+    # Auto-reset to idle if stuck in a completed state
+    from app.models.state import BoothState
+    stale_states = {BoothState.REVIEW, BoothState.PRINT, BoothState.THANKYOU}
+    if sm.state in stale_states:
+        try:
+            await sm.transition(BoothState.IDLE)
+        except Exception:
+            sm._state = BoothState.IDLE
 
     # Build sound config for the client
     sound_config = {}
