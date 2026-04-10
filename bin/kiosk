@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+AUTOSTART_DIR="$HOME/.config/autostart"
+DESKTOP_FILE="photobooth-kiosk.desktop"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+
+case "${1:-status}" in
+    enable)
+        mkdir -p "$AUTOSTART_DIR"
+        cp "$PROJECT_DIR/deploy/$DESKTOP_FILE" "$AUTOSTART_DIR/"
+        echo "Kiosk mode enabled. Will start on next login."
+        ;;
+    disable)
+        rm -f "$AUTOSTART_DIR/$DESKTOP_FILE"
+        echo "Kiosk mode disabled."
+        ;;
+    start)
+        # Start kiosk now without rebooting
+        xset s off -dpms 2>/dev/null || true
+        unclutter -idle 0.1 -root &
+        CHROMIUM=$(which chromium 2>/dev/null || which chromium-browser)
+        exec $CHROMIUM --kiosk --noerrdialogs --disable-infobars \
+            --disable-session-crashed-bubble --disable-component-update \
+            --autoplay-policy=no-user-gesture-required \
+            http://localhost:8000/booth
+        ;;
+    stop)
+        pkill -f "chromium.*kiosk" 2>/dev/null && echo "Kiosk stopped." || echo "Not running."
+        ;;
+    status)
+        if [ -f "$AUTOSTART_DIR/$DESKTOP_FILE" ]; then
+            echo "Kiosk mode: enabled (starts on login)"
+        else
+            echo "Kiosk mode: disabled"
+        fi
+        if pgrep -f "chromium.*kiosk" > /dev/null 2>&1; then
+            echo "Kiosk process: running"
+        else
+            echo "Kiosk process: not running"
+        fi
+        ;;
+    *)
+        echo "Usage: bin/kiosk {enable|disable|start|stop|status}"
+        ;;
+esac

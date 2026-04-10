@@ -91,31 +91,10 @@ systemctl start photobooth
 read -p "Enable kiosk mode (Chromium fullscreen)? [y/N] " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    KIOSK_DIR="${CURRENT_HOME}/.config/systemd/user"
-    sudo -u "$CURRENT_USER" mkdir -p "$KIOSK_DIR"
-
-    CHROMIUM_BIN=$(which chromium 2>/dev/null || which chromium-browser 2>/dev/null || echo "/usr/bin/chromium")
-    cat > "${KIOSK_DIR}/photobooth-kiosk.service" <<KIOSKEOF
-[Unit]
-Description=Photobooth Kiosk Display
-After=graphical-session.target
-Wants=photobooth.service
-
-[Service]
-Type=simple
-Environment=DISPLAY=:0
-ExecStartPre=/bin/sh -c 'xset s off -dpms 2>/dev/null || true'
-ExecStart=${CHROMIUM_BIN} --kiosk --noerrdialogs --disable-infobars --disable-session-crashed-bubble --disable-component-update --check-for-update-interval=31536000 --autoplay-policy=no-user-gesture-required http://localhost:8000/booth
-Restart=always
-RestartSec=5
-
-[Install]
-WantedBy=graphical-session.target
-KIOSKEOF
-    chown "$CURRENT_USER:$CURRENT_USER" "${KIOSK_DIR}/photobooth-kiosk.service"
-    sudo -u "$CURRENT_USER" systemctl --user daemon-reload
-    sudo -u "$CURRENT_USER" systemctl --user enable photobooth-kiosk
-    echo "Kiosk mode enabled. Will start on next login."
+    AUTOSTART_DIR="${CURRENT_HOME}/.config/autostart"
+    sudo -u "$CURRENT_USER" mkdir -p "$AUTOSTART_DIR"
+    sudo -u "$CURRENT_USER" cp deploy/photobooth-kiosk.desktop "${AUTOSTART_DIR}/"
+    echo "Kiosk mode enabled. Chromium will launch fullscreen on next login."
 else
     echo "Headless mode. Access booth from any browser on your network."
 fi
