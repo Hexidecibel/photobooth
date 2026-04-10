@@ -39,12 +39,23 @@ class ViewPlugin:
         if event == "choose":
             # Create a new capture session with the chosen mode/count
             mode = kwargs.get("mode", "photo")
-            count = kwargs.get("count", self._config.picture.capture_count)
-            self._sm.new_session(mode=mode, capture_count=int(count))
-            # Apply guest-selected template if provided
+            count = int(kwargs.get("count", self._config.picture.capture_count))
+            self._sm.new_session(mode=mode, capture_count=count)
+            # Apply guest-selected template if provided, otherwise auto-pick
             template = kwargs.get("template")
             if template and self._sm.session:
                 self._sm.session.layout_template = template
+            elif self._sm.session:
+                # Auto-select template based on capture count
+                auto_templates = {
+                    1: "single",
+                    2: "duo-4x6",
+                    3: "triple-4x6",
+                    4: "classic-4x6",
+                }
+                self._sm.session.layout_template = auto_templates.get(
+                    count, self._config.picture.layout_template
+                )
             return BoothState.PREVIEW
         return None
 
