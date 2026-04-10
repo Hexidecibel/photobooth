@@ -104,8 +104,8 @@
             overflow-y: auto;
         }
 
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        .tab-content { display: none; min-height: 60vh; }
+        .tab-content.active { display: flex; flex-direction: column; }
 
         /* ── Cards ──────────────────────────────────────── */
         .cards {
@@ -440,7 +440,7 @@
         }
 
         /* ── States ─────────────────────────────────────── */
-        .loading, .empty-state, .error {
+        .loading, .error {
             text-align: center;
             padding: 3rem;
             color: #888;
@@ -448,6 +448,30 @@
         }
 
         .error { color: #f44336; }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+            color: #888;
+            text-align: center;
+            flex: 1;
+        }
+        .empty-state .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        .empty-state h3 {
+            margin: 0 0 0.5rem;
+            color: #aaa;
+        }
+        .empty-state p {
+            margin: 0;
+            font-size: 0.9rem;
+        }
 
         /* ── Bar Chart (Analytics) ─────────────────────── */
         .bar-chart {
@@ -650,6 +674,145 @@
                 width: 100%;
             }
         }
+
+        /* ── Template Editor ───────────────────────────── */
+        .template-editor-layout {
+            display: flex;
+            gap: 1rem;
+            flex: 1;
+        }
+        .template-sidebar {
+            width: 200px;
+            flex-shrink: 0;
+        }
+        .template-sidebar h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 0.75rem;
+        }
+        .tpl-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 1rem; }
+        .tpl-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: #f5f5ff;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .tpl-item.active, .tpl-item:hover { background: #e8e8ff; border-color: #6c63ff; }
+        .tpl-item span { pointer-events: none; }
+        .btn-icon-small {
+            background: none; border: none; cursor: pointer; font-size: 1.1rem;
+            color: #999; padding: 0 4px; line-height: 1;
+        }
+        .btn-icon-small:hover { color: #f44336; }
+        .btn-secondary {
+            background: #f5f5ff; color: #6c63ff; border: 1px solid #d0d0e8;
+            padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.85rem;
+            cursor: pointer; width: 100%;
+        }
+        .btn-secondary:hover { background: #e8e8ff; }
+        .btn-text { background: none; border: none; cursor: pointer; font-size: 0.85rem; padding: 0.25rem 0; }
+        .template-canvas-area { flex: 1; min-width: 0; }
+        .template-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border: 1px solid #e8e8e8;
+        }
+        .template-name-edit input {
+            padding: 6px 10px; background: #fafafa; border: 1px solid #ddd;
+            color: #1a1a2e; border-radius: 4px; width: 160px; font-size: 0.9rem;
+        }
+        .template-name-edit input:focus { outline: none; border-color: #6c63ff; }
+        .template-size-controls {
+            display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: #555;
+        }
+        .input-small {
+            width: 60px; padding: 4px 8px; background: #fafafa; border: 1px solid #ddd;
+            color: #1a1a2e; border-radius: 4px; font-size: 0.85rem;
+        }
+        .template-actions { display: flex; gap: 0.5rem; margin-left: auto; }
+        .template-canvas-wrapper {
+            display: flex; justify-content: center; padding: 1.5rem;
+            background: #f0f0f0; border-radius: 8px; border: 1px solid #e0e0e0;
+        }
+        .template-canvas {
+            position: relative; border: 2px dashed #bbb; overflow: hidden;
+            background: #fff;
+        }
+        .canvas-slot {
+            position: absolute;
+            background: rgba(108, 99, 255, 0.12);
+            border: 2px solid rgba(108, 99, 255, 0.5);
+            border-radius: 4px;
+            cursor: move;
+            display: flex; align-items: center; justify-content: center;
+            transition: border-color 0.15s, background 0.15s;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .canvas-slot.selected {
+            border-color: #6c63ff;
+            background: rgba(108, 99, 255, 0.25);
+            z-index: 10;
+        }
+        .canvas-slot:hover { border-color: #6c63ff; }
+        .slot-label {
+            font-size: 1.5rem; font-weight: bold;
+            color: rgba(108, 99, 255, 0.5); pointer-events: none;
+        }
+        .resize-handle {
+            position: absolute; bottom: 0; right: 0; width: 16px; height: 16px;
+            background: #6c63ff; cursor: se-resize; border-radius: 2px 0 4px 0;
+        }
+        .canvas-footer {
+            position: absolute; left: 0; right: 0;
+            background: rgba(0,0,0,0.06);
+            display: flex; align-items: center; justify-content: center;
+            pointer-events: none; font-style: italic; color: #666;
+        }
+        .slot-properties, .footer-properties {
+            margin-top: 1rem; padding: 1rem;
+            background: #fff; border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid #e8e8e8;
+        }
+        .slot-properties h4, .footer-properties h4 {
+            font-size: 0.9rem; font-weight: 600; color: #1a1a2e;
+            margin-bottom: 0.75rem;
+        }
+        .slot-properties label, .footer-properties label {
+            display: flex; align-items: center; gap: 8px;
+            margin-bottom: 0.5rem; font-size: 0.85rem; color: #444;
+        }
+        .slot-properties input[type="range"], .footer-properties input[type="range"] {
+            flex: 1; accent-color: #6c63ff;
+        }
+        .footer-properties .input-field {
+            padding: 6px 10px; background: #fafafa; border: 1px solid #ddd;
+            color: #1a1a2e; border-radius: 4px; width: 100%; font-size: 0.85rem;
+        }
+        .template-empty {
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; padding: 3rem; color: #888; text-align: center;
+        }
+        .template-empty p { font-size: 0.9rem; margin-top: 0.5rem; }
+
+        @media (max-width: 768px) {
+            .template-editor-layout { flex-direction: column; }
+            .template-sidebar { width: 100%; }
+            .template-size-controls { flex-wrap: wrap; }
+        }
     </style>
 </head>
 <body>
@@ -732,7 +895,18 @@
 
             <div class="tab-content" data-content="templates">
                 <div id="templates-content">
-                    <div class="loading">Loading templates...</div>
+                    <div class="template-editor-layout">
+                        <div class="template-sidebar">
+                            <h3>Templates</h3>
+                            <div id="template-list" class="tpl-list"></div>
+                            <button class="btn-secondary" id="new-template-btn">+ New Template</button>
+                        </div>
+                        <div class="template-canvas-area" id="template-editor-area">
+                            <div class="template-empty">
+                                <p>Select a template from the sidebar or create a new one.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 

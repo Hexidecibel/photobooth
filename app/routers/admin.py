@@ -1,5 +1,6 @@
 """Admin API endpoints for configuration and system management."""
 
+import json
 import platform
 import shutil
 import socket
@@ -9,7 +10,7 @@ from collections import Counter
 from datetime import datetime
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, File, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
 
 from app.config import save_config
@@ -129,6 +130,41 @@ async def list_templates():
     from app.processing.templates import list_templates
 
     return {"templates": list_templates()}
+
+
+@router.get("/templates/{name}")
+async def get_template(name: str):
+    """Get a template's JSON definition."""
+    templates_dir = Path(__file__).parent.parent / "static" / "templates"
+    path = templates_dir / f"{name}.json"
+    if not path.exists():
+        raise HTTPException(404, "Template not found")
+    return json.loads(path.read_text())
+
+
+@router.put("/templates/{name}")
+async def save_template(name: str, request: Request):
+    """Save/update a template definition."""
+    data = await request.json()
+    templates_dir = Path(__file__).parent.parent / "static" / "templates"
+    templates_dir.mkdir(parents=True, exist_ok=True)
+    path = templates_dir / f"{name}.json"
+    path.write_text(json.dumps(data, indent=2))
+    return {"status": "saved", "name": name}
+
+
+@router.delete("/templates/{name}")
+async def delete_template(name: str):
+    """Delete a template."""
+    templates_dir = Path(__file__).parent.parent / "static" / "templates"
+    path = templates_dir / f"{name}.json"
+    if not path.exists():
+        raise HTTPException(404, "Template not found")
+    remaining = list(templates_dir.glob("*.json"))
+    if len(remaining) <= 1:
+        raise HTTPException(400, "Cannot delete the last template")
+    path.unlink()
+    return {"status": "deleted"}
 
 
 @router.get("/effects")
@@ -353,6 +389,52 @@ async def update_camera_framing(request: Request):
     request.app.state.config = config
 
     return {"status": "updated"}
+
+
+@router.post("/branding/logo")
+async def upload_logo(file: UploadFile = File(...)):
+    """Upload a company/event logo."""
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(400, "File must be an image")
+
+    branding_dir = Path(__file__).parent.parent / "static" / "branding"
+    branding_dir.mkdir(parents=True, exist_ok=True)
+
+    # Determine extension from content type
+    ext = file.content_type.split("/")[-1]
+    if ext == "svg+xml":
+        ext = "svg"
+    logo_path = branding_dir / f"logo.{ext}"
+
+    # Remove any existing logo files
+    for existing in branding_dir.glob("logo.*"):
+        existing.unlink()
+
+    content = await file.read()
+    logo_path.write_bytes(content)
+
+    return {"status": "uploaded", "url": f"/static/branding/logo.{ext}"}
+
+
+@router.delete("/branding/logo")
+async def delete_logo():
+    """Remove the uploaded logo."""
+    branding_dir = Path(__file__).parent.parent / "static" / "branding"
+    for existing in branding_dir.glob("logo.*"):
+        existing.unlink()
+    return {"status": "deleted"}
+
+
+@router.get("/branding")
+async def get_branding():
+    """Get current branding info (logo URL, etc.)."""
+    branding_dir = Path(__file__).parent.parent / "static" / "branding"
+    logo_url = None
+    if branding_dir.exists():
+        for f in branding_dir.glob("logo.*"):
+            logo_url = f"/static/branding/{f.name}"
+            break
+    return {"logo_url": logo_url}
 
 
 def _deep_merge(base: dict, updates: dict) -> dict:

@@ -150,6 +150,17 @@ class PluginConfig(BaseModel):
 
 
 
+class BrandingConfig(BaseModel):
+    """Company/event branding settings."""
+
+    logo_position: str = "top"  # top, bottom, overlay
+    logo_size: int = 120  # px height on booth screen
+    show_on_idle: bool = True
+    show_on_prints: bool = True  # Include logo in printed photos
+    company_name: str = ""
+    tagline: str = ""
+
+
 class EmailConfig(BaseModel):
     """Email sharing settings."""
 
@@ -180,3 +191,4 @@ class AppConfig(BaseModel):
     sound: SoundConfig = SoundConfig()
     plugin: PluginConfig = PluginConfig()
     email: EmailConfig = EmailConfig()
+    branding: BrandingConfig = BrandingConfig()

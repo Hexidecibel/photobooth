@@ -46,6 +46,25 @@ section[data-state].active {
 }
 
 /* ===================================================================
+   Logo / Branding
+   =================================================================== */
+
+.booth-logo {
+    position: absolute;
+    top: var(--pb-spacing);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 5;
+}
+
+.booth-logo img {
+    max-height: 100px;
+    max-width: 300px;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5));
+}
+
+/* ===================================================================
    IDLE — Attract screen
    =================================================================== */
 

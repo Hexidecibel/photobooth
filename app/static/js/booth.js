@@ -81,6 +81,7 @@ class BoothApp {
         this.bindEvents();
         this.setupSettingsAccess();
         this.loadConfig();
+        this.loadBranding();
     }
 
     /* ------------------------------------------------------------------ */
@@ -94,6 +95,24 @@ class BoothApp {
         } catch (e) {
             console.warn('[booth] failed to load config:', e);
             this.config = null;
+        }
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  Branding / logo                                                    */
+    /* ------------------------------------------------------------------ */
+
+    async loadBranding() {
+        try {
+            var res = await fetch('/api/admin/branding');
+            var data = await res.json();
+            var logoImg = document.getElementById('logo-img');
+            if (data.logo_url && logoImg) {
+                logoImg.src = data.logo_url;
+                logoImg.style.display = 'block';
+            }
+        } catch (e) {
+            // Branding endpoint may not be available
         }
     }
 

@@ -48,7 +48,8 @@ class PicturePlugin:
             })
 
             await self._pipeline.process(
-                session, self._config.picture, footer_vars
+                session, self._config.picture, footer_vars,
+                branding=self._config.branding,
             )
 
             await self._broadcast({

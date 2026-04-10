@@ -472,7 +472,11 @@ class AdminPanel {
         const container = document.getElementById('gallery-content');
 
         if (!photos || photos.length === 0) {
-            container.innerHTML = '<div class="empty-state">No photos yet. Take some pictures!</div>';
+            container.innerHTML = `<div class="empty-state">
+                <div class="empty-icon">&#128247;</div>
+                <h3>No photos yet</h3>
+                <p>Photos will appear here after guests start using the booth.</p>
+            </div>`;
             return;
         }
 
@@ -517,7 +521,28 @@ class AdminPanel {
         // so we parse the currently loaded stylesheet)
         const vars = this.getCurrentCSSVariables();
 
-        let html = '<form id="theme-form" class="config-form">';
+        let html = '';
+
+        // Branding / Logo section (outside the theme form)
+        html += `<div class="config-section">
+            <h3>Event Logo</h3>
+            <div style="display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;">
+                <div id="logo-preview" style="width:160px;height:100px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+                    <img id="admin-logo-preview" src="" alt="" style="display:none;max-width:100%;max-height:100%;object-fit:contain;">
+                    <span id="no-logo-text" style="color:#999;font-size:0.85rem;">No logo uploaded</span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:0.5rem;">
+                    <label class="btn btn-primary" style="cursor:pointer;">
+                        Upload Logo
+                        <input type="file" id="logo-upload" accept="image/*" hidden>
+                    </label>
+                    <button class="btn btn-danger btn-sm" id="remove-logo" style="display:none;">Remove</button>
+                    <p style="font-size:0.8rem;color:#888;margin:0;">Recommended: PNG with transparent background, at least 400px wide</p>
+                </div>
+            </div>
+        </div>`;
+
+        html += '<form id="theme-form" class="config-form">';
         html += '<div class="config-section"><h3>Colors</h3>';
 
         const colorVars = [
@@ -583,6 +608,60 @@ class AdminPanel {
             e.preventDefault();
             this.saveTheme();
         });
+
+        // Logo upload handler
+        document.getElementById('logo-upload')?.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const form = new FormData();
+            form.append('file', file);
+            try {
+                const res = await fetch('/api/admin/branding/logo', { method: 'POST', body: form });
+                const data = await res.json();
+                if (data.url) {
+                    this.loadBrandingPreview();
+                    this.showNotification('Logo uploaded!', 'success');
+                }
+            } catch (err) {
+                this.showNotification('Logo upload failed: ' + err.message, 'error');
+            }
+        });
+
+        // Remove logo handler
+        document.getElementById('remove-logo')?.addEventListener('click', async () => {
+            try {
+                await fetch('/api/admin/branding/logo', { method: 'DELETE' });
+                this.loadBrandingPreview();
+                this.showNotification('Logo removed', 'success');
+            } catch (err) {
+                this.showNotification('Failed to remove logo: ' + err.message, 'error');
+            }
+        });
+
+        // Load current branding
+        this.loadBrandingPreview();
+    }
+
+    async loadBrandingPreview() {
+        try {
+            const res = await fetch('/api/admin/branding');
+            const data = await res.json();
+            const img = document.getElementById('admin-logo-preview');
+            const noText = document.getElementById('no-logo-text');
+            const removeBtn = document.getElementById('remove-logo');
+            if (data.logo_url && img) {
+                img.src = data.logo_url + '?' + Date.now();
+                img.style.display = 'block';
+                if (noText) noText.style.display = 'none';
+                if (removeBtn) removeBtn.style.display = '';
+            } else {
+                if (img) img.style.display = 'none';
+                if (noText) noText.style.display = '';
+                if (removeBtn) removeBtn.style.display = 'none';
+            }
+        } catch (e) {
+            // Branding endpoint may not be available
+        }
     }
 
     getCurrentCSSVariables() {
@@ -672,51 +751,10 @@ class AdminPanel {
     /* ── Templates Tab ───────────────────────────────────────────── */
 
     async loadTemplates() {
-        const container = document.getElementById('templates-content');
-        container.innerHTML = '<div class="loading">Loading templates...</div>';
-
-        try {
-            const [tplRes, fxRes] = await Promise.all([
-                fetch('/api/admin/templates'),
-                fetch('/api/admin/effects'),
-            ]);
-            const templates = await tplRes.json();
-            const effects = await fxRes.json();
-            this.renderTemplates(templates.templates, effects.effects);
-        } catch (e) {
-            container.innerHTML = `<div class="error">Failed to load templates: ${e.message}</div>`;
+        if (!this.templateEditor) {
+            this.templateEditor = new TemplateEditor(this);
         }
-    }
-
-    renderTemplates(templates, effects) {
-        const container = document.getElementById('templates-content');
-
-        let html = '<div class="config-section"><h3>Layout Templates</h3>';
-        if (templates.length === 0) {
-            html += '<div class="empty-state">No templates found. Add JSON templates to app/static/templates/</div>';
-        } else {
-            html += '<div class="template-list">';
-            for (const t of templates) {
-                html += `<div class="template-item">
-                    <div class="template-icon">&#9638;</div>
-                    <div class="template-name">${t}</div>
-                </div>`;
-            }
-            html += '</div>';
-        }
-        html += '</div>';
-
-        html += '<div class="config-section"><h3>Photo Effects</h3>';
-        html += '<div class="effects-grid">';
-        for (const fx of effects) {
-            html += `<div class="effect-item">
-                <div class="effect-name">${fx}</div>
-            </div>`;
-        }
-        html += '</div>';
-        html += '</div>';
-
-        container.innerHTML = html;
+        this.templateEditor.init();
     }
 
     /* ── Analytics Tab ───────────────────────────────────────────── */
@@ -817,6 +855,528 @@ class AdminPanel {
             el.classList.remove('show');
             setTimeout(() => el.remove(), 300);
         }, 3000);
+    }
+}
+
+/* ── Template Editor ─────────────────────────────────────────────── */
+
+class TemplateEditor {
+    constructor(adminPanel) {
+        this.admin = adminPanel;
+        this.currentTemplate = null;
+        this.currentName = null;
+        this.slots = [];
+        this.selectedSlot = null;
+        this.footer = null;
+        this.isDragging = false;
+        this.isResizing = false;
+        this.dragOffset = { x: 0, y: 0 };
+    }
+
+    async init() {
+        await this.loadTemplateList();
+        this.bindSidebarButtons();
+    }
+
+    bindSidebarButtons() {
+        const newBtn = document.getElementById('new-template-btn');
+        if (newBtn && !newBtn._bound) {
+            newBtn._bound = true;
+            newBtn.addEventListener('click', () => this.createNew());
+        }
+    }
+
+    async loadTemplateList() {
+        try {
+            const res = await fetch('/api/admin/templates');
+            const data = await res.json();
+            const list = document.getElementById('template-list');
+            if (!list) return;
+            list.innerHTML = data.templates.map(name => `
+                <div class="tpl-item ${name === this.currentName ? 'active' : ''}"
+                     data-name="${name}">
+                    <span>${name}</span>
+                    <button class="btn-icon-small delete-tpl" data-name="${name}">&times;</button>
+                </div>
+            `).join('');
+
+            list.querySelectorAll('.tpl-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('delete-tpl')) return;
+                    this.loadTemplate(item.dataset.name);
+                });
+            });
+
+            list.querySelectorAll('.delete-tpl').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.deleteTemplate(btn.dataset.name);
+                });
+            });
+
+            // Auto-load first template if none selected
+            if (!this.currentName && data.templates.length > 0) {
+                this.loadTemplate(data.templates[0]);
+            }
+        } catch (e) {
+            this.admin.showNotification('Failed to load template list: ' + e.message, 'error');
+        }
+    }
+
+    async loadTemplate(name) {
+        try {
+            const res = await fetch(`/api/admin/templates/${name}`);
+            if (!res.ok) throw new Error('Template not found');
+            const data = await res.json();
+            this.currentTemplate = data;
+            this.currentName = name;
+            this.slots = (data.slots || []).map(s => ({...s}));
+            this.footer = data.footer ? {...data.footer} : null;
+            this.renderEditorUI();
+            this.loadTemplateList();
+        } catch (e) {
+            this.admin.showNotification('Failed to load template: ' + e.message, 'error');
+        }
+    }
+
+    createNew() {
+        this.currentName = null;
+        this.currentTemplate = {
+            name: 'custom',
+            width_inches: 4,
+            height_inches: 6,
+            dpi: 600,
+            background: '#ffffff',
+        };
+        this.slots = [
+            { x: 0.05, y: 0.05, width: 0.9, height: 0.4, rotation: 0 }
+        ];
+        this.footer = null;
+        this.selectedSlot = null;
+        this.renderEditorUI();
+    }
+
+    renderEditorUI() {
+        const area = document.getElementById('template-editor-area');
+        if (!area) return;
+
+        const tpl = this.currentTemplate;
+        const dpiOptions = [300, 600].map(d =>
+            `<option value="${d}" ${tpl.dpi === d ? 'selected' : ''}>${d}</option>`
+        ).join('');
+
+        area.innerHTML = `
+            <div class="template-toolbar">
+                <div class="template-name-edit">
+                    <input type="text" id="template-name" placeholder="Template name"
+                           value="${this.currentName || tpl.name || ''}">
+                </div>
+                <div class="template-size-controls">
+                    <label>Width (in):</label>
+                    <input type="number" id="tpl-width" value="${tpl.width_inches}" step="0.5" min="1" max="12" class="input-small">
+                    <label>Height (in):</label>
+                    <input type="number" id="tpl-height" value="${tpl.height_inches}" step="0.5" min="1" max="12" class="input-small">
+                    <label>DPI:</label>
+                    <select id="tpl-dpi" class="input-small">${dpiOptions}</select>
+                </div>
+                <div class="template-actions">
+                    <button class="btn-secondary" id="add-slot-btn">+ Add Photo Slot</button>
+                    <button class="btn-secondary" id="toggle-footer-btn">${this.footer ? 'Remove Footer' : 'Add Footer'}</button>
+                    <button class="btn btn-primary" id="save-template-btn">Save</button>
+                </div>
+            </div>
+            <div class="template-canvas-wrapper">
+                <div class="template-canvas" id="template-canvas"></div>
+            </div>
+            <div class="slot-properties" id="slot-properties" style="display:none">
+                <h4>Slot Properties</h4>
+                <label>X: <input type="range" id="slot-x" min="0" max="100" step="1"> <span id="slot-x-val"></span>%</label>
+                <label>Y: <input type="range" id="slot-y" min="0" max="100" step="1"> <span id="slot-y-val"></span>%</label>
+                <label>Width: <input type="range" id="slot-w" min="5" max="100" step="1"> <span id="slot-w-val"></span>%</label>
+                <label>Height: <input type="range" id="slot-h" min="5" max="100" step="1"> <span id="slot-h-val"></span>%</label>
+                <label>Rotation: <input type="range" id="slot-rot" min="-45" max="45" step="1" value="0"> <span id="slot-rot-val">0</span>&deg;</label>
+                <button class="btn-text" id="delete-slot-btn" style="color:#f44336">Delete Slot</button>
+            </div>
+            <div class="footer-properties" id="footer-properties" style="display:none">
+                <h4>Footer</h4>
+                <label>Text: <input type="text" id="footer-text" class="input-field" placeholder="{event_name} - {date}"></label>
+                <label>Font Size: <input type="number" id="footer-font-size" value="18" min="8" max="48" class="input-small"></label>
+                <label>Color: <input type="color" id="footer-color" value="#333333"></label>
+                <label>Y Position: <input type="range" id="footer-y" min="70" max="99" step="1"> <span id="footer-y-val"></span>%</label>
+            </div>
+        `;
+
+        // Bind size change to re-render canvas
+        ['tpl-width', 'tpl-height'].forEach(id => {
+            document.getElementById(id)?.addEventListener('change', () => this.renderCanvas());
+        });
+
+        // Bind buttons
+        document.getElementById('add-slot-btn')?.addEventListener('click', () => this.addSlot());
+        document.getElementById('toggle-footer-btn')?.addEventListener('click', () => this.toggleFooter());
+        document.getElementById('save-template-btn')?.addEventListener('click', () => this.save());
+        document.getElementById('delete-slot-btn')?.addEventListener('click', () => {
+            if (this.selectedSlot !== null) this.deleteSlot(this.selectedSlot);
+        });
+
+        // Bind slot property sliders
+        ['slot-x', 'slot-y', 'slot-w', 'slot-h', 'slot-rot'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', () => this.onSliderChange());
+            }
+        });
+
+        // Bind footer property inputs
+        ['footer-text', 'footer-font-size', 'footer-color', 'footer-y'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', () => this.onFooterInputChange());
+            }
+        });
+
+        this.renderCanvas();
+        this.updateFooterPanel();
+    }
+
+    renderCanvas() {
+        const canvas = document.getElementById('template-canvas');
+        if (!canvas) return;
+
+        const w = parseFloat(document.getElementById('tpl-width')?.value || this.currentTemplate.width_inches);
+        const h = parseFloat(document.getElementById('tpl-height')?.value || this.currentTemplate.height_inches);
+        const maxHeight = 500;
+        const scale = maxHeight / h;
+        canvas.style.width = `${w * scale}px`;
+        canvas.style.height = `${maxHeight}px`;
+        canvas.style.background = this.currentTemplate.background || '#ffffff';
+
+        canvas.innerHTML = '';
+
+        // Render slots
+        this.slots.forEach((slot, i) => {
+            const el = document.createElement('div');
+            el.className = 'canvas-slot' + (this.selectedSlot === i ? ' selected' : '');
+            el.dataset.index = i;
+            el.style.left = `${slot.x * 100}%`;
+            el.style.top = `${slot.y * 100}%`;
+            el.style.width = `${slot.width * 100}%`;
+            el.style.height = `${slot.height * 100}%`;
+            if (slot.rotation) el.style.transform = `rotate(${slot.rotation}deg)`;
+            el.innerHTML = `<span class="slot-label">${i + 1}</span>`;
+
+            // Drag to move
+            el.addEventListener('mousedown', (e) => this.startDrag(e, i));
+            el.addEventListener('touchstart', (e) => this.startDrag(e, i), {passive: false});
+
+            // Resize handle
+            const handle = document.createElement('div');
+            handle.className = 'resize-handle';
+            handle.addEventListener('mousedown', (e) => { e.stopPropagation(); this.startResize(e, i); });
+            handle.addEventListener('touchstart', (e) => { e.stopPropagation(); this.startResize(e, i); }, {passive: false});
+            el.appendChild(handle);
+
+            // Click to select
+            el.addEventListener('click', (e) => { e.stopPropagation(); this.selectSlot(i); });
+
+            canvas.appendChild(el);
+        });
+
+        // Render footer
+        if (this.footer) {
+            const footerEl = document.createElement('div');
+            footerEl.className = 'canvas-footer';
+            footerEl.style.top = `${(this.footer.y || 0.95) * 100}%`;
+            footerEl.style.height = `${(this.footer.height || 0.04) * 100}%`;
+            footerEl.textContent = this.footer.text || 'Footer text';
+            footerEl.style.fontSize = `${(this.footer.font_size || 18) * 0.5}px`;
+            footerEl.style.color = this.footer.color || '#333';
+            canvas.appendChild(footerEl);
+        }
+
+        // Clicking canvas background deselects
+        canvas.addEventListener('click', (e) => {
+            if (e.target === canvas) this.deselectAll();
+        });
+    }
+
+    startDrag(e, index) {
+        e.preventDefault();
+        this.isDragging = true;
+        this.selectedSlot = index;
+        const canvas = document.getElementById('template-canvas');
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        this.dragOffset = {
+            x: (clientX - rect.left) / rect.width - this.slots[index].x,
+            y: (clientY - rect.top) / rect.height - this.slots[index].y,
+        };
+
+        const onMove = (e) => {
+            if (!this.isDragging) return;
+            const cx = e.touches ? e.touches[0].clientX : e.clientX;
+            const cy = e.touches ? e.touches[0].clientY : e.clientY;
+            const newX = Math.max(0, Math.min(1 - this.slots[index].width,
+                (cx - rect.left) / rect.width - this.dragOffset.x));
+            const newY = Math.max(0, Math.min(1 - this.slots[index].height,
+                (cy - rect.top) / rect.height - this.dragOffset.y));
+            this.slots[index].x = Math.round(newX * 100) / 100;
+            this.slots[index].y = Math.round(newY * 100) / 100;
+            this.renderCanvas();
+            this.updateSlotProperties();
+        };
+
+        const onUp = () => {
+            this.isDragging = false;
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+            document.removeEventListener('touchmove', onMove);
+            document.removeEventListener('touchend', onUp);
+        };
+
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+        document.addEventListener('touchmove', onMove, {passive: false});
+        document.addEventListener('touchend', onUp);
+
+        this.selectSlot(index);
+    }
+
+    startResize(e, index) {
+        e.preventDefault();
+        this.isResizing = true;
+        this.selectedSlot = index;
+        const canvas = document.getElementById('template-canvas');
+        const rect = canvas.getBoundingClientRect();
+
+        const onMove = (e) => {
+            if (!this.isResizing) return;
+            const cx = e.touches ? e.touches[0].clientX : e.clientX;
+            const cy = e.touches ? e.touches[0].clientY : e.clientY;
+            const slot = this.slots[index];
+            const newW = Math.max(0.05, Math.min(1 - slot.x,
+                (cx - rect.left) / rect.width - slot.x));
+            const newH = Math.max(0.05, Math.min(1 - slot.y,
+                (cy - rect.top) / rect.height - slot.y));
+            slot.width = Math.round(newW * 100) / 100;
+            slot.height = Math.round(newH * 100) / 100;
+            this.renderCanvas();
+            this.updateSlotProperties();
+        };
+
+        const onUp = () => {
+            this.isResizing = false;
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+            document.removeEventListener('touchmove', onMove);
+            document.removeEventListener('touchend', onUp);
+        };
+
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+        document.addEventListener('touchmove', onMove, {passive: false});
+        document.addEventListener('touchend', onUp);
+
+        this.selectSlot(index);
+    }
+
+    selectSlot(index) {
+        this.selectedSlot = index;
+        this.renderCanvas();
+        this.updateSlotProperties();
+        document.getElementById('slot-properties').style.display = 'block';
+    }
+
+    deselectAll() {
+        this.selectedSlot = null;
+        document.getElementById('slot-properties').style.display = 'none';
+        this.renderCanvas();
+    }
+
+    updateSlotProperties() {
+        if (this.selectedSlot === null) return;
+        const slot = this.slots[this.selectedSlot];
+        if (!slot) return;
+
+        const setSlider = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.value = val;
+            const valEl = document.getElementById(id + '-val');
+            if (valEl) valEl.textContent = val;
+        };
+
+        setSlider('slot-x', Math.round(slot.x * 100));
+        setSlider('slot-y', Math.round(slot.y * 100));
+        setSlider('slot-w', Math.round(slot.width * 100));
+        setSlider('slot-h', Math.round(slot.height * 100));
+        setSlider('slot-rot', slot.rotation || 0);
+    }
+
+    onSliderChange() {
+        if (this.selectedSlot === null) return;
+        const slot = this.slots[this.selectedSlot];
+
+        const getVal = (id) => {
+            const el = document.getElementById(id);
+            const val = el ? parseFloat(el.value) : 0;
+            const valEl = document.getElementById(id + '-val');
+            if (valEl) valEl.textContent = Math.round(val);
+            return val;
+        };
+
+        slot.x = getVal('slot-x') / 100;
+        slot.y = getVal('slot-y') / 100;
+        slot.width = getVal('slot-w') / 100;
+        slot.height = getVal('slot-h') / 100;
+        slot.rotation = getVal('slot-rot');
+
+        this.renderCanvas();
+    }
+
+    addSlot() {
+        this.slots.push({
+            x: 0.1,
+            y: 0.1 + this.slots.length * 0.22,
+            width: 0.8,
+            height: 0.2,
+            rotation: 0
+        });
+        this.renderCanvas();
+    }
+
+    deleteSlot(index) {
+        this.slots.splice(index, 1);
+        this.selectedSlot = null;
+        document.getElementById('slot-properties').style.display = 'none';
+        this.renderCanvas();
+    }
+
+    toggleFooter() {
+        if (this.footer) {
+            this.footer = null;
+        } else {
+            this.footer = {
+                y: 0.95,
+                height: 0.04,
+                text: '{event_name} - {date}',
+                font_size: 18,
+                color: '#333333'
+            };
+        }
+        // Update button text
+        const btn = document.getElementById('toggle-footer-btn');
+        if (btn) btn.textContent = this.footer ? 'Remove Footer' : 'Add Footer';
+        this.updateFooterPanel();
+        this.renderCanvas();
+    }
+
+    updateFooterPanel() {
+        const panel = document.getElementById('footer-properties');
+        if (!panel) return;
+        if (!this.footer) {
+            panel.style.display = 'none';
+            return;
+        }
+        panel.style.display = 'block';
+
+        const setText = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+        setText('footer-text', this.footer.text || '');
+        setText('footer-font-size', this.footer.font_size || 18);
+        setText('footer-color', this.footer.color || '#333333');
+
+        const ySlider = document.getElementById('footer-y');
+        if (ySlider) ySlider.value = Math.round((this.footer.y || 0.95) * 100);
+        const yVal = document.getElementById('footer-y-val');
+        if (yVal) yVal.textContent = Math.round((this.footer.y || 0.95) * 100);
+    }
+
+    onFooterInputChange() {
+        if (!this.footer) return;
+        const getText = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
+        const getNum = (id) => { const el = document.getElementById(id); return el ? parseFloat(el.value) : 0; };
+
+        this.footer.text = getText('footer-text');
+        this.footer.font_size = getNum('footer-font-size') || 18;
+        this.footer.color = getText('footer-color') || '#333333';
+
+        const yVal = getNum('footer-y');
+        this.footer.y = yVal / 100;
+        const yValEl = document.getElementById('footer-y-val');
+        if (yValEl) yValEl.textContent = Math.round(yVal);
+
+        this.renderCanvas();
+    }
+
+    async save() {
+        const name = (document.getElementById('template-name')?.value || 'custom').trim();
+        if (!name) {
+            this.admin.showNotification('Template name is required', 'error');
+            return;
+        }
+
+        // Sanitize name for filename
+        const safeName = name.replace(/[^a-zA-Z0-9_-]/g, '-').toLowerCase();
+
+        const template = {
+            name: safeName,
+            width_inches: parseFloat(document.getElementById('tpl-width')?.value || 4),
+            height_inches: parseFloat(document.getElementById('tpl-height')?.value || 6),
+            dpi: parseInt(document.getElementById('tpl-dpi')?.value || 600),
+            background: this.currentTemplate?.background || '#ffffff',
+            slots: this.slots.map(s => ({
+                x: s.x,
+                y: s.y,
+                width: s.width,
+                height: s.height,
+                rotation: s.rotation || 0
+            })),
+        };
+        if (this.footer) {
+            template.footer = { ...this.footer };
+        }
+
+        try {
+            const res = await fetch(`/api/admin/templates/${safeName}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(template),
+            });
+            if (res.ok) {
+                this.currentName = safeName;
+                this.admin.showNotification('Template saved!', 'success');
+                this.loadTemplateList();
+            } else {
+                const err = await res.json();
+                this.admin.showNotification('Save failed: ' + (err.detail || 'Unknown error'), 'error');
+            }
+        } catch (e) {
+            this.admin.showNotification('Save failed: ' + e.message, 'error');
+        }
+    }
+
+    async deleteTemplate(name) {
+        if (!confirm(`Delete template "${name}"?`)) return;
+        try {
+            const res = await fetch(`/api/admin/templates/${name}`, { method: 'DELETE' });
+            if (res.ok) {
+                if (this.currentName === name) {
+                    this.currentName = null;
+                    this.currentTemplate = null;
+                    const area = document.getElementById('template-editor-area');
+                    if (area) {
+                        area.innerHTML = '<div class="template-empty"><p>Select a template from the sidebar or create a new one.</p></div>';
+                    }
+                }
+                this.admin.showNotification('Template deleted', 'success');
+                this.loadTemplateList();
+            } else {
+                const err = await res.json();
+                this.admin.showNotification('Delete failed: ' + (err.detail || 'Unknown error'), 'error');
+            }
+        } catch (e) {
+            this.admin.showNotification('Delete failed: ' + e.message, 'error');
+        }
     }
 }
 

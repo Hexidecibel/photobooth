@@ -119,3 +119,11 @@ from_address = ""
 from_name = "Photo Booth"
 subject = "Your Photo Booth Photo!"
 body_template = "Here's your photo from {event_name}! Download it below."
+
+[branding]
+logo_position = "top"
+logo_size = 120
+show_on_idle = true
+show_on_prints = true
+company_name = ""
+tagline = ""
