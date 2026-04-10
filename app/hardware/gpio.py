@@ -88,12 +88,29 @@ class GPIOController:
 
         Green (capture) = SELECT / CONFIRM
         Red (print) = CYCLE / NEXT
-
-        On choose/template/effect screens, buttons send WebSocket
-        events that the frontend handles for cycling and selecting.
+        Both within 500ms = CANCEL
         """
+        import time
+        now = time.time()
         state = self._sm.state
         print(f"[GPIO] Button '{button}' pressed in state {state}")
+
+        # Detect both buttons pressed within 500ms = cancel
+        if not hasattr(self, '_last_button_time'):
+            self._last_button_time = 0
+            self._last_button_name = ''
+
+        if (self._last_button_name != button
+                and (now - self._last_button_time) < 0.5):
+            print("[GPIO] Both buttons = CANCEL")
+            self._last_button_time = 0
+            self._last_button_name = ''
+            if state != BoothState.IDLE:
+                await self._sm.trigger("cancel")
+            return
+
+        self._last_button_time = now
+        self._last_button_name = button
 
         if state == BoothState.IDLE:
             # Either button wakes up
