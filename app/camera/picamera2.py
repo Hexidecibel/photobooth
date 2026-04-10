@@ -93,32 +93,29 @@ class PiCamera2Backend(CameraBase):
                 pass
 
     async def stream_mjpeg(self) -> AsyncIterator[bytes]:
-        """Fast MJPEG: capture_array + cv2 JPEG encode."""
-        # Try OpenCV for fast JPEG encoding, fall back to PIL
+        """Fast MJPEG: single thread call for capture + encode."""
         try:
             import cv2
             use_cv2 = True
         except ImportError:
             use_cv2 = False
 
+        def _grab_frame_cv2(picam2):
+            arr = picam2.capture_array("main")
+            _, jpeg = cv2.imencode(".jpg", arr, [cv2.IMWRITE_JPEG_QUALITY, 50])
+            return jpeg.tobytes()
+
+        def _grab_frame_pil(picam2):
+            buf = io.BytesIO()
+            picam2.capture_file(buf, format="jpeg")
+            return buf.getvalue()
+
+        grab = _grab_frame_cv2 if use_cv2 else _grab_frame_pil
+
         while self._running and self._picam2:
             try:
-                arr = await asyncio.to_thread(
-                    self._picam2.capture_array, "main"
-                )
-                if use_cv2:
-                    # Feed directly — picamera2 RGB888 may actually be BGR
-                    _, jpeg = await asyncio.to_thread(
-                        cv2.imencode, ".jpg", arr,
-                        [cv2.IMWRITE_JPEG_QUALITY, 60],
-                    )
-                    yield jpeg.tobytes()
-                else:
-                    from PIL import Image as PILImage
-                    img = PILImage.fromarray(arr, "RGB")
-                    buf = io.BytesIO()
-                    img.save(buf, format="JPEG", quality=60)
-                    yield buf.getvalue()
+                frame = await asyncio.to_thread(grab, self._picam2)
+                yield frame
             except Exception as e:
                 logger.debug("Frame capture error: %s", e)
                 await asyncio.sleep(0.05)
