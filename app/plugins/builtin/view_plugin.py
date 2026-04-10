@@ -58,6 +58,7 @@ class ViewPlugin:
                 count = int(kwargs.get("count", self._config.picture.capture_count))
 
             effect = kwargs.get("effect", "none")
+            background = kwargs.get("background")
             self._sm.new_session(
                 mode=mode,
                 capture_count=count,
@@ -65,6 +66,8 @@ class ViewPlugin:
             )
             if effect and effect != "none":
                 self._sm.session.selected_effect = effect
+            if background:
+                self._sm.session.selected_background = background
             return BoothState.PREVIEW
         return None
 

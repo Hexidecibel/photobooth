@@ -175,6 +175,14 @@ async def list_effects():
     return {"effects": list_effects()}
 
 
+@router.get("/backgrounds")
+async def list_backgrounds():
+    """List available chromakey background images."""
+    from app.processing.chromakey import list_backgrounds
+
+    return {"backgrounds": list_backgrounds()}
+
+
 @router.get("/sounds")
 async def list_sounds(request: Request):
     """List available sound files and current sound configuration."""

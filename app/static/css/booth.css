@@ -753,6 +753,64 @@ section[data-state="capture"] {
 }
 
 /* ===================================================================
+   BACKGROUND PICKER — Chromakey background selection
+   =================================================================== */
+
+.bg-picker-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+}
+.bg-picker-modal {
+    background: var(--pb-bg-secondary);
+    border-radius: var(--pb-border-radius);
+    padding: 2rem;
+    max-width: 700px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+.bg-picker-modal h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: var(--pb-text-primary);
+}
+.bg-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.75rem;
+}
+.bg-card {
+    cursor: pointer;
+    border: 2px solid transparent;
+    border-radius: var(--pb-border-radius-sm);
+    overflow: hidden;
+    transition: all 0.2s;
+    background: var(--pb-bg-card);
+}
+.bg-card:hover {
+    border-color: var(--pb-accent);
+    transform: scale(1.05);
+}
+.bg-card img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+}
+.bg-card span {
+    display: block;
+    text-align: center;
+    padding: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--pb-text-secondary);
+    text-transform: capitalize;
+}
+
+/* ===================================================================
    EFFECT PICKER — Pre-capture effect selection
    =================================================================== */
 

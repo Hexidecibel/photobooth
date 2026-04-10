@@ -53,6 +53,11 @@ async def booth_ws(ws: WebSocket):
     printer = getattr(ws.app.state, "printer", None)
     has_printer = printer is not None and printer.is_available if printer else False
 
+    # Check chromakey config
+    chromakey_enabled = False
+    if hasattr(ws.app.state, "config") and hasattr(ws.app.state.config, "chromakey"):
+        chromakey_enabled = ws.app.state.config.chromakey.enabled
+
     # Send current state on connect
     await ws.send_json({
         "type": "state_change",
@@ -63,6 +68,7 @@ async def booth_ws(ws: WebSocket):
         "config": {
             "guest_picks_template": guest_picks_template,
             "has_printer": has_printer,
+            "chromakey_enabled": chromakey_enabled,
         },
     })
 

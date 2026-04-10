@@ -1,0 +1,86 @@
+#!/usr/bin/env python3
+"""Generate gradient/pattern backgrounds for chromakey compositing."""
+
+from pathlib import Path
+
+from PIL import Image, ImageDraw, ImageFilter
+
+SIZE = (2400, 3600)  # 4x6 at 600dpi, portrait
+OUT_DIR = Path(__file__).resolve().parent.parent / "app" / "static" / "backgrounds"
+
+
+def gradient(name: str, color1: tuple, color2: tuple, direction: str = "vertical") -> None:
+    """Create a smooth gradient background."""
+    img = Image.new("RGB", SIZE)
+    draw = ImageDraw.Draw(img)
+    length = SIZE[1] if direction == "vertical" else SIZE[0]
+    for i in range(length):
+        ratio = i / length
+        r = int(color1[0] * (1 - ratio) + color2[0] * ratio)
+        g = int(color1[1] * (1 - ratio) + color2[1] * ratio)
+        b = int(color1[2] * (1 - ratio) + color2[2] * ratio)
+        if direction == "vertical":
+            draw.line([(0, i), (SIZE[0], i)], fill=(r, g, b))
+        else:
+            draw.line([(i, 0), (i, SIZE[1])], fill=(r, g, b))
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    img.save(str(OUT_DIR / f"{name}.jpg"), quality=90)
+    print(f"  Generated: {name}.jpg")
+
+
+def radial_gradient(name: str, inner: tuple, outer: tuple) -> None:
+    """Create a radial gradient background."""
+    img = Image.new("RGB", SIZE, outer)
+    draw = ImageDraw.Draw(img)
+    cx, cy = SIZE[0] // 2, SIZE[1] // 2
+    max_r = int((cx**2 + cy**2) ** 0.5)
+    steps = 200
+    for i in range(steps, 0, -1):
+        ratio = i / steps
+        r = int(inner[0] * (1 - ratio) + outer[0] * ratio)
+        g = int(inner[1] * (1 - ratio) + outer[1] * ratio)
+        b = int(inner[2] * (1 - ratio) + outer[2] * ratio)
+        radius = int(max_r * ratio)
+        draw.ellipse(
+            [cx - radius, cy - radius, cx + radius, cy + radius],
+            fill=(r, g, b),
+        )
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    img.save(str(OUT_DIR / f"{name}.jpg"), quality=90)
+    print(f"  Generated: {name}.jpg")
+
+
+if __name__ == "__main__":
+    print("Generating backgrounds...")
+
+    # 1. Sunset -- warm orange to deep purple
+    gradient("sunset", (255, 140, 50), (80, 20, 120))
+
+    # 2. Ocean -- deep blue to teal
+    gradient("ocean", (10, 30, 100), (20, 150, 150))
+
+    # 3. Night sky -- dark navy to black
+    gradient("night-sky", (20, 20, 60), (5, 5, 15))
+
+    # 4. Cotton candy -- pink to light blue
+    gradient("cotton-candy", (255, 150, 200), (150, 200, 255))
+
+    # 5. Forest -- dark green to lighter green
+    gradient("forest", (10, 50, 20), (50, 150, 50))
+
+    # 6. Fire -- red to yellow
+    gradient("fire", (200, 30, 0), (255, 220, 50))
+
+    # 7. Neon -- electric purple to cyan (horizontal)
+    gradient("neon", (150, 0, 255), (0, 255, 255), "horizontal")
+
+    # 8. Gold -- dark gold to light gold
+    gradient("gold", (100, 70, 0), (255, 215, 100))
+
+    # 9. Spotlight -- radial white center fading to dark
+    radial_gradient("spotlight", (240, 240, 250), (20, 20, 30))
+
+    # 10. Rose -- radial pink center fading to burgundy
+    radial_gradient("rose", (255, 180, 200), (80, 10, 30))
+
+    print(f"\nDone! {len(list(OUT_DIR.glob('*.jpg')))} backgrounds in {OUT_DIR}")

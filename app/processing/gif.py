@@ -86,14 +86,26 @@ def create_templated_gif(
     effect: str | None = None,
     duration_ms: int = 100,
     resize_width: int = 600,
+    chromakey_background: str | None = None,
+    chromakey_hue_center: int = 120,
+    chromakey_hue_range: int = 40,
 ) -> Path:
     """Create an animated GIF with each frame composited into a template."""
+    from app.processing.chromakey import apply_chromakey
     from app.processing.effects import apply_effect
     from app.processing.layout import LayoutEngine
     from app.processing.templates import load_template
 
     template = load_template(template_name)
     engine = LayoutEngine()
+
+    # Load chromakey background if specified
+    ck_bg = None
+    if chromakey_background:
+        bg_dir = Path(__file__).parent.parent / "static" / "backgrounds"
+        bg_path = bg_dir / chromakey_background
+        if bg_path.exists():
+            ck_bg = Image.open(bg_path)
 
     # Calculate output size maintaining template aspect ratio
     aspect = template.width_inches / template.height_inches
@@ -103,6 +115,10 @@ def create_templated_gif(
     composed_frames = []
     for frame_path in frames:
         img = Image.open(frame_path).convert("RGB")
+
+        # Apply chromakey before effects
+        if ck_bg:
+            img = apply_chromakey(img, ck_bg, chromakey_hue_center, chromakey_hue_range)
 
         # Apply effect if selected
         if effect and effect != "none":
@@ -140,14 +156,26 @@ def create_templated_boomerang(
     effect: str | None = None,
     duration_ms: int = 80,
     resize_width: int = 600,
+    chromakey_background: str | None = None,
+    chromakey_hue_center: int = 120,
+    chromakey_hue_range: int = 40,
 ) -> Path:
     """Create a boomerang GIF (forward+reverse) with template framing."""
+    from app.processing.chromakey import apply_chromakey
     from app.processing.effects import apply_effect
     from app.processing.layout import LayoutEngine
     from app.processing.templates import load_template
 
     template = load_template(template_name)
     engine = LayoutEngine()
+
+    # Load chromakey background if specified
+    ck_bg = None
+    if chromakey_background:
+        bg_dir = Path(__file__).parent.parent / "static" / "backgrounds"
+        bg_path = bg_dir / chromakey_background
+        if bg_path.exists():
+            ck_bg = Image.open(bg_path)
 
     aspect = template.width_inches / template.height_inches
     out_w = resize_width
@@ -156,6 +184,9 @@ def create_templated_boomerang(
     composed_frames = []
     for frame_path in frames:
         img = Image.open(frame_path).convert("RGB")
+        # Apply chromakey before effects
+        if ck_bg:
+            img = apply_chromakey(img, ck_bg, chromakey_hue_center, chromakey_hue_range)
         if effect and effect != "none":
             img = apply_effect(img, effect)
         composite = engine.compose([img], template, footer_vars or {})

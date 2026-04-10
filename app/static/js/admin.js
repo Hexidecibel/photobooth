@@ -673,7 +673,9 @@ class AdminPanel {
             'Chroma key settings for green screen backgrounds.',
             toggle('chromakey', 'enabled', 'Enable Chroma Key', 'Remove green background and replace with custom images', c.chromakey?.enabled) +
             slider('chromakey', 'hue_center', 'Hue Center', 'Center of the hue range to key out (120 = green)', c.chromakey?.hue_center || 120, 0, 180, 1, '') +
-            slider('chromakey', 'hue_range', 'Hue Range', 'Width of the hue range around center', c.chromakey?.hue_range || 40, 5, 90, 1, '')
+            slider('chromakey', 'hue_range', 'Hue Range', 'Width of the hue range around center', c.chromakey?.hue_range || 40, 5, 90, 1, '') +
+            '<div class="config-row"><label class="config-label">Available Backgrounds</label>' +
+            '<div id="admin-bg-list" class="admin-bg-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:0.5rem;margin-top:0.5rem;"></div></div>'
         );
 
         // 11. Email
@@ -715,6 +717,29 @@ class AdminPanel {
 
         // Load logo preview into config tab
         this.loadConfigLogoPreview();
+        // Load backgrounds list for chromakey section
+        this.loadBackgroundsList();
+    }
+
+    async loadBackgroundsList() {
+        try {
+            const res = await fetch('/api/admin/backgrounds');
+            const data = await res.json();
+            const container = document.getElementById('admin-bg-list');
+            if (!container) return;
+            const bgs = data.backgrounds || [];
+            if (bgs.length === 0) {
+                container.innerHTML = '<span style="color:var(--admin-text-muted);font-size:0.85rem;">No backgrounds found. Run bin/generate-backgrounds to create them.</span>';
+                return;
+            }
+            container.innerHTML = bgs.map(bg => {
+                const name = bg.replace(/\.[^.]+$/, '').replace(/-/g, ' ');
+                return `<div style="text-align:center;">
+                    <img src="/static/backgrounds/${bg}" alt="${name}" style="width:100%;height:60px;object-fit:cover;border-radius:4px;border:1px solid rgba(255,255,255,0.1);">
+                    <div style="font-size:0.7rem;color:var(--admin-text-muted);margin-top:2px;text-transform:capitalize;">${name}</div>
+                </div>`;
+            }).join('');
+        } catch (e) { /* ignore */ }
     }
 
     async loadConfigLogoPreview() {

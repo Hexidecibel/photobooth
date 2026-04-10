@@ -7,8 +7,9 @@ from pathlib import Path
 
 from PIL import Image
 
-from app.models.config_schema import BrandingConfig, PictureConfig
+from app.models.config_schema import BrandingConfig, ChromakeyConfig, PictureConfig
 from app.models.state import CaptureSession
+from app.processing.chromakey import apply_chromakey
 from app.processing.effects import apply_effect
 from app.processing.layout import LayoutEngine
 from app.processing.templates import load_template
@@ -27,13 +28,35 @@ class ProcessingPipeline:
         footer_vars: dict[str, str] | None = None,
         save_dir: str = "data",
         branding: BrandingConfig | None = None,
+        chromakey_config: ChromakeyConfig | None = None,
     ) -> Path:
         """Full pipeline: raw captures -> final composite."""
+        # Load chromakey background once if needed
+        chromakey_bg: Image.Image | None = None
+        if session.selected_background and chromakey_config:
+            bg_path = (
+                Path(__file__).parent.parent / "static" / "backgrounds"
+                / session.selected_background
+            )
+            if bg_path.exists():
+                chromakey_bg = await asyncio.to_thread(Image.open, bg_path)
+                logger.info("Chromakey background loaded: %s", bg_path.name)
+
         # Load captures
         images: list[Image.Image] = []
         for i, capture_path in enumerate(session.captures):
             img = await asyncio.to_thread(Image.open, capture_path)
             img = img.convert("RGB")
+
+            # Apply chromakey (green screen removal) before effects
+            if chromakey_bg and chromakey_config:
+                img = await asyncio.to_thread(
+                    apply_chromakey,
+                    img,
+                    chromakey_bg,
+                    chromakey_config.hue_center,
+                    chromakey_config.hue_range,
+                )
 
             # Per-capture effect takes priority, then session-wide effect
             effect = None

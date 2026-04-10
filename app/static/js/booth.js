@@ -60,6 +60,7 @@ class BoothApp {
         this.countdownTimer = null;
         this.selectedFilter = 'none';
         this.selectedEffect = 'none';
+        this.selectedBackground = null;
         this.pendingMode = null;
         this.pendingTemplate = null;
         this.i18n = new I18n('en');
@@ -841,6 +842,90 @@ class BoothApp {
     }
 
     /* ------------------------------------------------------------------ */
+    /*  Background picker (chromakey)                                      */
+    /* ------------------------------------------------------------------ */
+
+    async showBackgroundPicker() {
+        var picker = document.getElementById('bg-picker');
+        var grid = document.getElementById('bg-grid');
+        if (!picker || !grid) return;
+
+        // Fetch available backgrounds
+        try {
+            var res = await fetch('/api/admin/backgrounds');
+            var data = await res.json();
+            var backgrounds = data.backgrounds || [];
+        } catch (e) {
+            console.warn('[booth] Failed to load backgrounds:', e);
+            // Fall through without chromakey
+            this.selectedBackground = null;
+            this.send('choose', {
+                mode: this.pendingMode,
+                template: this.pendingTemplate,
+                effect: this.selectedEffect,
+            });
+            return;
+        }
+
+        if (backgrounds.length === 0) {
+            // No backgrounds available, proceed without
+            this.selectedBackground = null;
+            this.send('choose', {
+                mode: this.pendingMode,
+                template: this.pendingTemplate,
+                effect: this.selectedEffect,
+            });
+            return;
+        }
+
+        grid.innerHTML = '';
+        var self = this;
+
+        for (var i = 0; i < backgrounds.length; i++) {
+            (function(bg) {
+                var card = document.createElement('div');
+                card.className = 'bg-card';
+
+                var img = document.createElement('img');
+                img.src = '/static/backgrounds/' + bg;
+                img.alt = bg;
+                img.loading = 'lazy';
+                card.appendChild(img);
+
+                var label = document.createElement('span');
+                // Format name: remove extension, replace dashes with spaces
+                label.textContent = bg.replace(/\.[^.]+$/, '').replace(/-/g, ' ');
+                card.appendChild(label);
+
+                card.addEventListener('click', function() {
+                    if (self.sounds) self.sounds.play('click');
+                    self.onBackgroundPicked(bg);
+                });
+
+                grid.appendChild(card);
+            })(backgrounds[i]);
+        }
+
+        picker.style.display = 'flex';
+    }
+
+    hideBackgroundPicker() {
+        var picker = document.getElementById('bg-picker');
+        if (picker) picker.style.display = 'none';
+    }
+
+    onBackgroundPicked(background) {
+        this.selectedBackground = background;
+        this.hideBackgroundPicker();
+        this.send('choose', {
+            mode: this.pendingMode,
+            template: this.pendingTemplate,
+            effect: this.selectedEffect,
+            background: background,
+        });
+    }
+
+    /* ------------------------------------------------------------------ */
     /*  Template picker                                                    */
     /* ------------------------------------------------------------------ */
 
@@ -936,8 +1021,9 @@ class BoothApp {
     }
 
     resetChooseScreen() {
-        // Reset effect picker and template picker when re-entering choose
+        // Reset effect picker, background picker, and template picker when re-entering choose
         this.hideEffectPicker();
+        this.hideBackgroundPicker();
         var picker = document.getElementById('template-picker');
         var grid = document.querySelector('.choose-grid');
         var heading = document.querySelector('[data-state="choose"] .section-heading');
@@ -1094,6 +1180,15 @@ class BoothApp {
             });
         }
 
+        // Background picker back button
+        var bgBack = document.getElementById('bg-back-btn');
+        if (bgBack) {
+            bgBack.addEventListener('click', function () {
+                self.hideBackgroundPicker();
+                self.showEffectPicker();
+            });
+        }
+
         // Effect picker card clicks
         var effectCards = document.querySelectorAll('.effect-card');
         for (var e = 0; e < effectCards.length; e++) {
@@ -1111,11 +1206,18 @@ class BoothApp {
                         self.hideEffectPicker();
                         self._isGifMode = (self.pendingMode === 'gif' || self.pendingMode === 'boomerang');
                         self._multiShotActive = (self.pendingTemplate === 'multi' || (self.pendingTemplate && self.pendingTemplate !== 'single' && self.pendingTemplate !== 'polaroid-4x6'));
-                        self.send('choose', {
-                            mode: self.pendingMode,
-                            template: self.pendingTemplate,
-                            effect: effect,
-                        });
+
+                        // If chromakey enabled, show background picker before starting
+                        if (self.wsConfig && self.wsConfig.chromakey_enabled) {
+                            self.showBackgroundPicker();
+                        } else {
+                            self.selectedBackground = null;
+                            self.send('choose', {
+                                mode: self.pendingMode,
+                                template: self.pendingTemplate,
+                                effect: effect,
+                            });
+                        }
                     }
                 });
             })(effectCards[e]);

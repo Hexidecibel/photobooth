@@ -71,6 +71,18 @@ class PicturePlugin:
                     "event_name": self._config.sharing.event_name,
                 }
 
+                # Build chromakey kwargs for GIF/boomerang
+                ck_kwargs = {}
+                if (
+                    self._config.chromakey.enabled
+                    and session.selected_background
+                ):
+                    ck_kwargs = {
+                        "chromakey_background": session.selected_background,
+                        "chromakey_hue_center": self._config.chromakey.hue_center,
+                        "chromakey_hue_range": self._config.chromakey.hue_range,
+                    }
+
                 total_frames = len(session.captures)
                 for i in range(total_frames):
                     pct = 20 + int(60 * (i / total_frames))
@@ -91,6 +103,7 @@ class PicturePlugin:
                         template_name=session.layout_template,
                         footer_vars=footer_vars,
                         effect=effect,
+                        **ck_kwargs,
                     )
                 else:
                     await asyncio.to_thread(
@@ -100,12 +113,18 @@ class PicturePlugin:
                         template_name=session.layout_template,
                         footer_vars=footer_vars,
                         effect=effect,
+                        **ck_kwargs,
                     )
                 session.composite_path = output_path
             else:
                 await self._pipeline.process(
                     session, self._config.picture, footer_vars,
                     branding=self._config.branding,
+                    chromakey_config=(
+                        self._config.chromakey
+                        if self._config.chromakey.enabled
+                        else None
+                    ),
                 )
 
             await self._broadcast({
