@@ -841,8 +841,24 @@ class BoothApp {
         }
     }
 
+    _findOpenSpot(placed) {
+        var x, y, attempts = 0;
+        do {
+            x = Math.random() * 75 + 3;
+            y = Math.random() * 70 + 5;
+            attempts++;
+            var overlaps = false;
+            for (var p = 0; p < placed.length; p++) {
+                if (Math.abs(x - placed[p].x) < 28 && Math.abs(y - placed[p].y) < 30) {
+                    overlaps = true;
+                    break;
+                }
+            }
+        } while ((overlaps || (x > 25 && x < 65 && y > 25 && y < 65)) && attempts < 50);
+        return { x: x, y: y };
+    }
+
     cycleSlidePhoto() {
-        // Swap one random card's image (keep position)
         if (!this._floatCards || this._floatCards.length === 0 || this.slidePhotos.length <= 1) return;
 
         var cardIdx = Math.floor(Math.random() * this._floatCards.length);
@@ -850,12 +866,29 @@ class BoothApp {
         var photoIdx = Math.floor(Math.random() * this.slidePhotos.length);
         var photo = this.slidePhotos[photoIdx];
 
-        // Fade out, swap image, fade back in (same position)
+        // Get positions of OTHER cards (not the one we're moving)
+        var otherPositions = [];
+        for (var i = 0; i < this._floatCards.length; i++) {
+            if (i !== cardIdx) {
+                otherPositions.push({
+                    x: parseFloat(this._floatCards[i].el.style.left),
+                    y: parseFloat(this._floatCards[i].el.style.top),
+                });
+            }
+        }
+
+        // Fade out, swap image, move to new spot, fade in
         card.el.style.opacity = '0';
+        var self = this;
+        var newPos = this._findOpenSpot(otherPositions);
+        var newRot = (Math.random() * 20 - 10);
         setTimeout(function () {
             var img = card.el.querySelector('img');
             var isGif = photo.photo_path && photo.photo_path.endsWith('.gif');
             if (img) img.src = '/api/gallery/' + photo.id + (isGif ? '' : '/thumbnail');
+            card.el.style.left = newPos.x + '%';
+            card.el.style.top = newPos.y + '%';
+            card.el.style.transform = 'rotate(' + newRot + 'deg)';
             card.el.style.opacity = '0.7';
         }, 1000);
     }
