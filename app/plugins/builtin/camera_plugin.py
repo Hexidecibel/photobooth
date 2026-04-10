@@ -88,9 +88,11 @@ class CameraPlugin:
                     )
                     path.write_bytes(buf.getvalue())
                     session.captures.append(path)
-                    await asyncio.sleep(0)  # Yield for WebSocket pings
+                    await asyncio.sleep(0.05)  # Yield for WebSocket pings
+                    print(f"[CAPTURE] frame {i+1}/{frame_count}")
 
                 print(f"[CAPTURE] GIF burst complete, {len(session.captures)} frames")
+                await asyncio.sleep(0.2)  # Let frontend process state changes
                 # Re-enable stream
                 self._camera._running = True
 

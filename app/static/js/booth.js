@@ -207,18 +207,17 @@ class BoothApp {
                 // Show processing screen during capture (no separate capture screen)
                 var displayState = msg.state;
                 if (msg.state === 'capture') {
+                    // Always show processing screen during capture
+                    displayState = 'processing';
+                    var pt = document.getElementById('processing-text');
+                    if (pt) pt.textContent = this._isGifMode ? 'Recording...' : 'Capturing...';
+                    var ps = document.getElementById('processing-step');
+                    if (ps) ps.textContent = '';
+                    var pf = document.getElementById('progress');
+                    if (pf) pf.style.width = '0%';
+                    // Show recording overlay on top for GIF
                     if (this._isGifMode) {
-                        // GIF/boomerang: show energetic recording overlay instead of processing
                         this.showRecordingOverlay();
-                        displayState = 'preview'; // Keep preview section active (hidden behind overlay)
-                    } else {
-                        displayState = 'processing';
-                        var pt = document.getElementById('processing-text');
-                        if (pt) pt.textContent = 'Capturing...';
-                        var ps = document.getElementById('processing-step');
-                        if (ps) ps.textContent = '';
-                        var pf = document.getElementById('progress');
-                        if (pf) pf.style.width = '0%';
                     }
                 }
                 this.showState(displayState);
