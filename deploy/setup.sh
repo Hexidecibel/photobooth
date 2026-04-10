@@ -56,9 +56,16 @@ sudo -u "$CURRENT_USER" .venv/bin/pip install -e ".[dev]" -q
 echo "[4/6] Installing optional dependencies..."
 sudo -u "$CURRENT_USER" .venv/bin/pip install opencv-python-headless gpiozero pycups qrcode[pil] -q 2>/dev/null || true
 
-# Create data dirs
+# Create data dirs OUTSIDE the repo so git can never delete them
 echo "[5/6] Creating data directories..."
-sudo -u "$CURRENT_USER" mkdir -p data/photos data/raw
+DATA_DIR="${CURRENT_HOME}/photobooth-data"
+sudo -u "$CURRENT_USER" mkdir -p "${DATA_DIR}/photos" "${DATA_DIR}/raw"
+# Symlink data/ into the repo
+if [ ! -L "${INSTALL_DIR}/data" ]; then
+    rm -rf "${INSTALL_DIR}/data"
+    sudo -u "$CURRENT_USER" ln -s "${DATA_DIR}" "${INSTALL_DIR}/data"
+fi
+echo "  Photos stored at: ${DATA_DIR} (safe from git operations)"
 
 # Generate and install systemd service (templated for current user/path)
 echo "[6/6] Installing systemd services..."
