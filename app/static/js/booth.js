@@ -432,13 +432,24 @@ class BoothApp {
     /* ------------------------------------------------------------------ */
 
     onCaptureProgress(msg) {
-        console.log('[booth] capture_progress:', msg.frame, '/', msg.total);
+        // Show big frame counter on the processing screen
         var processingText = document.getElementById('processing-text');
         var processingStep = document.getElementById('processing-step');
         var fill = document.getElementById('progress');
-        if (processingText) processingText.textContent = 'Hold that pose!';
+        var icon = document.querySelector('.processing-icon');
+
+        if (icon) icon.textContent = msg.frame;
+        if (icon) icon.style.fontSize = '6rem';
+        if (processingText) processingText.textContent = 'Strike a pose!';
         if (processingStep) processingStep.textContent = msg.frame + ' of ' + msg.total;
         if (fill && msg.total) fill.style.width = (msg.frame / msg.total * 50) + '%';
+
+        // Flash effect on each frame
+        if (icon) {
+            icon.classList.remove('tick');
+            void icon.offsetWidth;
+            icon.classList.add('tick');
+        }
     }
 
     onCaptureComplete(msg) {
@@ -471,6 +482,13 @@ class BoothApp {
         var stepEl = document.getElementById('processing-step');
         var textEl = document.getElementById('processing-text');
         if (!stepEl) return;
+
+        // Reset icon back to sparkle for processing phase
+        var icon = document.querySelector('.processing-icon');
+        if (icon) {
+            icon.textContent = '\u2728';
+            icon.style.fontSize = '';
+        }
 
         var messages = {
             compositing: 'Composing your masterpiece...',

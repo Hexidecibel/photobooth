@@ -548,6 +548,14 @@ section[data-state="capture"] {
     font-size: 3rem;
     animation: float 2s ease-in-out infinite;
     z-index: 1;
+    transition: font-size 0.2s;
+}
+.processing-icon.tick {
+    animation: pop 0.3s ease-out;
+}
+@keyframes pop {
+    0% { transform: scale(1.5); }
+    100% { transform: scale(1); }
 }
 
 @keyframes float {
