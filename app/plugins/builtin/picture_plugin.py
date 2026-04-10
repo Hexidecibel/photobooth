@@ -53,7 +53,25 @@ class PicturePlugin:
                 from datetime import datetime as dt
                 from pathlib import Path
 
+                from PIL import Image
+                from app.processing.effects import apply_effect
                 from app.processing.gif import create_boomerang, create_gif
+
+                # Apply effect to each frame if selected
+                effect = session.selected_effect
+                if effect and effect != "none":
+                    await self._broadcast({
+                        "type": "processing_progress",
+                        "step": "applying_effect",
+                        "percent": 40,
+                    })
+                    for i, frame_path in enumerate(session.captures):
+                        img = await asyncio.to_thread(Image.open, frame_path)
+                        img = img.convert("RGB")
+                        img = await asyncio.to_thread(apply_effect, img, effect)
+                        await asyncio.to_thread(
+                            img.save, str(frame_path), quality=90
+                        )
 
                 date_str = dt.now().strftime("%Y-%m-%d")
                 output_dir = Path(
