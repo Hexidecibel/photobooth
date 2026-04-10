@@ -81,6 +81,6 @@ class ViewPlugin:
         })
 
     async def _on_thankyou_do(self, session, event=None, **kwargs):
-        if event == "auto_idle" or event == "start":
+        if event in ("auto_idle", "start", "cancel", "done"):
             return BoothState.IDLE
         return None

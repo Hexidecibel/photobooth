@@ -472,10 +472,17 @@ class BoothApp {
     }
 
     handleAutoTransition(target) {
+        var self = this;
         if (target === 'thankyou') {
             this.send('done');
         } else if (target === 'idle') {
             this.send('auto_idle');
+            // Force UI to idle after 2s even if server doesn't respond
+            setTimeout(function () {
+                if (self.state !== 'idle') {
+                    self.showState('idle');
+                }
+            }, 2000);
         }
     }
 
