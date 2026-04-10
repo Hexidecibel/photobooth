@@ -365,6 +365,14 @@ async def connection_info(request: Request):
         "port": port,
     }
 
+    # Add cloud gallery URL if configured
+    cloud = getattr(request.app.state, "cloud_gallery", None)
+    if cloud and cloud.is_configured:
+        info = await cloud.get_gallery_info()
+        if info:
+            slug = info.get("slug", "")
+            result["cloud_gallery_url"] = cloud.get_public_url(slug)
+
     return result
 
 

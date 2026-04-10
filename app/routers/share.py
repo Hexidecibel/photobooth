@@ -6,6 +6,19 @@ from fastapi.responses import FileResponse, HTMLResponse, Response
 router = APIRouter(tags=["share"])
 
 
+@router.get("/api/share/qr")
+async def get_qr_for_url(request: Request, url: str = ""):
+    """Generate a QR code for an arbitrary URL (used for cloud gallery)."""
+    if not url:
+        raise HTTPException(400, "url parameter required")
+    share_service = request.app.state.share_service
+    config = request.app.state.config
+    qr_bytes = share_service.generate_qr_png(url, config.sharing.qr_size)
+    if not qr_bytes:
+        raise HTTPException(503, "QR generation not available")
+    return Response(content=qr_bytes, media_type="image/png")
+
+
 @router.get("/api/share/{token}")
 async def get_share_info(token: str, request: Request):
     share_service = request.app.state.share_service
@@ -50,19 +63,6 @@ async def get_share_qr(token: str, request: Request):
         raise HTTPException(404, "Photo not found")
 
     url = share_service.get_share_url(token)
-    qr_bytes = share_service.generate_qr_png(url, config.sharing.qr_size)
-    if not qr_bytes:
-        raise HTTPException(503, "QR generation not available")
-    return Response(content=qr_bytes, media_type="image/png")
-
-
-@router.get("/api/share/qr")
-async def get_qr_for_url(request: Request, url: str = ""):
-    """Generate a QR code for an arbitrary URL (used for cloud gallery)."""
-    if not url:
-        raise HTTPException(400, "url parameter required")
-    share_service = request.app.state.share_service
-    config = request.app.state.config
     qr_bytes = share_service.generate_qr_png(url, config.sharing.qr_size)
     if not qr_bytes:
         raise HTTPException(503, "QR generation not available")

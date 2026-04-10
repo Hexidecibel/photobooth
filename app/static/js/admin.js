@@ -1008,12 +1008,16 @@ class AdminPanel {
 
                 if (!url) return;
 
-                // Get the freshest base URL before copying
+                // Prefer cloud gallery URL for sharing
                 try {
                     const freshConn = await fetch('/api/admin/connection').then(r => r.json());
-                    const freshBase = `http://${freshConn.ip}:${freshConn.port}`;
-                    const token = url.split('/share/')[1];
-                    if (token) url = `${freshBase}/share/${token}`;
+                    if (freshConn.cloud_gallery_url) {
+                        url = freshConn.cloud_gallery_url;
+                    } else {
+                        const freshBase = `http://${freshConn.ip}:${freshConn.port}`;
+                        const token = url.split('/share/')[1];
+                        if (token) url = `${freshBase}/share/${token}`;
+                    }
                 } catch (e) {}
 
                 try {
