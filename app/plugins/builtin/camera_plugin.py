@@ -132,9 +132,9 @@ class CameraPlugin:
             return BoothState.IDLE
 
         if event == "enter_complete":
-            # GIF: don't auto-advance, wait for frontend capture_advance
-            if session.mode in ("gif", "boomerang"):
-                return None
+            # GIF: burst is done, go to processing
+            if session.mode in ("gif", "boomerang") and len(session.captures) > 0:
+                return BoothState.PROCESSING
             # Photo: auto-advance
             if len(session.captures) >= session.capture_count:
                 return BoothState.PROCESSING

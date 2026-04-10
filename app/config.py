@@ -1,6 +1,10 @@
 """Configuration loading and saving.
 
 Uses stdlib tomllib for reading and tomli_w for writing TOML files.
+
+Config layering:
+  1. config.defaults.toml  -- tracked in git, updated with new features
+  2. config.toml           -- user overrides, gitignored
 """
 
 import tomllib
@@ -11,16 +15,27 @@ import tomli_w
 from app.models.config_schema import AppConfig
 
 
-def load_config(path: Path = Path("config.toml")) -> AppConfig:
-    """Load configuration from a TOML file.
+def load_config(
+    user_path: Path = Path("config.toml"),
+    defaults_path: Path = Path("config.defaults.toml"),
+) -> AppConfig:
+    """Load config: defaults first, then user overrides.
 
-    If the file does not exist, returns an AppConfig with all defaults.
+    Missing keys in user config fall back to defaults.
+    If neither file exists, returns an AppConfig with all defaults.
     """
-    if not path.exists():
-        return AppConfig()
+    data: dict = {}
 
-    with open(path, "rb") as f:
-        data = tomllib.load(f)
+    # Load defaults
+    if defaults_path.exists():
+        with open(defaults_path, "rb") as f:
+            data = tomllib.load(f)
+
+    # Overlay user config
+    if user_path.exists():
+        with open(user_path, "rb") as f:
+            user_data = tomllib.load(f)
+        _deep_merge(data, user_data)
 
     return AppConfig(**data)
 
@@ -28,13 +43,23 @@ def load_config(path: Path = Path("config.toml")) -> AppConfig:
 def save_config(
     config: AppConfig, path: Path = Path("config.toml")
 ) -> None:
-    """Serialize an AppConfig to TOML and write it to disk."""
+    """Serialize an AppConfig to TOML and write it to the user config."""
     data = config.model_dump()
     # Convert tuples to lists for TOML compatibility
     _convert_tuples(data)
 
     with open(path, "wb") as f:
         tomli_w.dump(data, f)
+
+
+def _deep_merge(base: dict, override: dict) -> dict:
+    """Deep merge override into base, mutating base in place."""
+    for key, value in override.items():
+        if key in base and isinstance(base[key], dict) and isinstance(value, dict):
+            _deep_merge(base[key], value)
+        else:
+            base[key] = value
+    return base
 
 
 def _convert_tuples(obj: dict | list) -> None:
