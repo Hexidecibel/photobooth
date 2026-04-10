@@ -772,7 +772,8 @@ class BoothApp {
         var vignette = document.getElementById('slideshow-vignette');
         if (vignette) vignette.style.display = '';
         this.loadSlidePhotos();
-        this.slideshowTimer = setInterval(() => this.cycleSlidePhoto(), 3000);
+        this._lastCycledCard = -1;
+        this.slideshowTimer = setInterval(() => this.cycleSlidePhoto(), 5000);
         this.loadPhotoCounter();
     }
 
@@ -861,7 +862,12 @@ class BoothApp {
     cycleSlidePhoto() {
         if (!this._floatCards || this._floatCards.length === 0 || this.slidePhotos.length <= 1) return;
 
-        var cardIdx = Math.floor(Math.random() * this._floatCards.length);
+        // Don't pick the same card twice in a row
+        var cardIdx;
+        do {
+            cardIdx = Math.floor(Math.random() * this._floatCards.length);
+        } while (cardIdx === this._lastCycledCard && this._floatCards.length > 1);
+        this._lastCycledCard = cardIdx;
         var card = this._floatCards[cardIdx];
         var photoIdx = Math.floor(Math.random() * this.slidePhotos.length);
         var photo = this.slidePhotos[photoIdx];
@@ -877,20 +883,25 @@ class BoothApp {
             }
         }
 
-        // Fade out, swap image, move to new spot, fade in
+        // Fade out
         card.el.style.opacity = '0';
-        var self = this;
         var newPos = this._findOpenSpot(otherPositions);
         var newRot = (Math.random() * 20 - 10);
+        // Wait for fade out to complete
         setTimeout(function () {
-            var img = card.el.querySelector('img');
-            var isGif = photo.photo_path && photo.photo_path.endsWith('.gif');
-            if (img) img.src = '/api/gallery/' + photo.id + (isGif ? '' : '/thumbnail');
+            // Move and swap while invisible (no transition)
+            card.el.style.transition = 'none';
             card.el.style.left = newPos.x + '%';
             card.el.style.top = newPos.y + '%';
             card.el.style.transform = 'rotate(' + newRot + 'deg)';
+            var img = card.el.querySelector('img');
+            var isGif = photo.photo_path && photo.photo_path.endsWith('.gif');
+            if (img) img.src = '/api/gallery/' + photo.id + (isGif ? '' : '/thumbnail');
+            // Force reflow then re-enable transition and fade in
+            void card.el.offsetWidth;
+            card.el.style.transition = 'opacity 1s';
             card.el.style.opacity = '0.7';
-        }, 1000);
+        }, 1200);
     }
 
     stopSlideshow() {
