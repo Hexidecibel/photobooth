@@ -266,7 +266,11 @@ class BoothApp {
         // State-specific setup / teardown
         if (state === 'preview') {
             this.startPreview();
-        } else if (state === 'idle') {
+            this.startCountdown();
+        } else if (state !== 'preview' && previousState === 'preview') {
+            this.stopCountdown();
+        }
+        if (state === 'idle') {
             this.stopPreview();
             this.hidePosePrompt();
         } else {
@@ -341,6 +345,35 @@ class BoothApp {
         } else {
             el.textContent = '';
         }
+    }
+
+    startCountdown() {
+        this.stopCountdown();
+        var countdownSeconds = 5;
+        var remaining = countdownSeconds;
+        var self = this;
+        this.updateCountdown(remaining);
+        this.countdownTimer = setInterval(function () {
+            remaining--;
+            if (remaining > 0) {
+                self.updateCountdown(remaining);
+            } else {
+                self.stopCountdown();
+                self.updateCountdown(0);
+                // Trigger capture
+                if (self.sounds) self.sounds.play('shutter');
+                self.send('capture');
+            }
+        }, 1000);
+    }
+
+    stopCountdown() {
+        if (this.countdownTimer) {
+            clearInterval(this.countdownTimer);
+            this.countdownTimer = null;
+        }
+        var el = document.getElementById('countdown');
+        if (el) el.textContent = '';
     }
 
     /* ------------------------------------------------------------------ */

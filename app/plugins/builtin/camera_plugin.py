@@ -42,7 +42,7 @@ class CameraPlugin:
 
     async def _on_preview_do(self, session, event=None, **kwargs):
         """Handle countdown timer in preview state."""
-        if event == "countdown_complete":
+        if event in ("countdown_complete", "capture"):
             return BoothState.CAPTURE
         if event == "cancel":
             return BoothState.IDLE
