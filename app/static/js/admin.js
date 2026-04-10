@@ -7,8 +7,76 @@ class AdminPanel {
     }
 
     async init() {
+        // Check if authentication is required
+        try {
+            var res = await fetch('/api/admin/system');
+            if (res.status === 401) {
+                this.showLogin();
+                return;
+            }
+        } catch (e) {
+            // Network error -- proceed anyway
+        }
+
+        this.hideLogin();
         this.bindTabs();
         this.showTab('system');
+    }
+
+    showLogin() {
+        var overlay = document.getElementById('admin-login-overlay');
+        overlay.classList.add('visible');
+
+        var passwordInput = document.getElementById('admin-password');
+        var loginBtn = document.getElementById('admin-login-btn');
+        var errorEl = document.getElementById('login-error');
+
+        // Clear previous state
+        passwordInput.value = '';
+        errorEl.style.display = 'none';
+
+        // Remove old listeners by cloning
+        var newBtn = loginBtn.cloneNode(true);
+        loginBtn.parentNode.replaceChild(newBtn, loginBtn);
+
+        var newInput = passwordInput.cloneNode(true);
+        passwordInput.parentNode.replaceChild(newInput, passwordInput);
+
+        newBtn.addEventListener('click', () => this.doLogin());
+        newInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') this.doLogin();
+        });
+
+        newInput.focus();
+    }
+
+    hideLogin() {
+        document.getElementById('admin-login-overlay').classList.remove('visible');
+    }
+
+    async doLogin() {
+        var password = document.getElementById('admin-password').value;
+        var errorEl = document.getElementById('login-error');
+        errorEl.style.display = 'none';
+
+        try {
+            var res = await fetch('/api/admin/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({password: password}),
+            });
+            if (res.ok) {
+                this.hideLogin();
+                this.bindTabs();
+                this.showTab('system');
+            } else {
+                errorEl.style.display = '';
+                document.getElementById('admin-password').focus();
+            }
+        } catch (e) {
+            errorEl.textContent = 'Connection error';
+            errorEl.style.display = '';
+        }
     }
 
     bindTabs() {
@@ -876,7 +944,7 @@ class AdminPanel {
                     : null;
                 html += `
                     <div class="gallery-card" data-photo-id="${photo.id}" data-photo-url="/api/gallery/${photo.id}">
-                        <img data-src="/api/gallery/${photo.id}/thumbnail" alt="Photo" />
+                        <img data-src="${photo.photo_path && photo.photo_path.endsWith('.gif') ? '/api/gallery/' + photo.id : '/api/gallery/' + photo.id + '/thumbnail'}" alt="Photo" />
                         <div class="gallery-overlay">
                             <div class="gallery-date">${date}</div>
                             <div class="gallery-actions">

@@ -96,7 +96,8 @@
             for (var k = 0; k < columnPhotos[c].length; k++) {
                 var item = columnPhotos[c][k];
                 html += '<div class="gallery-card" data-index="' + item.index + '">';
-                html += '<img data-src="/api/gallery/' + item.photo.id + '/thumbnail" alt="Photo">';
+                var isGif = item.photo.photo_path && item.photo.photo_path.endsWith('.gif');
+                html += '<img data-src="/api/gallery/' + item.photo.id + (isGif ? '' : '/thumbnail') + '" alt="Photo">';
                 html += '</div>';
             }
             html += '</div>';

@@ -10,13 +10,129 @@ from collections import Counter
 from datetime import datetime
 from pathlib import Path
 
-from fastapi import APIRouter, File, HTTPException, Request, UploadFile
+from fastapi import (
+    APIRouter,
+    Cookie,
+    Depends,
+    File,
+    HTTPException,
+    Request,
+    Response,
+    UploadFile,
+)
 from fastapi.responses import FileResponse
 
 from app.config import save_config
 from app.models.config_schema import AppConfig
+from app.services.admin_auth import (
+    generate_token,
+    hash_password,
+    verify_password,
+)
 
-router = APIRouter(prefix="/api/admin", tags=["admin"])
+# In-memory token store (tokens reset on server restart)
+_valid_tokens: set[str] = set()
+
+
+def check_admin_auth(request: Request) -> bool:
+    """Check if request is authenticated for admin."""
+    config = request.app.state.config
+    password_hash = config.admin.password_hash if hasattr(config, "admin") else ""
+
+    if not password_hash:
+        return True  # No password set
+
+    token = request.cookies.get("admin_token")
+    return token in _valid_tokens if token else False
+
+
+async def require_admin(request: Request):
+    """Dependency that enforces admin auth on all routes except login."""
+    if request.url.path.endswith("/login"):
+        return
+    if not check_admin_auth(request):
+        raise HTTPException(401, "Admin authentication required")
+
+
+router = APIRouter(
+    prefix="/api/admin",
+    tags=["admin"],
+    dependencies=[Depends(require_admin)],
+)
+
+
+@router.post("/login")
+async def admin_login(request: Request, response: Response):
+    """Authenticate with admin password."""
+    data = await request.json()
+    password = data.get("password", "")
+    config = request.app.state.config
+    password_hash = config.admin.password_hash if hasattr(config, "admin") else ""
+
+    if not password_hash:
+        return {"status": "ok", "message": "No password required"}
+
+    if not verify_password(password, password_hash):
+        raise HTTPException(401, "Invalid password")
+
+    token = generate_token()
+    _valid_tokens.add(token)
+
+    response.set_cookie(
+        "admin_token",
+        token,
+        max_age=30 * 24 * 60 * 60,
+        httponly=True,
+        samesite="lax",
+    )
+    return {"status": "ok"}
+
+
+@router.post("/logout")
+async def admin_logout(
+    response: Response, admin_token: str = Cookie(None),
+):
+    """Clear admin session."""
+    if admin_token:
+        _valid_tokens.discard(admin_token)
+    response.delete_cookie("admin_token")
+    return {"status": "ok"}
+
+
+@router.post("/set-password")
+async def set_admin_password(request: Request):
+    """Set or change admin password. Requires current auth if password already set."""
+    data = await request.json()
+    new_password = data.get("password", "")
+
+    if not new_password or len(new_password) < 4:
+        raise HTTPException(400, "Password must be at least 4 characters")
+
+    config = request.app.state.config
+    config.admin.password_hash = hash_password(new_password)
+    save_config(config)
+
+    return {"status": "ok", "message": "Password set"}
+
+
+@router.post("/remove-password")
+async def remove_admin_password(request: Request):
+    """Remove admin password (disable auth)."""
+    config = request.app.state.config
+    config.admin.password_hash = ""
+    save_config(config)
+
+    return {"status": "ok", "message": "Password removed"}
+
+
+@router.get("/auth-status")
+async def auth_status(request: Request):
+    """Check if admin auth is required and if current session is valid."""
+    config = request.app.state.config
+    password_hash = config.admin.password_hash if hasattr(config, "admin") else ""
+    has_password = bool(password_hash)
+    authenticated = check_admin_auth(request)
+    return {"has_password": has_password, "authenticated": authenticated}
 
 
 @router.get("/config")

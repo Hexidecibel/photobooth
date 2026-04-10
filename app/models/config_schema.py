@@ -155,6 +155,12 @@ class PluginConfig(BaseModel):
 
 
 
+class AdminConfig(BaseModel):
+    """Admin panel authentication settings."""
+
+    password_hash: str = ""  # SHA-256 + salt hash. Empty = no auth required
+
+
 class BrandingConfig(BaseModel):
     """Company/event branding settings."""
 
@@ -197,3 +203,4 @@ class AppConfig(BaseModel):
     plugin: PluginConfig = PluginConfig()
     email: EmailConfig = EmailConfig()
     branding: BrandingConfig = BrandingConfig()
+    admin: AdminConfig = AdminConfig()

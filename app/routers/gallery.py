@@ -24,7 +24,8 @@ async def get_photo(photo_id: str, request: Request):
     photo_path = Path(photo["photo_path"])
     if not photo_path.exists():
         raise HTTPException(404, "Photo file not found")
-    return FileResponse(str(photo_path), media_type="image/jpeg")
+    media_type = "image/gif" if photo_path.suffix == ".gif" else "image/jpeg"
+    return FileResponse(str(photo_path), media_type=media_type)
 
 
 @router.get("/{photo_id}/thumbnail")
