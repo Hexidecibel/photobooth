@@ -13,17 +13,28 @@ async def auto_detect_camera(config: CameraConfig) -> CameraBase:
     if config.backend != "auto":
         return _create_specific(config)
 
-    # Try in priority order
     from app.camera.picamera2 import PiCamera2Backend
     from app.camera.webcam import OpenCVBackend
 
-    if PiCamera2Backend.detect():
+    pi_available = PiCamera2Backend.detect()
+    usb_available = OpenCVBackend.detect()
+
+    # Both available: hybrid mode (USB for smooth preview, Pi for captures)
+    if pi_available and usb_available:
+        from app.camera.hybrid import HybridCamera
+
+        logger.info("Using Hybrid camera (USB webcam preview + Pi camera capture)")
+        preview = OpenCVBackend(config.webcam_index)
+        capture = PiCamera2Backend()
+        return HybridCamera(preview=preview, capture=capture)
+
+    # Pi camera only
+    if pi_available:
         logger.info("Using PiCamera2 backend")
         return PiCamera2Backend()
 
-    # gphoto2 backend not yet implemented — will add in future phase
-
-    if OpenCVBackend.detect():
+    # USB webcam only
+    if usb_available:
         logger.info("Using OpenCV webcam backend")
         return OpenCVBackend(config.webcam_index)
 
