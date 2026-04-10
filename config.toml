@@ -90,7 +90,8 @@ port = 8000
 
 [network]
 tunnel_enabled = false
-tunnel_command = ""
+tunnel_provider = "localhost.run"
+tunnel_custom_command = ""
 tunnel_name = "photobooth"
 tunnel_url_pattern = "https://{name}.tunnel.cush.rocks"
 hotspot_enabled = false

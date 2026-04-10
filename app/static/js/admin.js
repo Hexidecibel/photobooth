@@ -102,11 +102,26 @@ class AdminPanel {
                     </div>
                     <div class="qr-container" id="qr-booth"></div>
                 </div>
+                <div class="card card-wide">
+                    <h3>Tunnel</h3>
+                    ${conn.tunnel_url ? `
+                        <div class="card-row">${statusDot(conn.tunnel_active)} Status: ${conn.tunnel_active ? 'Active' : 'Inactive'}</div>
+                        <div class="card-row"><strong>Provider:</strong> ${conn.tunnel_provider || 'unknown'}</div>
+                        <div class="card-row"><strong>Public URL:</strong> <a href="${conn.tunnel_url}" target="_blank">${conn.tunnel_url}</a></div>
+                        <div class="qr-container" id="qr-tunnel"></div>
+                    ` : `
+                        <div class="card-row">${statusDot(false)} Tunnel not active</div>
+                        <div class="card-row" style="color:var(--pb-muted,#888)">Enable in config under [network] &rarr; tunnel_enabled = true</div>
+                    `}
+                </div>
             </div>
         `;
 
         // QR code generation (simple canvas-based via external lib or text fallback)
         this.renderQR('qr-booth', conn.booth_url);
+        if (conn.tunnel_url) {
+            this.renderQR('qr-tunnel', conn.tunnel_url);
+        }
     }
 
     renderQR(containerId, url) {

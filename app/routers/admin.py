@@ -245,6 +245,7 @@ async def connection_info(request: Request):
     if tunnel and tunnel.public_url:
         result["tunnel_url"] = tunnel.public_url
         result["tunnel_active"] = tunnel.is_running
+        result["tunnel_provider"] = config.network.tunnel_provider
 
     return result
 
