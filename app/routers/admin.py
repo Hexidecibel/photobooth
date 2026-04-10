@@ -365,12 +365,6 @@ async def connection_info(request: Request):
         "port": port,
     }
 
-    tunnel = getattr(request.app.state, "tunnel", None)
-    if tunnel and tunnel.public_url:
-        result["tunnel_url"] = tunnel.public_url
-        result["tunnel_active"] = tunnel.is_running
-        result["tunnel_provider"] = config.network.tunnel_provider
-
     return result
 
 
@@ -599,74 +593,106 @@ async def test_cloud_gallery(request: Request):
 
 @router.get("/events")
 async def list_events(request: Request):
-    """List all events (galleries) from cloud."""
-    cloud = getattr(request.app.state, "cloud_gallery", None)
-    if not cloud or not cloud.is_configured:
-        return {"events": [], "error": "Cloud gallery not configured"}
+    """List all events/albums (local DB is source of truth)."""
+    share_service = request.app.state.share_service
+    albums = share_service.list_albums()
 
-    galleries = await cloud.list_galleries()
-    return {"events": galleries}
+    # Include cloud connectivity status so the UI knows what's available
+    cloud = getattr(request.app.state, "cloud_gallery", None)
+    cloud_configured = bool(cloud and cloud.is_configured)
+
+    return {"events": albums, "cloud_configured": cloud_configured}
 
 
 @router.post("/events")
 async def create_event(request: Request):
-    """Create a new event (gallery) on the cloud."""
-    cloud = getattr(request.app.state, "cloud_gallery", None)
-    if not cloud or not cloud.is_configured:
-        raise HTTPException(503, "Cloud gallery not configured")
-
+    """Create a new event. Local album always; cloud gallery if configured."""
     data = await request.json()
     name = data.get("name", "")
-    slug = data.get("slug", "")
-
     if not name:
         raise HTTPException(400, "Event name required")
 
-    result = await cloud.create_gallery(name, slug)
-    if not result:
-        raise HTTPException(500, "Failed to create event")
+    share_service = request.app.state.share_service
+    cloud = getattr(request.app.state, "cloud_gallery", None)
 
-    # Auto-publish so guests can view
-    await cloud.publish_gallery(result["id"])
+    cloud_gallery_id = ""
+    slug = data.get("slug", "")
 
-    return {"event": result}
+    # If cloud gallery is configured, also create there
+    if cloud and cloud.is_configured:
+        try:
+            result = await cloud.create_gallery(name, slug)
+            if result:
+                cloud_gallery_id = result["id"]
+                slug = result.get("slug", slug)
+                await cloud.publish_gallery(cloud_gallery_id)
+        except Exception:
+            pass  # Cloud failure shouldn't block local album creation
+
+    album = share_service.create_album(name, slug, cloud_gallery_id)
+
+    # Auto-activate the new album
+    share_service.activate_album(album["id"])
+
+    # Update event name in config
+    config = request.app.state.config
+    config.sharing.event_name = name
+
+    # Update cloud gallery_id if applicable
+    if cloud_gallery_id:
+        config.cloud_gallery.gallery_id = cloud_gallery_id
+        if cloud:
+            cloud._gallery_id = cloud_gallery_id
+
+    save_config(config)
+
+    return {"event": album}
 
 
 @router.post("/events/{event_id}/activate")
 async def activate_event(event_id: str, request: Request):
-    """Set this event as the active one -- photos upload to this gallery."""
-    cloud = getattr(request.app.state, "cloud_gallery", None)
-    config = request.app.state.config
+    """Set an album as active -- new photos go to this album."""
+    share_service = request.app.state.share_service
+    share_service.activate_album(event_id)
 
-    # Update the gallery_id in config
-    config.cloud_gallery.gallery_id = event_id
-    save_config(config)
+    # Get album info for config updates
+    albums = share_service.list_albums()
+    album = next((a for a in albums if a["id"] == event_id), None)
 
-    # Update the cloud service's gallery_id
-    if cloud:
-        cloud._gallery_id = event_id
-        # Refresh gallery info and update event name
-        gallery_info = await cloud.get_gallery_info()
-        if gallery_info:
-            config.sharing.event_name = gallery_info.get(
-                "name", config.sharing.event_name
-            )
-            save_config(config)
+    if album:
+        config = request.app.state.config
+        config.sharing.event_name = album["name"]
 
-    return {"status": "activated", "gallery_id": event_id}
+        # Update cloud gallery if synced
+        cloud = getattr(request.app.state, "cloud_gallery", None)
+        if album.get("cloud_gallery_id") and cloud:
+            config.cloud_gallery.gallery_id = album["cloud_gallery_id"]
+            cloud._gallery_id = album["cloud_gallery_id"]
+
+        save_config(config)
+
+    return {"status": "activated"}
 
 
 @router.delete("/events/{event_id}")
 async def delete_event(event_id: str, request: Request):
-    """Delete an event (gallery) from the cloud."""
-    cloud = getattr(request.app.state, "cloud_gallery", None)
-    if not cloud:
-        raise HTTPException(503, "Cloud gallery not configured")
+    """Delete an album. Also removes cloud gallery if synced."""
+    share_service = request.app.state.share_service
 
-    success = await cloud.delete_gallery(event_id)
-    if not success:
-        raise HTTPException(500, "Failed to delete event")
+    # Get album to check for cloud gallery
+    albums = share_service.list_albums()
+    album = next((a for a in albums if a["id"] == event_id), None)
 
+    # Delete from cloud if synced
+    if album and album.get("cloud_gallery_id"):
+        cloud = getattr(request.app.state, "cloud_gallery", None)
+        if cloud and cloud.is_configured:
+            try:
+                await cloud.delete_gallery(album["cloud_gallery_id"])
+            except Exception:
+                pass  # Cloud failure shouldn't block local deletion
+
+    share_service.delete_album(event_id)
     return {"status": "deleted"}
 
 

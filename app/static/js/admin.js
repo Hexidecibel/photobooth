@@ -171,26 +171,11 @@ class AdminPanel {
                     </div>
                     <div class="qr-container" id="qr-booth"></div>
                 </div>
-                <div class="card card-wide">
-                    <h3>Tunnel</h3>
-                    ${conn.tunnel_url ? `
-                        <div class="card-row">${statusDot(conn.tunnel_active)} Status: ${conn.tunnel_active ? 'Active' : 'Inactive'}</div>
-                        <div class="card-row"><strong>Provider:</strong> ${conn.tunnel_provider || 'unknown'}</div>
-                        <div class="card-row"><strong>Public URL:</strong> <a href="${conn.tunnel_url}" target="_blank">${conn.tunnel_url}</a></div>
-                        <div class="qr-container" id="qr-tunnel"></div>
-                    ` : `
-                        <div class="card-row">${statusDot(false)} Tunnel not active</div>
-                        <div class="card-row" style="color:var(--pb-muted,#888)">Enable in config under [network] &rarr; tunnel_enabled = true</div>
-                    `}
-                </div>
             </div>
         `;
 
         // QR code generation (simple canvas-based via external lib or text fallback)
         this.renderQR('qr-booth', conn.booth_url);
-        if (conn.tunnel_url) {
-            this.renderQR('qr-tunnel', conn.tunnel_url);
-        }
     }
 
     renderQR(containerId, url) {
@@ -678,32 +663,9 @@ class AdminPanel {
             numberInput('display', 'height', 'Screen Height', 'Display height in pixels', c.display?.height || 600)
         );
 
-        // 7. Network / Tunnel
-        const tunnelUrl = c.network?.tunnel_url_pattern
-            ? c.network.tunnel_url_pattern.replace('{name}', c.network?.tunnel_name || 'photobooth')
-            : '';
-        const networkHtml = sectionCard('Network / Tunnel',
-            'Remote access via tunnels and hotspot configuration.',
-            toggle('network', 'tunnel_enabled', 'Enable Tunnel', 'Expose the booth to the internet via a tunnel', c.network?.tunnel_enabled) +
-            selectInput('network', 'tunnel_provider', 'Tunnel Provider', 'Service used to create the public URL', c.network?.tunnel_provider || 'localhost.run', [
-                { value: 'localhost.run', label: 'localhost.run' },
-                { value: 'custom', label: 'Custom command' },
-            ]) +
-            textInput('network', 'tunnel_name', 'Tunnel Name', 'Subdomain or identifier for the tunnel', c.network?.tunnel_name || 'photobooth', 'config-input-md') +
-            (tunnelUrl ? `<div class="config-field">
-                <div class="config-field-info">
-                    <div class="config-field-label">Public URL</div>
-                    <div class="config-field-desc">Derived from tunnel name and provider pattern</div>
-                </div>
-                <div class="config-field-control">
-                    <div class="url-display">
-                        <code>${tunnelUrl}</code>
-                        <button type="button" class="btn-copy" onclick="navigator.clipboard.writeText('${tunnelUrl}'); admin.showNotification('Copied!', 'success')" title="Copy">&#128203;</button>
-                    </div>
-                </div>
-            </div>` : '') +
-            textInput('network', 'tunnel_custom_command', 'Custom Command', 'Shell command for custom tunnel provider', c.network?.tunnel_custom_command || '', 'config-input-md') +
-            '<div style="border-top:1px solid #f0f0f0; margin-top:0.5rem; padding-top:0.5rem;"></div>' +
+        // 7. Network
+        const networkHtml = sectionCard('Network',
+            'Hotspot configuration for guest access.',
             toggle('network', 'hotspot_enabled', 'Enable Hotspot', 'Create a WiFi hotspot for guests to connect', c.network?.hotspot_enabled) +
             textInput('network', 'hotspot_ssid', 'Hotspot SSID', 'WiFi network name', c.network?.hotspot_ssid || 'PhotoBooth', 'config-input-md') +
             textInput('network', 'hotspot_password', 'Hotspot Password', 'WiFi password for guests', c.network?.hotspot_password || '', 'config-input-md')
@@ -929,7 +891,7 @@ class AdminPanel {
         try {
             const connRes = await fetch('/api/admin/connection');
             const connInfo = await connRes.json();
-            this._shareBaseUrl = connInfo.tunnel_url || `http://${connInfo.ip}:${connInfo.port}`;
+            this._shareBaseUrl = `http://${connInfo.ip}:${connInfo.port}`;
         } catch (e) {
             this._shareBaseUrl = window.location.origin;
         }
@@ -1046,10 +1008,10 @@ class AdminPanel {
 
                 if (!url) return;
 
-                // Always get the freshest tunnel URL before copying
+                // Get the freshest base URL before copying
                 try {
                     const freshConn = await fetch('/api/admin/connection').then(r => r.json());
-                    const freshBase = freshConn.tunnel_url || `http://${freshConn.ip}:${freshConn.port}`;
+                    const freshBase = `http://${freshConn.ip}:${freshConn.port}`;
                     const token = url.split('/share/')[1];
                     if (token) url = `${freshBase}/share/${token}`;
                 } catch (e) {}
@@ -1501,26 +1463,19 @@ class AdminPanel {
             const res = await fetch('/api/admin/events');
             const data = await res.json();
 
-            if (data.error) {
-                container.innerHTML = `<div class="empty-state"><p>${data.error}</p></div>`;
-                return;
-            }
-
-            this.renderEvents(data.events, container);
+            this.renderEvents(data.events, container, data.cloud_configured);
         } catch (e) {
             container.innerHTML = `<div class="error">Failed to load events</div>`;
         }
     }
 
-    renderEvents(events, container) {
-        const activeId = this.config?.cloud_gallery?.gallery_id || '';
-
+    renderEvents(events, container, cloudConfigured) {
         let html = `
             <div class="events-header">
                 <h3>Events</h3>
                 <button class="btn btn-primary" id="create-event-btn">+ New Event</button>
             </div>
-            <p class="section-desc">Each event is a gallery on gallery.cush.rocks. Photos upload to the active event.</p>
+            <p class="section-desc">Each event is a local album. Photos are tagged to the active event.${cloudConfigured ? ' Cloud-synced events also upload to gallery.cush.rocks.' : ''}</p>
         `;
 
         if (events.length === 0) {
@@ -1528,17 +1483,21 @@ class AdminPanel {
         } else {
             html += '<div class="events-list">';
             for (const event of events) {
-                const isActive = event.id === activeId;
-                const photoCount = event.media_count || 0;
+                const isActive = !!event.is_active;
+                const photoCount = event.photo_count || 0;
                 const date = new Date(event.created_at).toLocaleDateString();
-                const publicUrl = `https://gallery.cush.rocks/${event.slug}`;
+                const hasCloud = !!event.cloud_gallery_id;
+                const publicUrl = hasCloud
+                    ? `https://gallery.cush.rocks/${event.slug}`
+                    : `${window.location.origin}/gallery?album=${event.id}`;
+                const urlLabel = hasCloud ? publicUrl : 'Local Gallery';
 
                 html += `
                     <div class="event-card ${isActive ? 'active' : ''}">
                         <div class="event-info">
-                            <div class="event-name">${event.name} ${isActive ? '<span class="event-badge">Active</span>' : ''}</div>
+                            <div class="event-name">${event.name} ${isActive ? '<span class="event-badge">Active</span>' : ''}${hasCloud ? '<span class="event-badge" style="background:#4caf50">Cloud</span>' : ''}</div>
                             <div class="event-meta">${photoCount} photos &middot; Created ${date}</div>
-                            <div class="event-url"><a href="${publicUrl}" target="_blank">${publicUrl}</a></div>
+                            <div class="event-url"><a href="${publicUrl}" target="_blank">${urlLabel}</a></div>
                         </div>
                         <div class="event-actions">
                             ${!isActive ? `<button class="btn btn-sm btn-primary" data-activate-event="${event.id}">Activate</button>` : ''}
@@ -1606,14 +1565,7 @@ class AdminPanel {
                 body: JSON.stringify({ name, slug }),
             });
             if (res.ok) {
-                const data = await res.json();
                 this.showNotification('Event created!', 'success');
-
-                // Auto-activate the new event
-                if (data.event?.id) {
-                    await fetch(`/api/admin/events/${data.event.id}/activate`, { method: 'POST' });
-                }
-
                 this.loadEvents();
                 this.loadConfig();
             } else {

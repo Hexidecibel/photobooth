@@ -46,6 +46,12 @@ fi
 
 cd "$INSTALL_DIR"
 
+# Default config — create user config from defaults if it doesn't exist
+if [ ! -f config.toml ]; then
+    sudo -u "$CURRENT_USER" cp config.defaults.toml config.toml
+    echo "  Created config.toml from defaults"
+fi
+
 # Python venv (run as the actual user, not root)
 echo "[3/6] Creating virtual environment..."
 sudo -u "$CURRENT_USER" python3 -m venv .venv --system-site-packages

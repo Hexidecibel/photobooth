@@ -163,7 +163,9 @@ class PicturePlugin:
             }
             if self._share_service:
                 try:
-                    self._share_service.create_share(session)
+                    active_album = self._share_service.get_active_album()
+                    album_id = active_album["id"] if active_album else ""
+                    self._share_service.create_share(session, album_id=album_id)
                     result_msg["qr_url"] = f"/api/share/{session.share_token}/qr"
                 except Exception as e:
                     logger.warning(f"Share token creation failed: {e}")

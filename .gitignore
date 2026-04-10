@@ -29,5 +29,8 @@ ENV/
 .coverage
 htmlcov/
 
+# User config (config.defaults.toml is the tracked reference)
+config.toml
+
 # OS
 .DS_Store

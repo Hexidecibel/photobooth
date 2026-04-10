@@ -8,9 +8,14 @@ router = APIRouter(prefix="/api/gallery", tags=["gallery"])
 
 
 @router.get("/")
-async def list_gallery(request: Request, limit: int = 50, offset: int = 0):
+async def list_gallery(
+    request: Request, limit: int = 50, offset: int = 0, album: str = "",
+):
     share_service = request.app.state.share_service
-    photos = share_service.list_photos(limit, offset)
+    if album:
+        photos = share_service.get_album_photos(album, limit, offset)
+    else:
+        photos = share_service.list_photos(limit, offset)
     return {"photos": photos, "total": len(photos)}
 
 

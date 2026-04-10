@@ -93,13 +93,6 @@ event_name = "Photo Booth"
 host = "0.0.0.0"
 port = 8000
 
-[network]
-tunnel_enabled = false
-tunnel_provider = "localhost.run"
-tunnel_custom_command = ""
-tunnel_name = "photobooth"
-tunnel_url_pattern = "https://{name}.tunnel.cush.rocks"
-
 [sound]
 enabled = true
 countdown_beep = "sounds/beep.wav"

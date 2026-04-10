@@ -18,7 +18,6 @@ from app.services.email_service import EmailService
 from app.services.plugin_manager import PluginManager
 from app.services.share_service import ShareService
 from app.services.state_machine import StateMachine
-from app.services.tunnel_service import TunnelService
 from app.services.watchdog import WatchdogService
 
 logger = logging.getLogger(__name__)
@@ -70,13 +69,6 @@ async def lifespan(app: FastAPI):
     printer = setup_printer(config)
     app.state.printer = printer
 
-    # Tunnel service
-    tunnel = TunnelService(config.network, config.server.port)
-    tunnel_url = await tunnel.start()
-    if tunnel_url:
-        config.sharing.base_url = tunnel_url
-    app.state.tunnel = tunnel
-
     # Share service
     share_svc = ShareService(config.sharing, data_dir=config.general.save_dir)
     app.state.share_service = share_svc
@@ -124,8 +116,6 @@ async def lifespan(app: FastAPI):
 
     # Shutdown
     await watchdog.stop()
-    if app.state.tunnel:
-        await app.state.tunnel.stop()
     if app.state.gpio:
         app.state.gpio.close()
     if app.state.camera:

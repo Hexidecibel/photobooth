@@ -125,16 +125,6 @@ class ServerConfig(BaseModel):
     port: int = 8000
 
 
-class NetworkConfig(BaseModel):
-    """Network settings."""
-
-    tunnel_enabled: bool = False
-    tunnel_provider: str = "localhost.run"
-    tunnel_custom_command: str = ""
-    tunnel_name: str = "photobooth"
-    tunnel_url_pattern: str = "https://{name}.tunnel.cush.rocks"
-
-
 class SoundConfig(BaseModel):
     """Sound effects settings."""
 
@@ -208,7 +198,6 @@ class AppConfig(BaseModel):
     display: DisplayConfig = DisplayConfig()
     sharing: SharingConfig = SharingConfig()
     server: ServerConfig = ServerConfig()
-    network: NetworkConfig = NetworkConfig()
     sound: SoundConfig = SoundConfig()
     plugin: PluginConfig = PluginConfig()
     email: EmailConfig = EmailConfig()

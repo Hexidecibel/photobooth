@@ -10,6 +10,7 @@
     var allPhotos = [];
     var currentIndex = -1;
     var lightboxOverlay = null;
+    var albumId = new URLSearchParams(window.location.search).get('album') || '';
 
     function init() {
         loadGallery();
@@ -41,7 +42,9 @@
 
     async function loadGallery() {
         try {
-            var res = await fetch('/api/gallery/?limit=100');
+            var url = '/api/gallery/?limit=100';
+            if (albumId) url += '&album=' + encodeURIComponent(albumId);
+            var res = await fetch(url);
             var data = await res.json();
             allPhotos = data.photos || [];
             renderMasonry(allPhotos);
