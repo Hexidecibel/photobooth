@@ -48,6 +48,7 @@ do_sync() {
         --exclude 'node_modules/' \
         --exclude '.pytest_cache/' \
         --exclude '.ruff_cache/' \
+        --exclude 'config.toml' \
         . "${PI_HOST}:${PI_DIR}/"
     echo "Done! $(date '+%H:%M:%S')"
 }
