@@ -47,6 +47,7 @@ class CaptureSession:
     capture_count: int = 4
     captures: list[Path] = field(default_factory=list)
     selected_effect: str | None = None
+    per_capture_effects: list[str] = field(default_factory=list)
     layout_template: str = "classic-4x6"
     composite_path: Path | None = None
     share_token: str | None = None

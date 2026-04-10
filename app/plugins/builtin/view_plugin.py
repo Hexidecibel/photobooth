@@ -48,11 +48,14 @@ class ViewPlugin:
             except Exception:
                 count = int(kwargs.get("count", self._config.picture.capture_count))
 
+            effect = kwargs.get("effect", "none")
             self._sm.new_session(
                 mode=mode,
                 capture_count=count,
                 layout_template=template_name,
             )
+            if effect and effect != "none":
+                self._sm.session.selected_effect = effect
             return BoothState.PREVIEW
         return None
 
@@ -66,10 +69,6 @@ class ViewPlugin:
             return BoothState.PRINT
         if event == "done":
             return BoothState.THANKYOU
-        if event == "select_effect":
-            if session:
-                session.selected_effect = kwargs.get("effect")
-            return None  # Stay in review
         return None
 
     async def _on_print_do(self, session, event=None, **kwargs):

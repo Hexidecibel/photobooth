@@ -362,24 +362,6 @@ section[data-state="choose"] {
     box-shadow: 0 0 10px var(--pb-accent-glow);
 }
 
-/* Live filter preview strip */
-.preview-filters {
-    position: absolute;
-    bottom: 60px;
-    left: 0;
-    right: 0;
-    display: flex;
-    gap: 8px;
-    padding: 8px 16px;
-    overflow-x: auto;
-    z-index: 10;
-    scrollbar-width: none;
-}
-
-.preview-filters::-webkit-scrollbar {
-    display: none;
-}
-
 .filter-btn {
     flex-shrink: 0;
     padding: 8px 16px;
@@ -582,12 +564,6 @@ section[data-state="capture"] {
     color: var(--pb-text-secondary);
 }
 
-.review-filters {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
 .review-primary-actions {
     display: flex;
     flex-direction: column;
@@ -623,6 +599,75 @@ section[data-state="capture"] {
 
 .btn-accent:hover {
     filter: brightness(1.1);
+}
+
+/* ===================================================================
+   EFFECT PICKER — Pre-capture effect selection
+   =================================================================== */
+
+.effect-picker-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+}
+.effect-picker-modal {
+    background: var(--pb-bg-secondary);
+    border-radius: var(--pb-border-radius);
+    padding: 2rem;
+    max-width: 700px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+.effect-picker-modal h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: var(--pb-text-primary);
+}
+.effect-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.75rem;
+}
+.effect-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1.25rem 0.75rem;
+    background: var(--pb-bg-card);
+    border: 2px solid transparent;
+    border-radius: var(--pb-border-radius-sm);
+    cursor: pointer;
+    transition: all var(--pb-transition);
+    color: var(--pb-text-primary);
+    font-size: 0.9rem;
+}
+.effect-card:hover, .effect-card:active {
+    border-color: var(--pb-accent);
+    background: rgba(108, 99, 255, 0.15);
+    transform: scale(1.05);
+}
+.effect-icon {
+    font-size: 2rem;
+    line-height: 1;
+}
+
+/* Preview effect label badge */
+.preview-effect-label {
+    position: absolute;
+    top: var(--pb-spacing);
+    right: var(--pb-spacing);
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    z-index: 10;
 }
 
 /* ===================================================================

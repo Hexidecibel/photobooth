@@ -49,6 +49,59 @@
                 <!-- Populated by JS with template preview cards -->
             </div>
         </div>
+
+        <!-- Effect picker modal -->
+        <div class="effect-picker-overlay" id="effect-picker" style="display:none">
+            <div class="effect-picker-modal">
+                <h2 data-i18n="pick_effect">Choose an Effect</h2>
+                <div class="effect-grid">
+                    <button class="effect-card" data-effect="none">
+                        <div class="effect-icon">&#128247;</div>
+                        <span>Normal</span>
+                    </button>
+                    <button class="effect-card" data-effect="bw">
+                        <div class="effect-icon">&#9899;</div>
+                        <span>Black & White</span>
+                    </button>
+                    <button class="effect-card" data-effect="sepia">
+                        <div class="effect-icon">&#127811;</div>
+                        <span>Sepia</span>
+                    </button>
+                    <button class="effect-card" data-effect="vintage">
+                        <div class="effect-icon">&#128249;</div>
+                        <span>Vintage</span>
+                    </button>
+                    <button class="effect-card" data-effect="cartoon">
+                        <div class="effect-icon">&#127912;</div>
+                        <span>Cartoon</span>
+                    </button>
+                    <button class="effect-card" data-effect="pencil_sketch">
+                        <div class="effect-icon">&#9998;</div>
+                        <span>Pencil Sketch</span>
+                    </button>
+                    <button class="effect-card" data-effect="watercolor">
+                        <div class="effect-icon">&#127912;</div>
+                        <span>Watercolor</span>
+                    </button>
+                    <button class="effect-card" data-effect="pop_art">
+                        <div class="effect-icon">&#10036;</div>
+                        <span>Pop Art</span>
+                    </button>
+                    <button class="effect-card" data-effect="oil_painting">
+                        <div class="effect-icon">&#128396;</div>
+                        <span>Oil Painting</span>
+                    </button>
+                    <button class="effect-card" data-effect="warm">
+                        <div class="effect-icon">&#9728;</div>
+                        <span>Warm</span>
+                    </button>
+                    <button class="effect-card" data-effect="cool">
+                        <div class="effect-icon">&#10052;</div>
+                        <span>Cool</span>
+                    </button>
+                </div>
+            </div>
+        </div>
         <button class="btn-cancel" data-action="cancel" data-i18n="cancel">Cancel</button>
     </section>
 
@@ -59,19 +112,9 @@
             <div class="no-camera-message" id="no-camera" style="display:none;">
                 <p data-i18n="no_camera">No Camera Detected</p>
             </div>
+            <div class="preview-effect-label" id="preview-effect-label"></div>
             <div class="countdown-overlay" id="countdown"></div>
             <div class="capture-progress" id="capture-dots"></div>
-        </div>
-        <div class="preview-filters">
-            <button class="filter-btn active" data-filter="none" data-i18n="filter_none">Normal</button>
-            <button class="filter-btn" data-filter="bw" data-i18n="filter_bw">B&W</button>
-            <button class="filter-btn" data-filter="sepia" data-i18n="filter_sepia">Sepia</button>
-            <button class="filter-btn" data-filter="vintage" data-i18n="filter_vintage">Vintage</button>
-            <button class="filter-btn" data-filter="cartoon" data-i18n="filter_cartoon">Cartoon</button>
-            <button class="filter-btn" data-filter="pencil_sketch" data-i18n="filter_sketch">Sketch</button>
-            <button class="filter-btn" data-filter="watercolor" data-i18n="filter_watercolor">Watercolor</button>
-            <button class="filter-btn" data-filter="pop_art" data-i18n="filter_pop_art">Pop Art</button>
-            <button class="filter-btn" data-filter="oil_painting" data-i18n="filter_oil_paint">Oil Paint</button>
         </div>
         <button class="btn-cancel" data-action="cancel" data-i18n="cancel">Cancel</button>
     </section>
@@ -92,7 +135,7 @@
         </div>
     </section>
 
-    <!-- REVIEW: Show result, pick effects, retake -->
+    <!-- REVIEW: Show result, retake -->
     <section data-state="review">
         <div class="review-layout">
             <!-- Photo takes center stage -->
@@ -103,19 +146,6 @@
             <!-- Clear action area -->
             <div class="review-actions-panel">
                 <h2 data-i18n="review_title">Your Photo!</h2>
-
-                <!-- Filter strip (optional, for those who want it) -->
-                <div class="review-filters" id="review-filters">
-                    <button class="filter-btn active" data-filter="none" data-i18n="filter_none">Normal</button>
-                    <button class="filter-btn" data-filter="bw" data-i18n="filter_bw">B&W</button>
-                    <button class="filter-btn" data-filter="sepia" data-i18n="filter_sepia">Sepia</button>
-                    <button class="filter-btn" data-filter="vintage" data-i18n="filter_vintage">Vintage</button>
-                    <button class="filter-btn" data-filter="cartoon" data-i18n="filter_cartoon">Cartoon</button>
-                    <button class="filter-btn" data-filter="pencil_sketch" data-i18n="filter_sketch">Sketch</button>
-                    <button class="filter-btn" data-filter="watercolor" data-i18n="filter_watercolor">Watercolor</button>
-                    <button class="filter-btn" data-filter="pop_art" data-i18n="filter_pop_art">Pop Art</button>
-                    <button class="filter-btn" data-filter="oil_painting" data-i18n="filter_oil_paint">Oil Paint</button>
-                </div>
 
                 <!-- QR code shown directly -->
                 <div class="review-qr" id="review-qr">

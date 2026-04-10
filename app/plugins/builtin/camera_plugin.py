@@ -46,10 +46,12 @@ class CameraPlugin:
             return BoothState.CAPTURE
         if event == "cancel":
             return BoothState.IDLE
-        if event == "select_effect":
+        if event == "select_per_shot_effect":
+            # Store effect for the upcoming capture
             if session:
-                session.selected_effect = kwargs.get("effect")
-            return None  # Stay in preview
+                effect = kwargs.get("effect", "none")
+                session.per_capture_effects.append(effect)
+            return None
         return None
 
     async def _on_capture_enter(self, session, **kwargs):

@@ -31,15 +31,19 @@ class ProcessingPipeline:
         """Full pipeline: raw captures -> final composite."""
         # Load captures
         images: list[Image.Image] = []
-        for capture_path in session.captures:
+        for i, capture_path in enumerate(session.captures):
             img = await asyncio.to_thread(Image.open, capture_path)
             img = img.convert("RGB")
 
-            # Apply selected effect
-            if session.selected_effect and session.selected_effect != "none":
-                img = await asyncio.to_thread(
-                    apply_effect, img, session.selected_effect
-                )
+            # Per-capture effect takes priority, then session-wide effect
+            effect = None
+            if session.per_capture_effects and i < len(session.per_capture_effects):
+                effect = session.per_capture_effects[i]
+            elif session.selected_effect:
+                effect = session.selected_effect
+
+            if effect and effect != "none":
+                img = await asyncio.to_thread(apply_effect, img, effect)
 
             images.append(img)
 

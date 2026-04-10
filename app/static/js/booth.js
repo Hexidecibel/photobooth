@@ -6,24 +6,6 @@
  * review with effects, print with QR, and thank-you.
  */
 
-/* CSS filter mapping for live preview (client-side only) */
-const CSS_FILTERS = {
-    none: 'none',
-    bw: 'grayscale(100%)',
-    sepia: 'sepia(80%)',
-    vintage: 'sepia(40%) contrast(90%) saturate(80%)',
-    warm: 'sepia(20%) saturate(120%)',
-    cool: 'hue-rotate(20deg) saturate(90%)',
-    blur: 'blur(2px)',
-    high_contrast: 'contrast(150%)',
-    // sharpen can't be done with CSS filters, skip for preview
-    cartoon: 'contrast(150%) saturate(120%)',
-    pencil_sketch: 'grayscale(100%) contrast(200%) brightness(120%)',
-    watercolor: 'saturate(130%) blur(0.5px)',
-    pop_art: 'contrast(200%) saturate(200%)',
-    oil_painting: 'saturate(110%) contrast(110%)',
-};
-
 class SoundManager {
     constructor(config) {
         this.enabled = config.enabled !== false;
@@ -77,6 +59,9 @@ class BoothApp {
         this.reconnectDelay = 1000;
         this.countdownTimer = null;
         this.selectedFilter = 'none';
+        this.selectedEffect = 'none';
+        this.pendingMode = null;
+        this.pendingTemplate = null;
         this.i18n = new I18n('en');
         this.sounds = null; // Initialized when server sends sound_config
     }
@@ -277,7 +262,26 @@ class BoothApp {
         // State-specific setup / teardown
         if (state === 'preview') {
             this.startPreview();
-            this.startCountdown();
+            // Multi-shot: show effect picker before each capture (except first, already chosen)
+            if (previousState === 'capture' && this.captureCount > 1) {
+                this.showPerShotEffectPicker();
+            } else {
+                this.startCountdown();
+            }
+        }
+        // Show selected effect label on preview
+        if (state === 'preview') {
+            var effectLabel = document.getElementById('preview-effect-label');
+            if (effectLabel) {
+                var effectNames = {
+                    none: '', bw: 'B&W', sepia: 'Sepia', vintage: 'Vintage',
+                    cartoon: 'Cartoon', pencil_sketch: 'Sketch', watercolor: 'Watercolor',
+                    pop_art: 'Pop Art', oil_painting: 'Oil Paint', warm: 'Warm', cool: 'Cool'
+                };
+                var label = effectNames[this.selectedEffect] || '';
+                effectLabel.textContent = label;
+                effectLabel.style.display = label ? '' : 'none';
+            }
         } else if (state !== 'preview' && previousState === 'preview') {
             this.stopCountdown();
         }
@@ -392,6 +396,8 @@ class BoothApp {
     /* ------------------------------------------------------------------ */
 
     onCaptureComplete(msg) {
+        this.captureCount = msg.total || 1;
+        this.captureIndex = msg.index || 0;
         var dots = document.getElementById('capture-dots');
         if (dots) {
             dots.innerHTML = '';
@@ -518,47 +524,7 @@ class BoothApp {
         }
     }
 
-    /* ------------------------------------------------------------------ */
-    /*  Review filter preview                                              */
-    /* ------------------------------------------------------------------ */
 
-    applyReviewFilter(filterName) {
-        this.selectedFilter = filterName;
-        var img = document.getElementById('review-photo');
-        if (img) {
-            img.style.filter = CSS_FILTERS[filterName] || 'none';
-        }
-
-        // Update active button in review filters
-        var buttons = document.querySelectorAll('#review-filters .filter-btn');
-        for (var i = 0; i < buttons.length; i++) {
-            buttons[i].classList.toggle('active', buttons[i].dataset.filter === filterName);
-        }
-
-        // Notify server of the selected effect
-        this.send('select_effect', { effect: filterName });
-    }
-
-    /* ------------------------------------------------------------------ */
-    /*  Live filter preview                                                */
-    /* ------------------------------------------------------------------ */
-
-    selectFilter(filterName) {
-        this.selectedFilter = filterName;
-        var img = document.getElementById('camera-preview');
-        if (img) {
-            img.style.filter = CSS_FILTERS[filterName] || 'none';
-        }
-
-        // Update active button
-        var buttons = document.querySelectorAll('.filter-btn');
-        for (var i = 0; i < buttons.length; i++) {
-            buttons[i].classList.toggle('active', buttons[i].dataset.filter === filterName);
-        }
-
-        // Notify server of the selected effect
-        this.send('select_effect', { effect: filterName });
-    }
 
     /* ------------------------------------------------------------------ */
     /*  Pose prompts                                                       */
@@ -652,6 +618,63 @@ class BoothApp {
     }
 
     /* ------------------------------------------------------------------ */
+    /*  Effect picker                                                      */
+    /* ------------------------------------------------------------------ */
+
+    showEffectPicker() {
+        document.getElementById('effect-picker').style.display = 'flex';
+    }
+
+    hideEffectPicker() {
+        document.getElementById('effect-picker').style.display = 'none';
+    }
+
+    showPerShotEffectPicker() {
+        // For multi-shot: show effect picker overlay on the preview screen
+        var picker = document.getElementById('effect-picker');
+        var previewSection = document.querySelector('[data-state="preview"]');
+        if (picker && previewSection) {
+            // Update heading for between-shots context
+            var heading = picker.querySelector('h2');
+            if (heading) heading.textContent = 'Change effect or strike a new pose!';
+            previewSection.appendChild(picker);
+            picker.style.display = 'flex';
+            this._perShotPicking = true;
+            // Auto-dismiss after 5 seconds — use the last selected effect
+            var self = this;
+            this._perShotTimer = setTimeout(function () {
+                if (self._perShotPicking) {
+                    self.onPerShotEffectPicked(self.selectedEffect || 'none');
+                }
+            }, 5000);
+        }
+    }
+
+    onPerShotEffectPicked(effect) {
+        // Clear auto-dismiss timer
+        if (this._perShotTimer) {
+            clearTimeout(this._perShotTimer);
+            this._perShotTimer = null;
+        }
+        // Store the effect for this capture
+        this.send('select_per_shot_effect', { effect: effect });
+        // Move picker back to choose section and hide
+        var picker = document.getElementById('effect-picker');
+        var chooseSection = document.querySelector('[data-state="choose"]');
+        if (picker && chooseSection) {
+            // Restore heading
+            var heading = picker.querySelector('h2');
+            if (heading) heading.textContent = this.i18n.t('pick_effect');
+            chooseSection.appendChild(picker);
+            picker.style.display = 'none';
+        }
+        this._perShotPicking = false;
+        this.selectedEffect = effect;
+        // Start countdown for next capture
+        this.startCountdown();
+    }
+
+    /* ------------------------------------------------------------------ */
     /*  Template picker                                                    */
     /* ------------------------------------------------------------------ */
 
@@ -701,14 +724,12 @@ class BoothApp {
                 card.addEventListener('click', function () {
                     if (self.sounds) self.sounds.play('click');
                     self.send('select_template', { template: name });
-                    self.send('choose', {
-                        mode: self._pendingMode,
-                        count: self._pendingCount,
-                        template: name
-                    });
-                    // Hide picker, show mode chooser again for next time
+                    self.pendingMode = self._pendingMode;
+                    self.pendingTemplate = name;
+                    // Hide template picker, show effect picker
                     document.getElementById('template-picker').style.display = 'none';
                     document.querySelector('.choose-grid').style.display = '';
+                    self.showEffectPicker();
                 });
 
                 grid.appendChild(card);
@@ -722,7 +743,8 @@ class BoothApp {
     }
 
     resetChooseScreen() {
-        // Reset template picker visibility when re-entering choose
+        // Reset effect picker and template picker when re-entering choose
+        this.hideEffectPicker();
         var picker = document.getElementById('template-picker');
         var grid = document.querySelector('.choose-grid');
         var heading = document.querySelector('[data-state="choose"] .section-heading');
@@ -804,7 +826,9 @@ class BoothApp {
                     if (guestPicks) {
                         self.showTemplatePicker(mode);
                     } else {
-                        self.send('choose', { mode: mode, template: template });
+                        self.pendingMode = mode;
+                        self.pendingTemplate = template;
+                        self.showEffectPicker();
                     }
                 });
             })(options[i]);
@@ -833,27 +857,33 @@ class BoothApp {
             })(actions[k]);
         }
 
-        // Preview filter buttons
-        var previewFilterBtns = document.querySelectorAll('.preview-filters .filter-btn');
-        for (var n = 0; n < previewFilterBtns.length; n++) {
-            (function (btn) {
-                btn.addEventListener('click', function () {
-                    self.selectFilter(btn.dataset.filter);
-                });
-            })(previewFilterBtns[n]);
-        }
 
-        // Review filter buttons
-        var reviewFilterBtns = document.querySelectorAll('#review-filters .filter-btn');
-        for (var n2 = 0; n2 < reviewFilterBtns.length; n2++) {
-            (function (btn) {
-                btn.addEventListener('click', function () {
+
+
+        // Effect picker card clicks
+        var effectCards = document.querySelectorAll('.effect-card');
+        for (var e = 0; e < effectCards.length; e++) {
+            (function(card) {
+                card.addEventListener('click', function() {
                     if (self.sounds) self.sounds.play('click');
-                    self.applyReviewFilter(btn.dataset.filter);
-                });
-            })(reviewFilterBtns[n2]);
-        }
+                    var effect = card.dataset.effect;
+                    self.selectedEffect = effect;
 
+                    if (self._perShotPicking) {
+                        // Per-shot effect pick (multi-shot between captures)
+                        self.onPerShotEffectPicked(effect);
+                    } else {
+                        // Initial effect pick before first capture
+                        self.hideEffectPicker();
+                        self.send('choose', {
+                            mode: self.pendingMode,
+                            template: self.pendingTemplate,
+                            effect: effect,
+                        });
+                    }
+                });
+            })(effectCards[e]);
+        }
         // Ripple effect on buttons
         var buttons = document.querySelectorAll('.btn-primary, .btn-secondary, .btn-text, .choose-option');
         for (var m = 0; m < buttons.length; m++) {
