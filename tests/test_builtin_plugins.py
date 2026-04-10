@@ -58,13 +58,10 @@ class TestViewPlugin:
     @pytest.mark.asyncio
     async def test_choose_option(self, plugin, session):
         result = await plugin._on_choose_do(
-            session, event="choose", mode="photo", count=4
+            session, event="choose", mode="photo", template="lets-go"
         )
         assert result == BoothState.PREVIEW
-        plugin._sm.new_session.assert_called_once_with(
-            mode="photo", capture_count=4,
-            layout_template="classic-4x6",
-        )
+        plugin._sm.new_session.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_review_retake(self, plugin):

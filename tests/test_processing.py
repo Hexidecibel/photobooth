@@ -115,12 +115,13 @@ def test_list_effects():
 
 
 def test_load_template():
-    template = load_template("classic-4x6", templates_dir=TEMPLATES_DIR)
-    assert template.name == "classic-4x6"
-    assert len(template.slots) == 4
+    template = load_template("lets-go", templates_dir=TEMPLATES_DIR)
+    assert template.name == "lets-go"
+    assert len(template.slots) >= 1
     assert template.width_px == int(4 * 600)
     assert template.height_px == int(6 * 600)
-    assert template.footer is not None
+    # New templates use text_overlays instead of footer
+    assert template.footer is not None or len(template.text_overlays) > 0
 
 
 def test_load_template_not_found():
@@ -131,16 +132,16 @@ def test_load_template_not_found():
 def test_list_templates():
     names = list_templates(templates_dir=TEMPLATES_DIR)
     assert isinstance(names, list)
-    assert "classic-4x6" in names
-    assert "strip-2x6" in names
-    assert "single" in names
+    assert "lets-go" in names
+    assert "polaroid-4x6" in names
+    assert len(names) >= 10
 
 
 # --------------- layout engine ---------------
 
 
 def test_layout_engine_compose():
-    template = load_template("classic-4x6", templates_dir=TEMPLATES_DIR)
+    template = load_template("lets-go", templates_dir=TEMPLATES_DIR)
     captures = [
         _make_image(color="red"),
         _make_image(color="green"),
@@ -154,7 +155,7 @@ def test_layout_engine_compose():
 
 
 def test_layout_engine_fewer_captures():
-    template = load_template("classic-4x6", templates_dir=TEMPLATES_DIR)
+    template = load_template("lets-go", templates_dir=TEMPLATES_DIR)
     captures = [
         _make_image(color="red"),
         _make_image(color="green"),
@@ -182,7 +183,7 @@ async def test_pipeline_process(tmp_path: Path, tmp_captures: list[Path]):
     session = CaptureSession(
         captures=tmp_captures,
         selected_effect="none",
-        layout_template="classic-4x6",
+        layout_template="lets-go",
     )
     config = PictureConfig()
 

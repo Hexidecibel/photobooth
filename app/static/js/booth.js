@@ -457,11 +457,11 @@ class BoothApp {
 
         var hints = {
             idle:       { green: 'Press to start!', red: 'Press to start!' },
-            choose:     { green: 'Select', red: 'Next / Cancel' },
-            preview:    { green: 'Both = Cancel', red: '' },
+            choose:     { green: 'Select', red: 'Next  |  Both = Cancel' },
+            preview:    { green: 'Both = Cancel', red: 'Both = Cancel' },
             capture:    { green: '', red: '' },
             processing: { green: '', red: '' },
-            review:     { green: 'Done', red: 'Retake' },
+            review:     { green: 'Done', red: 'Retake  |  Both = Cancel' },
             print:      { green: 'Done', red: 'Done' },
             thankyou:   { green: 'Next', red: 'Next' },
         };
