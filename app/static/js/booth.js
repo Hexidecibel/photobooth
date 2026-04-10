@@ -288,22 +288,25 @@ class BoothApp {
         var activeSection = document.querySelector('section[data-state].active');
         if (!activeSection) return;
 
-        // Check what's visible: choose grid, template picker, effect picker, bg picker
+        // Check what's visible — use offsetParent to detect hidden elements
+        function isVisible(el) { return el && el.offsetParent !== null; }
+
         var effectPicker = document.getElementById('effect-picker');
         var templatePicker = document.getElementById('template-picker');
         var bgPicker = document.getElementById('bg-picker');
-        var chooseGrid = activeSection.querySelector('.choose-grid');
 
-        if (effectPicker && effectPicker.style.display !== 'none') {
+        if (isVisible(effectPicker)) {
             items = Array.from(effectPicker.querySelectorAll('.effect-card'));
-        } else if (bgPicker && bgPicker.style.display !== 'none') {
+        } else if (isVisible(bgPicker)) {
             items = Array.from(bgPicker.querySelectorAll('.bg-card'));
-        } else if (templatePicker && templatePicker.style.display !== 'none') {
+        } else if (isVisible(templatePicker)) {
             items = Array.from(templatePicker.querySelectorAll('.template-card'));
-        } else if (chooseGrid && chooseGrid.style.display !== 'none') {
-            items = Array.from(chooseGrid.querySelectorAll('.choose-option'));
+        } else {
+            // Fall back to choose grid options
+            items = Array.from(document.querySelectorAll('.choose-option'));
         }
 
+        console.log('[booth] button action=' + action + ', items found=' + items.length);
         if (items.length === 0) return;
 
         // Find current highlighted item
