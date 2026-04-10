@@ -61,7 +61,7 @@ class PiCamera2Backend(CameraBase):
             return False
 
     async def start_preview(
-        self, resolution: tuple[int, int] = (800, 600)
+        self, resolution: tuple[int, int] = (640, 480)
     ) -> None:
         from picamera2 import Picamera2
 
