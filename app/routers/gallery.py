@@ -43,6 +43,10 @@ async def get_thumbnail(photo_id: str, request: Request, size: int = 400):
         from PIL import Image
 
         img = Image.open(photo_path)
+        # For GIFs, use first frame
+        if hasattr(img, 'n_frames') and img.n_frames > 1:
+            img.seek(0)
+        img = img.convert("RGB")
         img.thumbnail((size, size), Image.LANCZOS)
         buf = BytesIO()
         img.save(buf, format="JPEG", quality=80)
