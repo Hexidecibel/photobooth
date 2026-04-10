@@ -505,8 +505,9 @@ class AdminPanel {
             </div>` +
             toggle('camera', 'mirror_preview', 'Mirror Preview', 'Selfie-mode: flip the live preview horizontally', c.camera?.mirror_preview) +
             toggle('camera', 'mirror_capture', 'Mirror Capture', 'Also flip the saved/printed photo', c.camera?.mirror_capture) +
-            selectInput('camera', 'backend', 'Camera Backend', 'Auto-detect usually works best', c.camera?.backend || 'auto', [
+            selectInput('camera', 'backend', 'Camera Backend', 'Hybrid = USB webcam for smooth preview + Pi camera for high-res captures', c.camera?.backend || 'auto', [
                 { value: 'auto', label: 'Auto Detect' },
+                { value: 'hybrid', label: 'Hybrid (USB preview + Pi capture)' },
                 { value: 'picamera2', label: 'Pi Camera (picamera2)' },
                 { value: 'webcam', label: 'USB Webcam (OpenCV)' },
                 { value: 'gphoto2', label: 'DSLR (gPhoto2)' },
