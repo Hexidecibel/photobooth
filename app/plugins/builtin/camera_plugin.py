@@ -66,34 +66,24 @@ class CameraPlugin:
 
         try:
             if session.mode in ("gif", "boomerang"):
-                # Stop MJPEG stream
+                # Stop MJPEG stream — we need exclusive camera access
                 self._camera._running = False
-                await asyncio.sleep(0.2)
+                await asyncio.sleep(0.3)
 
-                # Capture all frames as fast as possible into memory
                 frame_count = 8
-                raw_frames = []
                 for i in range(frame_count):
                     await self._broadcast({
                         "type": "capture_progress",
                         "frame": i + 1,
                         "total": frame_count,
                     })
-                    arr = await asyncio.to_thread(
-                        self._camera._picam2.capture_array, "main"
-                    )
-                    raw_frames.append(arr)
-                    await asyncio.sleep(0.05)  # Minimal delay
-
-                # Now save to disk (non-blocking for UI)
-                from PIL import Image as PILImage
-
-                for i, arr in enumerate(raw_frames):
                     path = raw_dir / f"frame_{i:03d}.jpg"
-                    img = PILImage.fromarray(arr)
-                    if img.mode != "RGB":
-                        img = img.convert("RGB")
-                    img.save(str(path), quality=85)
+                    buf = io.BytesIO()
+                    await asyncio.to_thread(
+                        self._camera._picam2.capture_file,
+                        buf, format="jpeg",
+                    )
+                    path.write_bytes(buf.getvalue())
                     session.captures.append(path)
 
                 # Re-enable stream
