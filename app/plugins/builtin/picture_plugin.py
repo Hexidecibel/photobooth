@@ -224,13 +224,16 @@ class PicturePlugin:
                 description=f"Photo Booth \u2014 {session.mode}",
             )
             if result:
-                logger.info(
-                    "Photo uploaded to cloud gallery: %s",
-                    session.composite_path.name,
+                media_id = result.get("id", "")
+                photo_url = self._cloud_service.get_photo_url(
+                    self._cloud_gallery_slug, media_id
                 )
+                logger.info("Uploaded to cloud: %s → %s", session.composite_path.name, photo_url)
                 await self._broadcast({
                     "type": "cloud_upload_complete",
-                    "media_id": result.get("id", ""),
+                    "media_id": media_id,
+                    "photo_url": photo_url,
+                    "gallery_url": self._cloud_service.get_public_url(self._cloud_gallery_slug),
                     "photo_id": session.id,
                 })
         except Exception as e:

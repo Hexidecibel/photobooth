@@ -244,6 +244,15 @@ class BoothApp {
             case 'result_ready':
                 this.showResult(msg);
                 break;
+            case 'cloud_upload_complete':
+                // Update QR to point to the specific photo, not just the album
+                if (msg.photo_url) {
+                    var qr = document.getElementById('qr-code');
+                    if (qr) qr.src = '/api/share/qr?url=' + encodeURIComponent(msg.photo_url);
+                    var reviewQr = document.getElementById('review-qr-img');
+                    if (reviewQr) reviewQr.src = '/api/share/qr?url=' + encodeURIComponent(msg.photo_url);
+                }
+                break;
             case 'print_status':
                 this.updatePrintStatus(msg.status);
                 break;

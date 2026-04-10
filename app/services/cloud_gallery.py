@@ -121,9 +121,14 @@ class CloudGalleryService:
         return None
 
     def get_public_url(self, slug: str) -> str:
-        """Build the public gallery URL from the slug."""
+        """Build the public gallery album URL."""
         base = self._api_url.split("/api")[0]
-        return f"{base}/{slug}"
+        return f"{base}/g/{slug}"
+
+    def get_photo_url(self, slug: str, media_id: str) -> str:
+        """Build a direct photo link with download/share buttons."""
+        base = self._api_url.split("/api")[0]
+        return f"{base}/g/{slug}/photo/{media_id}"
 
     async def list_galleries(self) -> list[dict]:
         """List all galleries for this tenant."""
