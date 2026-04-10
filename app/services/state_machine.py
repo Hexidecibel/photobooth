@@ -57,14 +57,18 @@ class StateMachine:
             "state": str(self._state),
             "previous": str(old),
         })
-        # Auto-fire _do with "enter_complete" so hooks can immediately transition
-        try:
-            handler_key = f"state_{self._state}_do"
-            result = await self._fire_hook(
-                handler_key, event="enter_complete"
-            )
-            if result and isinstance(result, BoothState) and result != self._state:
-                await self.transition(result)
+        # Auto-fire _do for states that need immediate transition (capture, processing)
+        # Skip for states that wait for user input (idle, choose, preview, review, print, thankyou)
+        wait_states = {BoothState.IDLE, BoothState.CHOOSE, BoothState.PREVIEW,
+                       BoothState.REVIEW, BoothState.PRINT, BoothState.THANKYOU}
+        if self._state not in wait_states:
+            try:
+                handler_key = f"state_{self._state}_do"
+                result = await self._fire_hook(
+                    handler_key, event="enter_complete"
+                )
+                if result and isinstance(result, BoothState) and result != self._state:
+                    await self.transition(result)
         except Exception as e:
             logger.debug(f"Auto-advance from {self._state}: {e}")
 
