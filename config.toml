@@ -36,6 +36,11 @@ available_effects = [
     "vintage",
     "warm",
     "cool",
+    "cartoon",
+    "pencil_sketch",
+    "watercolor",
+    "pop_art",
+    "oil_painting",
 ]
 pose_prompts = [
     "Strike a pose!",

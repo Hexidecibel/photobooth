@@ -48,6 +48,11 @@ class PictureConfig(BaseModel):
         "vintage",
         "warm",
         "cool",
+        "cartoon",
+        "pencil_sketch",
+        "watercolor",
+        "pop_art",
+        "oil_painting",
     ]
     pose_prompts: list[str] = [
         "Strike a pose!",

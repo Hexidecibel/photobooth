@@ -17,6 +17,11 @@ const CSS_FILTERS = {
     blur: 'blur(2px)',
     high_contrast: 'contrast(150%)',
     // sharpen can't be done with CSS filters, skip for preview
+    cartoon: 'contrast(150%) saturate(120%)',
+    pencil_sketch: 'grayscale(100%) contrast(200%) brightness(120%)',
+    watercolor: 'saturate(130%) blur(0.5px)',
+    pop_art: 'contrast(200%) saturate(200%)',
+    oil_painting: 'saturate(110%) contrast(110%)',
 };
 
 class SoundManager {

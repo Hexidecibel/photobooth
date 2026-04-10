@@ -61,13 +61,54 @@ def test_apply_effect_unknown():
     assert result is img
 
 
+def test_apply_effect_cartoon():
+    img = Image.new("RGB", (200, 200), "red")
+    result = apply_effect(img, "cartoon")
+    assert result.mode == "RGB"
+    assert result.size == (200, 200)
+
+
+def test_apply_effect_pencil_sketch():
+    img = Image.new("RGB", (200, 200), "red")
+    result = apply_effect(img, "pencil_sketch")
+    assert result.mode == "RGB"
+    assert result.size == (200, 200)
+
+
+def test_apply_effect_watercolor():
+    img = Image.new("RGB", (200, 200), "red")
+    result = apply_effect(img, "watercolor")
+    assert result.mode == "RGB"
+    assert result.size == (200, 200)
+
+
+def test_apply_effect_pop_art():
+    img = Image.new("RGB", (200, 200), "red")
+    result = apply_effect(img, "pop_art")
+    assert result.mode == "RGB"
+    assert result.size == (200, 200)
+
+
+def test_apply_effect_oil_painting():
+    img = Image.new("RGB", (200, 200), "red")
+    result = apply_effect(img, "oil_painting")
+    assert result.mode == "RGB"
+    assert result.size == (200, 200)
+
+
+def test_list_effects_includes_new():
+    effects = list_effects()
+    for name in ["cartoon", "pencil_sketch", "watercolor", "pop_art", "oil_painting"]:
+        assert name in effects, f"{name} not in list_effects()"
+
+
 def test_list_effects():
     effects = list_effects()
     assert isinstance(effects, list)
     assert "none" in effects
     assert "bw" in effects
     assert "sepia" in effects
-    assert len(effects) == 9
+    assert len(effects) == 14
 
 
 # --------------- templates ---------------

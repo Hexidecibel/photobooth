@@ -57,6 +57,11 @@ var TRANSLATIONS = {
         filter_bw: "B&W",
         filter_sepia: "Sepia",
         filter_vintage: "Vintage",
+        filter_cartoon: "Cartoon",
+        filter_sketch: "Sketch",
+        filter_watercolor: "Watercolor",
+        filter_pop_art: "Pop Art",
+        filter_oil_paint: "Oil Paint",
         pick_layout: "Pick Your Layout"
     },
     es: {
@@ -106,6 +111,11 @@ var TRANSLATIONS = {
         filter_bw: "B/N",
         filter_sepia: "Sepia",
         filter_vintage: "Vintage",
+        filter_cartoon: "Caricatura",
+        filter_sketch: "Boceto",
+        filter_watercolor: "Acuarela",
+        filter_pop_art: "Pop Art",
+        filter_oil_paint: "Óleo",
         pick_layout: "Elige tu Diseño"
     },
     fr: {
@@ -155,6 +165,11 @@ var TRANSLATIONS = {
         filter_bw: "N/B",
         filter_sepia: "Sépia",
         filter_vintage: "Vintage",
+        filter_cartoon: "Dessin animé",
+        filter_sketch: "Croquis",
+        filter_watercolor: "Aquarelle",
+        filter_pop_art: "Pop Art",
+        filter_oil_paint: "Peinture",
         pick_layout: "Choisissez votre Mise en Page"
     },
     de: {
@@ -204,6 +219,11 @@ var TRANSLATIONS = {
         filter_bw: "S/W",
         filter_sepia: "Sepia",
         filter_vintage: "Vintage",
+        filter_cartoon: "Comic",
+        filter_sketch: "Skizze",
+        filter_watercolor: "Aquarell",
+        filter_pop_art: "Pop Art",
+        filter_oil_paint: "Ölgemälde",
         pick_layout: "Wähle dein Layout"
     },
     it: {
@@ -246,6 +266,11 @@ var TRANSLATIONS = {
         filter_bw: "B/N",
         filter_sepia: "Seppia",
         filter_vintage: "Vintage",
+        filter_cartoon: "Fumetto",
+        filter_sketch: "Schizzo",
+        filter_watercolor: "Acquerello",
+        filter_pop_art: "Pop Art",
+        filter_oil_paint: "Olio",
         pick_layout: "Scegli il tuo Layout"
     },
     pt: {
@@ -288,6 +313,11 @@ var TRANSLATIONS = {
         filter_bw: "P/B",
         filter_sepia: "Sépia",
         filter_vintage: "Vintage",
+        filter_cartoon: "Cartoon",
+        filter_sketch: "Esboço",
+        filter_watercolor: "Aquarela",
+        filter_pop_art: "Pop Art",
+        filter_oil_paint: "Óleo",
         pick_layout: "Escolha seu Layout"
     },
     ja: {
@@ -330,6 +360,11 @@ var TRANSLATIONS = {
         filter_bw: "モノクロ",
         filter_sepia: "セピア",
         filter_vintage: "ヴィンテージ",
+        filter_cartoon: "マンガ",
+        filter_sketch: "スケッチ",
+        filter_watercolor: "水彩",
+        filter_pop_art: "ポップアート",
+        filter_oil_paint: "油絵",
         pick_layout: "レイアウトを選択"
     },
     zh: {
@@ -372,6 +407,11 @@ var TRANSLATIONS = {
         filter_bw: "黑白",
         filter_sepia: "复古",
         filter_vintage: "怀旧",
+        filter_cartoon: "卡通",
+        filter_sketch: "素描",
+        filter_watercolor: "水彩",
+        filter_pop_art: "波普艺术",
+        filter_oil_paint: "油画",
         pick_layout: "选择布局"
     },
     ko: {
@@ -414,6 +454,11 @@ var TRANSLATIONS = {
         filter_bw: "흑백",
         filter_sepia: "세피아",
         filter_vintage: "빈티지",
+        filter_cartoon: "만화",
+        filter_sketch: "스케치",
+        filter_watercolor: "수채화",
+        filter_pop_art: "팝 아트",
+        filter_oil_paint: "유화",
         pick_layout: "레이아웃 선택"
     },
     nl: {
@@ -456,6 +501,11 @@ var TRANSLATIONS = {
         filter_bw: "Z/W",
         filter_sepia: "Sepia",
         filter_vintage: "Vintage",
+        filter_cartoon: "Cartoon",
+        filter_sketch: "Schets",
+        filter_watercolor: "Aquarel",
+        filter_pop_art: "Pop Art",
+        filter_oil_paint: "Olieverf",
         pick_layout: "Kies je Layout"
     },
     pl: {
@@ -498,6 +548,11 @@ var TRANSLATIONS = {
         filter_bw: "Cz/B",
         filter_sepia: "Sepia",
         filter_vintage: "Vintage",
+        filter_cartoon: "Kreskówka",
+        filter_sketch: "Szkic",
+        filter_watercolor: "Akwarela",
+        filter_pop_art: "Pop Art",
+        filter_oil_paint: "Obraz olejny",
         pick_layout: "Wybierz Układ"
     },
     sv: {
@@ -540,6 +595,11 @@ var TRANSLATIONS = {
         filter_bw: "S/V",
         filter_sepia: "Sepia",
         filter_vintage: "Vintage",
+        filter_cartoon: "Tecknad",
+        filter_sketch: "Skiss",
+        filter_watercolor: "Akvarell",
+        filter_pop_art: "Pop Art",
+        filter_oil_paint: "Oljemålning",
         pick_layout: "Välj din Layout"
     },
     ru: {
@@ -582,6 +642,11 @@ var TRANSLATIONS = {
         filter_bw: "Ч/Б",
         filter_sepia: "Сепия",
         filter_vintage: "Винтаж",
+        filter_cartoon: "Мультфильм",
+        filter_sketch: "Эскиз",
+        filter_watercolor: "Акварель",
+        filter_pop_art: "Поп-арт",
+        filter_oil_paint: "Масло",
         pick_layout: "Выберите Макет"
     },
     ar: {
@@ -624,6 +689,11 @@ var TRANSLATIONS = {
         filter_bw: "أبيض/أسود",
         filter_sepia: "بني",
         filter_vintage: "كلاسيكي",
+        filter_cartoon: "كرتون",
+        filter_sketch: "رسم",
+        filter_watercolor: "ألوان مائية",
+        filter_pop_art: "بوب آرت",
+        filter_oil_paint: "زيتي",
         pick_layout: "اختر التخطيط"
     }
 };
