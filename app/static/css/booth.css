@@ -1320,6 +1320,59 @@ section[data-state="capture"] {
 }
 
 /* ===================================================================
+   Button hints bar (physical arcade buttons)
+   =================================================================== */
+
+.button-hints {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 50;
+    pointer-events: none;
+}
+
+.hint-green, .hint-red {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: white;
+    font-weight: 500;
+}
+
+.hint-green::before {
+    content: '';
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #4caf50;
+    display: inline-block;
+}
+
+.hint-red::before {
+    content: '';
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #f44336;
+    display: inline-block;
+}
+
+/* Hardware button highlight */
+.btn-highlighted {
+    outline: 3px solid var(--pb-accent) !important;
+    outline-offset: 3px;
+    box-shadow: 0 0 20px var(--pb-accent-glow) !important;
+    transform: scale(1.05) !important;
+}
+
+/* ===================================================================
    Offline indicator
    =================================================================== */
 

@@ -84,32 +84,42 @@ class GPIOController:
     # -- state-aware action router ---------------------------------------
 
     async def _on_button(self, button: str) -> None:
-        """Route a physical button press to the correct state-machine event."""
+        """Route a physical button press.
+
+        Green (capture) = SELECT / CONFIRM
+        Red (print) = CYCLE / NEXT
+
+        On choose/template/effect screens, buttons send WebSocket
+        events that the frontend handles for cycling and selecting.
+        """
         state = self._sm.state
         print(f"[GPIO] Button '{button}' pressed in state {state}")
 
         if state == BoothState.IDLE:
+            # Either button wakes up
             await self._sm.trigger("start")
 
         elif state == BoothState.CHOOSE:
-            if button == "capture":
-                # Left button = first option (single shot)
-                await self._sm.trigger("choose", mode="photo", count=1)
-            else:
-                # Right button = second option (classic strip)
-                await self._sm.trigger("choose", mode="photo", count=4)
+            # Red = cycle, Green = select — handled by frontend
+            await self._broadcast({
+                "type": "button",
+                "action": "select" if button == "capture" else "cycle",
+            })
 
         elif state == BoothState.PREVIEW:
+            # Either button cancels during countdown
             await self._sm.trigger("cancel")
 
         elif state in (BoothState.CAPTURE, BoothState.PROCESSING):
-            pass  # buttons disabled during capture / processing
+            pass
 
         elif state == BoothState.REVIEW:
             if button == "capture":
-                await self._sm.trigger("retake")
+                # Green = done
+                await self._sm.trigger("done")
             else:
-                await self._sm.trigger("print")
+                # Red = retake
+                await self._sm.trigger("retake")
 
         elif state == BoothState.PRINT:
             await self._sm.trigger("done")

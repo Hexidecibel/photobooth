@@ -268,6 +268,59 @@ class BoothApp {
                 if (this.sounds) this.sounds.play('error');
                 this.showError(msg.message);
                 break;
+            case 'button':
+                this.handleHardwareButton(msg.action);
+                break;
+        }
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  Hardware button handler (red=cycle, green=select)                   */
+    /* ------------------------------------------------------------------ */
+
+    handleHardwareButton(action) {
+        // Show button hints when hardware buttons are used
+        var hints = document.getElementById('button-hints');
+        if (hints) hints.style.display = 'flex';
+
+        // Find all visible option cards/buttons on the current screen
+        var items = [];
+        var activeSection = document.querySelector('section[data-state].active');
+        if (!activeSection) return;
+
+        // Check what's visible: choose grid, template picker, effect picker, bg picker
+        var effectPicker = document.getElementById('effect-picker');
+        var templatePicker = document.getElementById('template-picker');
+        var bgPicker = document.getElementById('bg-picker');
+        var chooseGrid = activeSection.querySelector('.choose-grid');
+
+        if (effectPicker && effectPicker.style.display !== 'none') {
+            items = Array.from(effectPicker.querySelectorAll('.effect-card'));
+        } else if (bgPicker && bgPicker.style.display !== 'none') {
+            items = Array.from(bgPicker.querySelectorAll('.bg-card'));
+        } else if (templatePicker && templatePicker.style.display !== 'none') {
+            items = Array.from(templatePicker.querySelectorAll('.template-card'));
+        } else if (chooseGrid && chooseGrid.style.display !== 'none') {
+            items = Array.from(chooseGrid.querySelectorAll('.choose-option'));
+        }
+
+        if (items.length === 0) return;
+
+        // Find current highlighted item
+        var currentIdx = items.findIndex(function(el) { return el.classList.contains('btn-highlighted'); });
+
+        if (action === 'cycle') {
+            // Red button: move highlight to next item
+            if (currentIdx >= 0) items[currentIdx].classList.remove('btn-highlighted');
+            var nextIdx = (currentIdx + 1) % items.length;
+            items[nextIdx].classList.add('btn-highlighted');
+            items[nextIdx].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            if (this.sounds) this.sounds.play('click');
+        } else if (action === 'select') {
+            // Green button: click the highlighted item (or first if none highlighted)
+            var target = currentIdx >= 0 ? items[currentIdx] : items[0];
+            if (this.sounds) this.sounds.play('click');
+            target.click();
         }
     }
 
@@ -382,6 +435,36 @@ class BoothApp {
         }
         if (previousState === 'print') {
             this.stopPrintTimer();
+        }
+
+        // Update physical button hint labels
+        this.updateButtonHints(state);
+    }
+
+    updateButtonHints(state) {
+        var green = document.getElementById('hint-green');
+        var red = document.getElementById('hint-red');
+        if (!green || !red) return;
+
+        var hints = {
+            idle:       { green: 'Press to start!', red: 'Press to start!' },
+            choose:     { green: 'Select', red: 'Next' },
+            preview:    { green: 'Cancel', red: 'Cancel' },
+            capture:    { green: '', red: '' },
+            processing: { green: '', red: '' },
+            review:     { green: 'Done', red: 'Retake' },
+            print:      { green: 'Done', red: 'Done' },
+            thankyou:   { green: 'Next', red: 'Next' },
+        };
+
+        var h = hints[state] || { green: '', red: '' };
+        green.textContent = h.green;
+        red.textContent = h.red;
+
+        // Hide hints when no actions are available
+        var container = document.getElementById('button-hints');
+        if (container) {
+            container.style.display = (h.green || h.red) ? 'flex' : 'none';
         }
     }
 
@@ -1235,6 +1318,12 @@ class BoothApp {
         // Reset idle timer on any user interaction
         document.addEventListener('click', function () { self.resetIdleTimer(); });
         document.addEventListener('touchstart', function () { self.resetIdleTimer(); });
+
+        // Hide button hints when touch is used (touch users don't need them)
+        document.addEventListener('touchstart', function () {
+            var hints = document.getElementById('button-hints');
+            if (hints) hints.style.display = 'none';
+        });
 
         // Processing cancel: force back to idle even if server is stuck
         var procCancel = document.getElementById('processing-cancel-btn');
