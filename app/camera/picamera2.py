@@ -69,15 +69,15 @@ class PiCamera2Backend(CameraBase):
         self._picam2 = await asyncio.to_thread(
             Picamera2, self._camera_index
         )
+        # Force RGB888 so capture_array returns clean 3-channel RGB
         config = self._picam2.create_preview_configuration(
-            main={"size": resolution},
+            main={"size": resolution, "format": "RGB888"},
         )
         await asyncio.to_thread(self._picam2.configure, config)
         await asyncio.to_thread(self._picam2.start)
-        # Let AWB and AE converge
         await asyncio.sleep(2)
         self._running = True
-        logger.info("PiCamera2 preview started at %s", resolution)
+        logger.info("PiCamera2 preview started at %s (RGB888)", resolution)
 
     async def stop_preview(self) -> None:
         self._running = False
@@ -88,14 +88,35 @@ class PiCamera2Backend(CameraBase):
                 pass
 
     async def stream_mjpeg(self) -> AsyncIterator[bytes]:
-        """Capture JPEG frames for MJPEG streaming."""
+        """Fast MJPEG: capture_array + cv2 JPEG encode."""
+        # Try OpenCV for fast JPEG encoding, fall back to PIL
+        try:
+            import cv2
+            use_cv2 = True
+        except ImportError:
+            use_cv2 = False
+
         while self._running and self._picam2:
             try:
-                buf = io.BytesIO()
-                await asyncio.to_thread(
-                    self._picam2.capture_file, buf, format="jpeg"
+                arr = await asyncio.to_thread(
+                    self._picam2.capture_array, "main"
                 )
-                yield buf.getvalue()
+                if use_cv2:
+                    # OpenCV imencode is ~3x faster than PIL for JPEG
+                    rgb_to_bgr = await asyncio.to_thread(
+                        cv2.cvtColor, arr, cv2.COLOR_RGB2BGR
+                    )
+                    _, jpeg = await asyncio.to_thread(
+                        cv2.imencode, ".jpg", rgb_to_bgr,
+                        [cv2.IMWRITE_JPEG_QUALITY, 60],
+                    )
+                    yield jpeg.tobytes()
+                else:
+                    from PIL import Image as PILImage
+                    img = PILImage.fromarray(arr, "RGB")
+                    buf = io.BytesIO()
+                    img.save(buf, format="JPEG", quality=60)
+                    yield buf.getvalue()
             except Exception as e:
                 logger.debug("Frame capture error: %s", e)
                 await asyncio.sleep(0.05)
