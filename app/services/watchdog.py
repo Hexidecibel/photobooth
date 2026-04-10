@@ -35,19 +35,9 @@ class WatchdogService:
             await self._check_printer()
 
     async def _check_camera(self):
-        camera = getattr(self._app, "camera", None)
-        if camera is None:
-            # Try to detect and start camera
-            try:
-                from app.camera.factory import auto_detect_camera
-
-                config = self._app.config
-                camera = await auto_detect_camera(config.camera)
-                await camera.start_preview(config.camera.preview_resolution)
-                self._app.camera = camera
-                logger.info("Camera recovered")
-            except Exception:
-                pass  # Still no camera, try again next cycle
+        # Camera recovery is disabled — picamera2 doesn't handle
+        # re-acquisition well. Restart the service instead.
+        pass
 
     async def _check_printer(self):
         printer = getattr(self._app, "printer", None)

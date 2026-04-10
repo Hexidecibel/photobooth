@@ -250,8 +250,25 @@ class AdminPanel {
     async onZoomChange(value) {
         const zoom = parseFloat(value);
         document.getElementById('zoom-value').textContent = zoom.toFixed(1) + 'x';
-        // When using zoom, reset manual crop to let zoom handle it
-        await this.updateFraming({ zoom: zoom });
+        // Zoom = centered crop. Calculate crop values from zoom level.
+        const cropW = 1.0 / zoom;
+        const cropH = 1.0 / zoom;
+        const cropX = (1.0 - cropW) / 2;
+        const cropY = (1.0 - cropH) / 2;
+        // Sync pan/crop sliders
+        const els = {
+            'pan-x-slider': cropX * 100, 'pan-y-slider': cropY * 100,
+            'crop-w-slider': cropW * 100, 'crop-h-slider': cropH * 100,
+        };
+        for (const [id, val] of Object.entries(els)) {
+            const el = document.getElementById(id);
+            if (el) el.value = val;
+        }
+        document.getElementById('pan-x-value').textContent = (cropX * 100).toFixed(0) + '%';
+        document.getElementById('pan-y-value').textContent = (cropY * 100).toFixed(0) + '%';
+        document.getElementById('crop-w-value').textContent = (cropW * 100).toFixed(0) + '%';
+        document.getElementById('crop-h-value').textContent = (cropH * 100).toFixed(0) + '%';
+        await this.updateFraming({ crop_x: cropX, crop_y: cropY, crop_width: cropW, crop_height: cropH });
     }
 
     async onPanChange() {
@@ -265,19 +282,11 @@ class AdminPanel {
         document.getElementById('crop-w-value').textContent = (cropW * 100).toFixed(0) + '%';
         document.getElementById('crop-h-value').textContent = (cropH * 100).toFixed(0) + '%';
 
-        // Reset zoom slider when manually adjusting crop
-        const zoomSlider = document.getElementById('zoom-slider');
-        if (zoomSlider) {
-            zoomSlider.value = 1;
-            document.getElementById('zoom-value').textContent = '1.0x';
-        }
-
         await this.updateFraming({
             crop_x: cropX,
             crop_y: cropY,
             crop_width: cropW,
             crop_height: cropH,
-            zoom: 1.0,
         });
     }
 

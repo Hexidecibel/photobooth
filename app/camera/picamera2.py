@@ -188,9 +188,12 @@ class PiCamera2Backend(CameraBase):
         self._running = False
         if self._picam2:
             try:
-                await asyncio.to_thread(self._picam2.stop_recording)
+                await asyncio.to_thread(self._picam2.stop)
             except Exception:
                 pass
-            await asyncio.to_thread(self._picam2.close)
+            try:
+                await asyncio.to_thread(self._picam2.close)
+            except Exception:
+                pass
             self._picam2 = None
             logger.info("PiCamera2 released")

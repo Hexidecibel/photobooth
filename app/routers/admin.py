@@ -365,21 +365,16 @@ async def update_camera_framing(request: Request):
         if key in data:
             setattr(config.camera, key, data[key])
 
-    # Apply to camera immediately
+    # Apply to camera immediately — always use the full config state
     if camera:
-        has_crop = any(k in data for k in ["crop_x", "crop_y", "crop_width", "crop_height"])
-        if has_crop:
-            # Crop/pan takes precedence — apply as direct ScalerCrop
-            from app.camera.base import CropRegion
+        from app.camera.base import CropRegion
 
-            camera.set_crop(CropRegion(
-                config.camera.crop_x,
-                config.camera.crop_y,
-                config.camera.crop_width,
-                config.camera.crop_height,
-            ))
-        elif "zoom" in data:
-            camera.set_zoom(data["zoom"])
+        camera.set_crop(CropRegion(
+            config.camera.crop_x,
+            config.camera.crop_y,
+            config.camera.crop_width,
+            config.camera.crop_height,
+        ))
 
         # Apply mirror settings
         if "mirror_preview" in data:
