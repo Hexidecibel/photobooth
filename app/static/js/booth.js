@@ -200,7 +200,14 @@ class BoothApp {
                     this.wsConfig = msg.config;
                     this.applyConfigUI();
                 }
-                this.showState(msg.state);
+                // For GIF/boomerang: skip capture screen, show processing instead
+                var displayState = msg.state;
+                if (msg.state === 'capture' && this._isGifMode) {
+                    displayState = 'processing';
+                    var pt = document.getElementById('processing-text');
+                    if (pt) pt.textContent = 'Recording...';
+                }
+                this.showState(displayState, msg.state);
                 break;
             case 'countdown':
                 this.updateCountdown(msg.seconds);
@@ -421,12 +428,17 @@ class BoothApp {
     /* ------------------------------------------------------------------ */
 
     onCaptureProgress(msg) {
-        // Show recording progress on the capture screen or countdown overlay
-        var captureText = document.getElementById('capture-text');
-        var countdownEl = document.getElementById('countdown');
         var text = 'Recording ' + msg.frame + '/' + msg.total;
+        // Update whichever screen is showing
+        var captureText = document.getElementById('capture-text');
+        var processingText = document.getElementById('processing-text');
+        var processingStep = document.getElementById('processing-step');
         if (captureText) captureText.textContent = text;
-        if (countdownEl) countdownEl.textContent = text;
+        if (processingText) processingText.textContent = 'Recording...';
+        if (processingStep) processingStep.textContent = text;
+        // Update progress bar
+        var fill = document.getElementById('progress');
+        if (fill && msg.total) fill.style.width = (msg.frame / msg.total * 50) + '%';
     }
 
     onCaptureComplete(msg) {
@@ -855,6 +867,14 @@ class BoothApp {
         document.addEventListener('click', function () { self.resetIdleTimer(); });
         document.addEventListener('touchstart', function () { self.resetIdleTimer(); });
 
+        // Thankyou: tap anywhere to go back to idle
+        var thankyou = document.getElementById('thankyou-section');
+        if (thankyou) {
+            thankyou.addEventListener('click', function () {
+                self.send('auto_idle');
+            });
+        }
+
         // Idle: tap anywhere to start
         var idle = document.querySelector('[data-state="idle"]');
         if (idle) {
@@ -927,6 +947,7 @@ class BoothApp {
                     } else {
                         // Initial effect pick before first capture
                         self.hideEffectPicker();
+                        self._isGifMode = (self.pendingMode === 'gif' || self.pendingMode === 'boomerang');
                         self.send('choose', {
                             mode: self.pendingMode,
                             template: self.pendingTemplate,
