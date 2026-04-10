@@ -1283,7 +1283,7 @@ section[data-state="capture"] {
 
 .idle-content {
     position: relative;
-    z-index: 3;
+    z-index: 10;
 }
 
 /* Photo counter on idle screen */
