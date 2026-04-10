@@ -28,10 +28,14 @@ class OpenCVBackend(CameraBase):
         try:
             import cv2
 
-            cap = cv2.VideoCapture(0)
-            available = cap.isOpened()
-            cap.release()
-            return available
+            # Try indices 0-3 to find a USB webcam
+            for idx in range(4):
+                cap = cv2.VideoCapture(idx)
+                if cap.isOpened():
+                    cap.release()
+                    return True
+                cap.release()
+            return False
         except ImportError:
             return False
 
