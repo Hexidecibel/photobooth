@@ -143,13 +143,20 @@ class PiCamera2Backend(CameraBase):
             self._picam2.capture_image, "main"
         )
         await asyncio.to_thread(image.save, str(path), quality=95)
-        # Restart preview
+        # Restart preview with same config as initial start
         await asyncio.to_thread(self._picam2.stop)
+        sensor_full = self._picam2.camera_properties.get(
+            "PixelArraySize", (3280, 2464)
+        )
         preview_config = self._picam2.create_preview_configuration(
-            main={"size": self._preview_resolution},
+            main={"size": self._preview_resolution, "format": "RGB888"},
+            raw={"size": sensor_full},
         )
         await asyncio.to_thread(self._picam2.configure, preview_config)
         await asyncio.to_thread(self._picam2.start)
+        # Re-apply crop/zoom if set
+        if hasattr(self, '_crop') and self._crop:
+            self._apply_hardware_crop(self._crop)
         self._running = True
         logger.info("Still captured: %s", path)
         return path
