@@ -316,18 +316,18 @@ Sound effects settings.
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | `enabled` | bool | `true` | Enable sound effects. |
-| `countdown_beep` | string | `"sounds/beep.mp3"` | Sound played during countdown. |
-| `shutter` | string | `"sounds/shutter.mp3"` | Sound played on capture. |
-| `applause` | string | `"sounds/applause.mp3"` | Sound played after processing. |
-| `click` | string | `"sounds/click.mp3"` | Sound played on button press. |
-| `error` | string | `"sounds/error.mp3"` | Sound played on errors. |
+| `countdown_beep` | string | `"sounds/beep.wav"` | Sound played during countdown. |
+| `shutter` | string | `"sounds/shutter.wav"` | Sound played on capture. |
+| `applause` | string | `"sounds/applause.wav"` | Sound played after processing. |
+| `click` | string | `"sounds/click.wav"` | Sound played on button press. |
+| `error` | string | `"sounds/error.wav"` | Sound played on errors. |
 | `volume` | float | `0.8` | Volume level (0.0 to 1.0). |
 
 ```toml
 [sound]
 enabled = true
 volume = 0.8
-shutter = "sounds/shutter.mp3"
+shutter = "sounds/shutter.wav"
 ```
 
 Paths are relative to the `app/static/` directory. You can use your own sound files by placing them in the static directory and updating the paths.
@@ -471,11 +471,11 @@ hotspot_password = "photobooth"
 
 [sound]
 enabled = true
-countdown_beep = "sounds/beep.mp3"
-shutter = "sounds/shutter.mp3"
-applause = "sounds/applause.mp3"
-click = "sounds/click.mp3"
-error = "sounds/error.mp3"
+countdown_beep = "sounds/beep.wav"
+shutter = "sounds/shutter.wav"
+applause = "sounds/applause.wav"
+click = "sounds/click.wav"
+error = "sounds/error.wav"
 volume = 0.8
 
 [plugin]

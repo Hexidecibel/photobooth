@@ -105,11 +105,11 @@ hotspot_password = "photobooth"
 
 [sound]
 enabled = true
-countdown_beep = "sounds/beep.mp3"
-shutter = "sounds/shutter.mp3"
-applause = "sounds/applause.mp3"
-click = "sounds/click.mp3"
-error = "sounds/error.mp3"
+countdown_beep = "sounds/beep.wav"
+shutter = "sounds/shutter.wav"
+applause = "sounds/applause.wav"
+click = "sounds/click.wav"
+error = "sounds/error.wav"
 volume = 0.8
 
 [plugin]

@@ -16,11 +16,11 @@ class SoundManager {
 
     preload(config) {
         const soundFiles = {
-            countdown_beep: config.countdown_beep || 'sounds/beep.mp3',
-            shutter: config.shutter || 'sounds/shutter.mp3',
-            applause: config.applause || 'sounds/applause.mp3',
-            click: config.click || 'sounds/click.mp3',
-            error: config.error || 'sounds/error.mp3',
+            countdown_beep: config.countdown_beep || 'sounds/beep.wav',
+            shutter: config.shutter || 'sounds/shutter.wav',
+            applause: config.applause || 'sounds/applause.wav',
+            click: config.click || 'sounds/click.wav',
+            error: config.error || 'sounds/error.wav',
         };
         for (const [name, src] of Object.entries(soundFiles)) {
             const audio = new Audio('/static/' + src);

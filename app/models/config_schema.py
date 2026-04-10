@@ -144,11 +144,11 @@ class SoundConfig(BaseModel):
     """Sound effects settings."""
 
     enabled: bool = True
-    countdown_beep: str = "sounds/beep.mp3"
-    shutter: str = "sounds/shutter.mp3"
-    applause: str = "sounds/applause.mp3"
-    click: str = "sounds/click.mp3"
-    error: str = "sounds/error.mp3"
+    countdown_beep: str = "sounds/beep.wav"
+    shutter: str = "sounds/shutter.wav"
+    applause: str = "sounds/applause.wav"
+    click: str = "sounds/click.wav"
+    error: str = "sounds/error.wav"
     volume: float = 0.8  # 0.0 to 1.0
 
 
