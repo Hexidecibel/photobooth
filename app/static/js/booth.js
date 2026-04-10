@@ -783,14 +783,14 @@ class BoothApp {
                 btn.addEventListener('click', function () {
                     if (self.sounds) self.sounds.play('click');
                     var mode = btn.dataset.mode;
-                    var count = parseInt(btn.dataset.count, 10);
+                    var template = btn.dataset.template || 'single';
 
                     // Check if guest picks template
                     var guestPicks = self.config && self.config.picture && self.config.picture.guest_picks_template;
                     if (guestPicks) {
-                        self.showTemplatePicker(mode, count);
+                        self.showTemplatePicker(mode);
                     } else {
-                        self.send('choose', { mode: mode, count: count });
+                        self.send('choose', { mode: mode, template: template });
                     }
                 });
             })(options[i]);
