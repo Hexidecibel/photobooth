@@ -498,19 +498,35 @@ class BoothApp {
     /* ------------------------------------------------------------------ */
 
     onCaptureProgress(msg) {
+        // Always update processing screen
+        var processingText = document.getElementById('processing-text');
+        var processingStep = document.getElementById('processing-step');
+        var processingIcon = document.querySelector('.processing-icon');
+        var fill = document.getElementById('progress');
+
+        if (processingText) processingText.textContent = 'Recording...';
+        if (processingStep) processingStep.textContent = msg.frame + ' of ' + msg.total;
+        if (processingIcon) {
+            processingIcon.textContent = msg.frame;
+            processingIcon.style.fontSize = '6rem';
+            processingIcon.classList.remove('pop');
+            void processingIcon.offsetWidth;
+            processingIcon.classList.add('pop');
+        }
+        if (fill && msg.total) fill.style.width = (msg.frame / msg.total * 40) + '%';
+
+        // Also update recording overlay if visible
         if (this._isGifMode) {
-            // GIF/boomerang: update the recording overlay
             var counter = document.getElementById('recording-counter');
             var dots = document.getElementById('recording-dots');
 
             if (counter) {
                 counter.textContent = msg.frame;
                 counter.classList.remove('pop');
-                void counter.offsetWidth; // Force reflow for re-animation
+                void counter.offsetWidth;
                 counter.classList.add('pop');
             }
 
-            // Fill in dots
             if (dots) {
                 var dotEls = dots.querySelectorAll('.dot');
                 for (var i = 0; i < dotEls.length; i++) {
