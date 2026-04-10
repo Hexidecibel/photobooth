@@ -80,18 +80,28 @@ class CloudGalleryService:
 
                 media_record = upload_resp.json().get("data", {})
 
-                # Step 3: Confirm with metadata (optional)
-                if title or description:
-                    await client.post(
-                        f"{self._api_url}/galleries/{self._gallery_id}"
-                        "/media/confirm",
-                        headers=self._headers,
-                        json={
-                            "mediaId": media_id,
-                            "title": title,
-                            "description": description,
-                        },
-                    )
+                # Step 3: Confirm with metadata + dimensions
+                confirm_data = {"mediaId": media_id}
+                if title:
+                    confirm_data["title"] = title
+                if description:
+                    confirm_data["description"] = description
+
+                # Get image dimensions
+                try:
+                    from PIL import Image as PILImage
+                    img = await asyncio.to_thread(PILImage.open, photo_path)
+                    confirm_data["width"] = img.width
+                    confirm_data["height"] = img.height
+                except Exception:
+                    pass
+
+                await client.post(
+                    f"{self._api_url}/galleries/{self._gallery_id}"
+                    "/media/confirm",
+                    headers=self._headers,
+                    json=confirm_data,
+                )
 
                 logger.info(
                     "Uploaded to cloud gallery: %s (media_id: %s)",
