@@ -96,53 +96,7 @@ section[data-state].active {
     animation: subtitlePulse 2.5s ease-in-out infinite;
 }
 
-.idle-animation {
-    position: relative;
-    width: clamp(80px, 15vw, 140px);
-    height: clamp(80px, 15vw, 140px);
-}
-
-/* CSS camera icon */
-.camera-icon {
-    display: block;
-    width: 100%;
-    height: 70%;
-    margin-top: 15%;
-    background: var(--pb-accent);
-    border-radius: var(--pb-border-radius);
-    position: relative;
-    animation: cameraFloat 3s ease-in-out infinite;
-    box-shadow: 0 0 40px var(--pb-accent-glow);
-}
-
-.camera-icon::before {
-    content: '';
-    position: absolute;
-    top: -20%;
-    left: 25%;
-    width: 30%;
-    height: 25%;
-    background: var(--pb-accent);
-    border-radius: var(--pb-border-radius-sm) var(--pb-border-radius-sm) 0 0;
-}
-
-.camera-icon::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 40%;
-    height: 55%;
-    background: var(--pb-bg-primary);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    border: 3px solid rgba(255, 255, 255, 0.15);
-}
-
-@keyframes cameraFloat {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-12px); }
-}
+/* Camera icon removed — replaced by floating photo cards */
 
 @keyframes subtitlePulse {
     0%, 100% { opacity: 0.6; }
@@ -1255,27 +1209,80 @@ section[data-state="capture"] {
 }
 
 /* ===================================================================
-   Slideshow attract mode
+   Floating photo slideshow (idle attract mode)
    =================================================================== */
 
-.slideshow-bg {
+.slideshow-float {
     position: absolute;
     inset: 0;
-    background-size: cover;
-    background-position: center;
-    opacity: 0;
-    transition: opacity 1s ease, background-image 1s ease;
-    filter: blur(8px) brightness(0.3);
+    overflow: hidden;
     z-index: 0;
 }
 
-.slideshow-bg.visible {
-    opacity: 1;
+.slideshow-vignette {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse at center, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.7) 70%, rgba(0, 0, 0, 0.9) 100%);
+}
+
+.float-card {
+    position: absolute;
+    width: clamp(150px, 20vw, 250px);
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 1s ease;
+    pointer-events: none;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+}
+
+.float-card.visible {
+    opacity: 0.7;
+}
+
+.float-card img {
+    width: 100%;
+    display: block;
+}
+
+/* Slow drift animations — each card gets a unique one */
+@keyframes drift-1 {
+    0%   { transform: translate(0, 0) rotate(-3deg); }
+    50%  { transform: translate(20px, -15px) rotate(2deg); }
+    100% { transform: translate(0, 0) rotate(-3deg); }
+}
+
+@keyframes drift-2 {
+    0%   { transform: translate(0, 0) rotate(2deg); }
+    50%  { transform: translate(-15px, 20px) rotate(-1deg); }
+    100% { transform: translate(0, 0) rotate(2deg); }
+}
+
+@keyframes drift-3 {
+    0%   { transform: translate(0, 0) rotate(-1deg); }
+    50%  { transform: translate(10px, 10px) rotate(3deg); }
+    100% { transform: translate(0, 0) rotate(-1deg); }
+}
+
+@keyframes drift-4 {
+    0%   { transform: translate(0, 0) rotate(1deg); }
+    50%  { transform: translate(-10px, -20px) rotate(-2deg); }
+    100% { transform: translate(0, 0) rotate(1deg); }
+}
+
+@keyframes drift-5 {
+    0%   { transform: translate(0, 0) rotate(-2deg); }
+    50%  { transform: translate(15px, 12px) rotate(1deg); }
+    100% { transform: translate(0, 0) rotate(-2deg); }
 }
 
 .idle-content {
     position: relative;
-    z-index: 1;
+    z-index: 2;
 }
 
 /* Photo counter on idle screen */

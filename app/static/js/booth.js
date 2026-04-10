@@ -73,6 +73,7 @@ class BoothApp {
         this.setupSettingsAccess();
         this.loadConfig();
         this.loadBranding();
+        this.startSlideshow();
     }
 
     /* ------------------------------------------------------------------ */
@@ -350,8 +351,12 @@ class BoothApp {
             this.stopPreview();
             this.hidePosePrompt();
             this._multiShotActive = false;
+            this.startSlideshow();
         } else {
             this.hidePosePrompt();
+            if (previousState === 'idle') {
+                this.stopSlideshow();
+            }
         }
 
         // Processing timeout — if stuck, force advance
@@ -760,12 +765,12 @@ class BoothApp {
     }
 
     /* ------------------------------------------------------------------ */
-    /*  Slideshow attract mode                                             */
+    /*  Floating photo slideshow (idle attract mode)                       */
     /* ------------------------------------------------------------------ */
 
     startSlideshow() {
         this.loadSlidePhotos();
-        this.slideshowTimer = setInterval(() => this.nextSlide(), 4000);
+        this.slideshowTimer = setInterval(() => this.cycleSlidePhoto(), 3000);
         this.loadPhotoCounter();
     }
 
@@ -774,26 +779,81 @@ class BoothApp {
             var res = await fetch('/api/gallery/?limit=20');
             var data = await res.json();
             this.slidePhotos = data.photos || [];
-            this.slideIndex = 0;
-            if (this.slidePhotos.length > 0) this.showSlide();
+            if (this.slidePhotos.length > 0) {
+                this.initFloatingCards();
+            }
         } catch (e) {
             console.warn('[booth] slideshow fetch failed:', e);
         }
     }
 
-    nextSlide() {
-        if (!this.slidePhotos || this.slidePhotos.length === 0) return;
-        this.slideIndex = (this.slideIndex + 1) % this.slidePhotos.length;
-        this.showSlide();
+    initFloatingCards() {
+        var container = document.getElementById('slideshow-float');
+        if (!container || this.slidePhotos.length === 0) return;
+        container.innerHTML = '';
+
+        // Place 5-6 cards at random positions
+        var cardCount = Math.min(6, this.slidePhotos.length);
+        this._floatCards = [];
+
+        for (var i = 0; i < cardCount; i++) {
+            var card = document.createElement('div');
+            card.className = 'float-card';
+
+            // Random position (avoid center where the text is)
+            var x, y;
+            do {
+                x = Math.random() * 80 + 5;  // 5-85%
+                y = Math.random() * 70 + 10;  // 10-80%
+            } while (x > 25 && x < 75 && y > 25 && y < 75); // Avoid center
+
+            card.style.left = x + '%';
+            card.style.top = y + '%';
+            card.style.transform = 'rotate(' + (Math.random() * 20 - 10) + 'deg)';
+            card.style.animation = 'drift-' + ((i % 5) + 1) + ' ' + (15 + Math.random() * 10) + 's ease-in-out infinite';
+
+            var img = document.createElement('img');
+            var photo = this.slidePhotos[i % this.slidePhotos.length];
+            var isGif = photo.photo_path && photo.photo_path.endsWith('.gif');
+            img.src = '/api/gallery/' + photo.id + (isGif ? '' : '/thumbnail');
+            img.alt = '';
+            card.appendChild(img);
+
+            container.appendChild(card);
+            this._floatCards.push({ el: card, index: i });
+
+            // Stagger the fade-in
+            setTimeout(function (c) { c.classList.add('visible'); }, i * 500, card);
+        }
     }
 
-    showSlide() {
-        var photo = this.slidePhotos[this.slideIndex];
-        var slideEl = document.getElementById('slideshow');
-        if (slideEl && photo) {
-            slideEl.style.backgroundImage = 'url(/api/gallery/' + photo.id + ')';
-            slideEl.classList.add('visible');
-        }
+    cycleSlidePhoto() {
+        // Swap one random card with a new photo
+        if (!this._floatCards || this._floatCards.length === 0 || this.slidePhotos.length <= 1) return;
+
+        var cardIdx = Math.floor(Math.random() * this._floatCards.length);
+        var card = this._floatCards[cardIdx];
+        var photoIdx = Math.floor(Math.random() * this.slidePhotos.length);
+        var photo = this.slidePhotos[photoIdx];
+
+        // Fade out, swap image, fade in at new position
+        card.el.classList.remove('visible');
+        var self = this;
+        setTimeout(function () {
+            var img = card.el.querySelector('img');
+            var isGif = photo.photo_path && photo.photo_path.endsWith('.gif');
+            if (img) img.src = '/api/gallery/' + photo.id + (isGif ? '' : '/thumbnail');
+            // New random position (avoid center)
+            var x, y;
+            do {
+                x = Math.random() * 80 + 5;
+                y = Math.random() * 70 + 10;
+            } while (x > 25 && x < 75 && y > 25 && y < 75);
+            card.el.style.left = x + '%';
+            card.el.style.top = y + '%';
+            card.el.style.transform = 'rotate(' + (Math.random() * 20 - 10) + 'deg)';
+            card.el.classList.add('visible');
+        }, 1000);
     }
 
     stopSlideshow() {
@@ -801,8 +861,9 @@ class BoothApp {
             clearInterval(this.slideshowTimer);
             this.slideshowTimer = null;
         }
-        var slideEl = document.getElementById('slideshow');
-        if (slideEl) slideEl.classList.remove('visible');
+        var container = document.getElementById('slideshow-float');
+        if (container) container.innerHTML = '';
+        this._floatCards = [];
     }
 
     async loadPhotoCounter() {
