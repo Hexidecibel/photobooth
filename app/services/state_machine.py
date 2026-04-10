@@ -37,9 +37,10 @@ class StateMachine:
 
     async def transition(self, target: BoothState) -> None:
         if target not in TRANSITIONS[self._state]:
+            logger.warning("INVALID transition: %s → %s", self._state, target)
             raise InvalidTransitionError(self._state, target)
         old = self._state
-        logger.info(f"Transition: {old} \u2192 {target}")
+        print(f"[STATE] {old} → {target}")  # Print to stdout for journald
         # Exit current state
         try:
             await self._fire_hook(f"state_{old}_exit")
@@ -71,7 +72,7 @@ class StateMachine:
 
     async def trigger(self, event: str, **kwargs: Any) -> None:
         """Handle an external event (button press, touch, timer)."""
-        logger.debug(f"Event '{event}' in state {self._state}")
+        print(f"[EVENT] '{event}' in state {self._state}")
         try:
             handler_key = f"state_{self._state}_do"
             result = await self._fire_hook(handler_key, event=event, **kwargs)

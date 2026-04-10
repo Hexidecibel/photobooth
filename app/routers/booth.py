@@ -30,6 +30,7 @@ async def booth_ws(ws: WebSocket):
     """WebSocket endpoint for real-time booth state updates."""
     await ws.accept()
     _clients.add(ws)
+    print(f"[WS] Client connected ({len(_clients)} total), state={ws.app.state.state_machine.state}")
 
     # Get state machine from app state
     sm: StateMachine = ws.app.state.state_machine
@@ -38,6 +39,7 @@ async def booth_ws(ws: WebSocket):
     from app.models.state import BoothState
     stale_states = {BoothState.REVIEW, BoothState.PRINT, BoothState.THANKYOU}
     if sm.state in stale_states:
+        print(f"[WS] Auto-resetting from stale state {sm.state} → idle")
         try:
             await sm.transition(BoothState.IDLE)
         except Exception:

@@ -66,6 +66,7 @@ class CameraPlugin:
 
         try:
             if session.mode in ("gif", "boomerang"):
+                print(f"[CAPTURE] GIF burst starting, mode={session.mode}")
                 # Stop MJPEG stream
                 self._camera._running = False
                 await asyncio.sleep(0.2)
@@ -89,6 +90,7 @@ class CameraPlugin:
                     session.captures.append(path)
                     await asyncio.sleep(0)  # Yield for WebSocket pings
 
+                print(f"[CAPTURE] GIF burst complete, {len(session.captures)} frames")
                 # Re-enable stream
                 self._camera._running = True
 
