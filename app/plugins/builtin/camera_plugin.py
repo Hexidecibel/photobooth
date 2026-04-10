@@ -43,16 +43,45 @@ class CameraPlugin:
     async def _on_preview_do(self, session, event=None, **kwargs):
         """Handle countdown timer in preview state."""
         if event in ("countdown_complete", "capture"):
+            # GIF/boomerang: record burst here then go straight to processing
+            if session and session.mode in ("gif", "boomerang"):
+                await self._record_burst(session)
+                return BoothState.PROCESSING
             return BoothState.CAPTURE
         if event == "cancel":
             return BoothState.IDLE
         if event == "select_per_shot_effect":
-            # Store effect for the upcoming capture
             if session:
                 effect = kwargs.get("effect", "none")
                 session.per_capture_effects.append(effect)
             return None
         return None
+
+    async def _record_burst(self, session):
+        """Record GIF/boomerang frames during preview state."""
+        import asyncio as _asyncio
+        import io as _io
+
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        raw_dir = Path(self._config.general.save_dir) / "raw" / date_str / session.id
+        raw_dir.mkdir(parents=True, exist_ok=True)
+
+        frame_count = 8
+        for i in range(frame_count):
+            await self._broadcast({
+                "type": "capture_progress",
+                "frame": i + 1,
+                "total": frame_count,
+            })
+            path = raw_dir / f"frame_{i:03d}.jpg"
+            buf = _io.BytesIO()
+            await _asyncio.to_thread(
+                self._camera._picam2.capture_file,
+                buf, format="jpeg",
+            )
+            path.write_bytes(buf.getvalue())
+            session.captures.append(path)
+            await _asyncio.sleep(0.1)
 
     async def _on_capture_enter(self, session, **kwargs):
         """Trigger a capture and auto-advance to next state."""
