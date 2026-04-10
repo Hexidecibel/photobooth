@@ -213,6 +213,10 @@ class BoothApp {
                 break;
             case 'processing_progress':
                 this.updateProgress(msg.percent, msg.step, msg.frame, msg.total_frames);
+                // If we get processing_progress while still in capture, advance
+                if (this.state === 'capture') {
+                    this.send('capture_advance');
+                }
                 break;
             case 'result_ready':
                 this.showResult(msg);
