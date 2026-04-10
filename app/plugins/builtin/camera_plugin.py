@@ -46,6 +46,10 @@ class CameraPlugin:
             return BoothState.CAPTURE
         if event == "cancel":
             return BoothState.IDLE
+        if event == "select_effect":
+            if session:
+                session.selected_effect = kwargs.get("effect")
+            return None  # Stay in preview
         return None
 
     async def _on_capture_enter(self, session, **kwargs):
@@ -56,23 +60,36 @@ class CameraPlugin:
         # Broadcast flash effect
         await self._broadcast({"type": "flash"})
 
-        # Capture still
         date_str = datetime.now().strftime("%Y-%m-%d")
         raw_dir = Path(self._config.general.save_dir) / "raw" / date_str / session.id
         raw_dir.mkdir(parents=True, exist_ok=True)
 
-        capture_index = len(session.captures)
-        path = raw_dir / f"capture_{capture_index:03d}.jpg"
-
         try:
-            saved_path = await self._camera.capture_still(path)
-            session.captures.append(saved_path)
-
-            await self._broadcast({
-                "type": "capture_complete",
-                "index": len(session.captures),
-                "total": session.capture_count,
-            })
+            if session.mode in ("gif", "boomerang"):
+                # Rapid burst capture for GIF/boomerang
+                frame_count = 8  # 8 frames for a good GIF
+                paths = await self._camera.capture_sequence(
+                    count=frame_count,
+                    interval_ms=150,  # ~6.6fps burst
+                    output_dir=raw_dir,
+                )
+                session.captures.extend(paths)
+                await self._broadcast({
+                    "type": "capture_complete",
+                    "index": len(paths),
+                    "total": len(paths),
+                })
+            else:
+                # Single still capture
+                capture_index = len(session.captures)
+                path = raw_dir / f"capture_{capture_index:03d}.jpg"
+                saved_path = await self._camera.capture_still(path)
+                session.captures.append(saved_path)
+                await self._broadcast({
+                    "type": "capture_complete",
+                    "index": len(session.captures),
+                    "total": session.capture_count,
+                })
         except Exception as e:
             logger.error(f"Capture failed: {e}")
             await self._broadcast(
@@ -88,12 +105,14 @@ class CameraPlugin:
 
         # Auto-advance after capture_enter completes
         if event in ("auto_advance", "capture_advance"):
+            # GIF/boomerang captures all frames at once — go straight to processing
+            if session.mode in ("gif", "boomerang"):
+                return BoothState.PROCESSING
             if len(session.captures) < session.capture_count:
                 return BoothState.PREVIEW
-            else:
-                return BoothState.PROCESSING
-
-        if len(session.captures) < session.capture_count:
-            return BoothState.PREVIEW
-        else:
             return BoothState.PROCESSING
+
+        # Fallback
+        if session.mode in ("gif", "boomerang") or len(session.captures) >= session.capture_count:
+            return BoothState.PROCESSING
+        return BoothState.PREVIEW

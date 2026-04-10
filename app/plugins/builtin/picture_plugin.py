@@ -1,5 +1,6 @@
 """Built-in picture plugin -- handles image processing and composition."""
 
+import asyncio
 import logging
 
 from app.models.state import BoothState
@@ -47,10 +48,34 @@ class PicturePlugin:
                 "percent": 30,
             })
 
-            await self._pipeline.process(
-                session, self._config.picture, footer_vars,
-                branding=self._config.branding,
-            )
+            if session.mode in ("gif", "boomerang"):
+                # Create GIF/boomerang from captured frames
+                from datetime import datetime as dt
+                from pathlib import Path
+
+                from app.processing.gif import create_boomerang, create_gif
+
+                date_str = dt.now().strftime("%Y-%m-%d")
+                output_dir = Path(
+                    self._config.general.save_dir
+                ) / "photos" / date_str
+                output_dir.mkdir(parents=True, exist_ok=True)
+                output_path = output_dir / f"{session.id}.gif"
+
+                if session.mode == "boomerang":
+                    await asyncio.to_thread(
+                        create_boomerang, session.captures, output_path
+                    )
+                else:
+                    await asyncio.to_thread(
+                        create_gif, session.captures, output_path
+                    )
+                session.composite_path = output_path
+            else:
+                await self._pipeline.process(
+                    session, self._config.picture, footer_vars,
+                    branding=self._config.branding,
+                )
 
             await self._broadcast({
                 "type": "processing_progress",
