@@ -889,18 +889,27 @@ class BoothApp {
         var newRot = (Math.random() * 20 - 10);
         // Wait for fade out to complete
         setTimeout(function () {
-            // Move and swap while invisible (no transition)
+            // Move while invisible (no transition)
             card.el.style.transition = 'none';
             card.el.style.left = newPos.x + '%';
             card.el.style.top = newPos.y + '%';
             card.el.style.transform = 'rotate(' + newRot + 'deg)';
+            // Swap image and wait for it to load before fading in
             var img = card.el.querySelector('img');
             var isGif = photo.photo_path && photo.photo_path.endsWith('.gif');
-            if (img) img.src = '/api/gallery/' + photo.id + (isGif ? '' : '/thumbnail');
-            // Force reflow then re-enable transition and fade in
-            void card.el.offsetWidth;
-            card.el.style.transition = 'opacity 1s';
-            card.el.style.opacity = '0.7';
+            var newSrc = '/api/gallery/' + photo.id + (isGif ? '' : '/thumbnail');
+            var fadeIn = function () {
+                void card.el.offsetWidth;
+                card.el.style.transition = 'opacity 1s';
+                card.el.style.opacity = '0.7';
+            };
+            if (img) {
+                img.onload = fadeIn;
+                img.onerror = fadeIn;
+                img.src = newSrc;
+                // Fallback if image is cached (onload won't fire)
+                if (img.complete) fadeIn();
+            }
         }, 1200);
     }
 
