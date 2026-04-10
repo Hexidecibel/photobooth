@@ -1010,6 +1010,14 @@ class AdminPanel {
 
                 if (!url) return;
 
+                // Always get the freshest tunnel URL before copying
+                try {
+                    const freshConn = await fetch('/api/admin/connection').then(r => r.json());
+                    const freshBase = freshConn.tunnel_url || `http://${freshConn.ip}:${freshConn.port}`;
+                    const token = url.split('/share/')[1];
+                    if (token) url = `${freshBase}/share/${token}`;
+                } catch (e) {}
+
                 try {
                     await navigator.clipboard.writeText(url);
                     btn.textContent = 'Copied!';
