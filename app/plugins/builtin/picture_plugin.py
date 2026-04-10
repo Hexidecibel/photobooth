@@ -59,13 +59,17 @@ class PicturePlugin:
 
                 # Apply effect to each frame if selected
                 effect = session.selected_effect
+                total_frames = len(session.captures)
                 if effect and effect != "none":
-                    await self._broadcast({
-                        "type": "processing_progress",
-                        "step": "applying_effect",
-                        "percent": 40,
-                    })
                     for i, frame_path in enumerate(session.captures):
+                        pct = 20 + int(60 * (i / total_frames))
+                        await self._broadcast({
+                            "type": "processing_progress",
+                            "step": "applying_effect",
+                            "percent": pct,
+                            "frame": i + 1,
+                            "total_frames": total_frames,
+                        })
                         img = await asyncio.to_thread(Image.open, frame_path)
                         img = img.convert("RGB")
                         img = await asyncio.to_thread(apply_effect, img, effect)

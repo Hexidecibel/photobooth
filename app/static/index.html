@@ -127,8 +127,14 @@
     <!-- PROCESSING: Wait screen -->
     <section data-state="processing">
         <div class="processing-content">
-            <div class="spinner" aria-label="Processing"></div>
-            <h2 data-i18n="processing">Creating your photo...</h2>
+            <div class="processing-animation">
+                <div class="pulse-ring"></div>
+                <div class="pulse-ring delay-1"></div>
+                <div class="pulse-ring delay-2"></div>
+                <div class="processing-icon">&#10024;</div>
+            </div>
+            <h2 id="processing-text">Working on something amazing...</h2>
+            <p class="processing-step" id="processing-step"></p>
             <div class="progress-bar">
                 <div class="progress-fill" id="progress"></div>
             </div>

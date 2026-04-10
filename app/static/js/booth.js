@@ -209,7 +209,7 @@ class BoothApp {
                 this.onCaptureComplete(msg);
                 break;
             case 'processing_progress':
-                this.updateProgress(msg.percent);
+                this.updateProgress(msg.percent, msg.step, msg.frame, msg.total_frames);
                 break;
             case 'result_ready':
                 this.showResult(msg);
@@ -418,10 +418,28 @@ class BoothApp {
     /*  Processing progress                                                */
     /* ------------------------------------------------------------------ */
 
-    updateProgress(percent) {
+    updateProgress(percent, step, frame, totalFrames) {
         var fill = document.getElementById('progress');
-        if (fill) {
-            fill.style.width = percent + '%';
+        if (fill) fill.style.width = percent + '%';
+
+        var stepEl = document.getElementById('processing-step');
+        var textEl = document.getElementById('processing-text');
+        if (!stepEl) return;
+
+        var messages = {
+            compositing: 'Composing your masterpiece...',
+            applying_effect: 'Applying the magic...',
+            done: 'Almost there...',
+        };
+
+        if (textEl && messages[step]) {
+            textEl.textContent = messages[step];
+        }
+
+        if (frame && totalFrames) {
+            stepEl.textContent = 'Frame ' + frame + ' of ' + totalFrames;
+        } else {
+            stepEl.textContent = '';
         }
     }
 
