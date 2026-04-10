@@ -516,6 +516,68 @@
 
         .error { color: #f44336; }
 
+        /* ── Events Tab ────────────────────────────────── */
+        .events-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .events-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .event-card {
+            background: white;
+            border: 2px solid #e8e8e8;
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: border-color 0.2s;
+        }
+        .event-card.active {
+            border-color: #6c63ff;
+            background: #fafaff;
+        }
+        .event-name {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+        .event-badge {
+            display: inline-block;
+            background: #6c63ff;
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 0.5rem;
+            font-weight: 500;
+        }
+        .event-meta {
+            font-size: 0.85rem;
+            color: #666;
+        }
+        .event-url {
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+        }
+        .event-url a {
+            color: #6c63ff;
+            text-decoration: none;
+        }
+        .event-url a:hover {
+            text-decoration: underline;
+        }
+        .event-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-shrink: 0;
+        }
+
         .empty-state {
             display: flex;
             flex-direction: column;
@@ -1292,6 +1354,10 @@
                 <span class="nav-icon">&#128247;</span>
                 <span>Gallery</span>
             </div>
+            <div class="nav-item" data-tab="events">
+                <span class="nav-icon">&#127881;</span>
+                <span>Events</span>
+            </div>
             <div class="nav-item" data-tab="theme">
                 <span class="nav-icon">&#127912;</span>
                 <span>Theme</span>
@@ -1329,6 +1395,12 @@
             <div class="tab-content" data-content="gallery">
                 <div id="gallery-content">
                     <div class="loading">Loading gallery...</div>
+                </div>
+            </div>
+
+            <div class="tab-content" data-content="events">
+                <div id="events-content">
+                    <div class="loading">Loading events...</div>
                 </div>
             </div>
 

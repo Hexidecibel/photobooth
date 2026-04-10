@@ -597,6 +597,79 @@ async def test_cloud_gallery(request: Request):
         return {"connected": False, "error": str(e)}
 
 
+@router.get("/events")
+async def list_events(request: Request):
+    """List all events (galleries) from cloud."""
+    cloud = getattr(request.app.state, "cloud_gallery", None)
+    if not cloud or not cloud.is_configured:
+        return {"events": [], "error": "Cloud gallery not configured"}
+
+    galleries = await cloud.list_galleries()
+    return {"events": galleries}
+
+
+@router.post("/events")
+async def create_event(request: Request):
+    """Create a new event (gallery) on the cloud."""
+    cloud = getattr(request.app.state, "cloud_gallery", None)
+    if not cloud or not cloud.is_configured:
+        raise HTTPException(503, "Cloud gallery not configured")
+
+    data = await request.json()
+    name = data.get("name", "")
+    slug = data.get("slug", "")
+
+    if not name:
+        raise HTTPException(400, "Event name required")
+
+    result = await cloud.create_gallery(name, slug)
+    if not result:
+        raise HTTPException(500, "Failed to create event")
+
+    # Auto-publish so guests can view
+    await cloud.publish_gallery(result["id"])
+
+    return {"event": result}
+
+
+@router.post("/events/{event_id}/activate")
+async def activate_event(event_id: str, request: Request):
+    """Set this event as the active one -- photos upload to this gallery."""
+    cloud = getattr(request.app.state, "cloud_gallery", None)
+    config = request.app.state.config
+
+    # Update the gallery_id in config
+    config.cloud_gallery.gallery_id = event_id
+    save_config(config)
+
+    # Update the cloud service's gallery_id
+    if cloud:
+        cloud._gallery_id = event_id
+        # Refresh gallery info and update event name
+        gallery_info = await cloud.get_gallery_info()
+        if gallery_info:
+            config.sharing.event_name = gallery_info.get(
+                "name", config.sharing.event_name
+            )
+            save_config(config)
+
+    return {"status": "activated", "gallery_id": event_id}
+
+
+@router.delete("/events/{event_id}")
+async def delete_event(event_id: str, request: Request):
+    """Delete an event (gallery) from the cloud."""
+    cloud = getattr(request.app.state, "cloud_gallery", None)
+    if not cloud:
+        raise HTTPException(503, "Cloud gallery not configured")
+
+    success = await cloud.delete_gallery(event_id)
+    if not success:
+        raise HTTPException(500, "Failed to delete event")
+
+    return {"status": "deleted"}
+
+
 def _deep_merge(base: dict, updates: dict) -> dict:
     """Deep merge updates into base dict."""
     for key, value in updates.items():

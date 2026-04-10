@@ -99,6 +99,7 @@ class AdminPanel {
         if (name === 'config') this.loadConfig();
         if (name === 'gallery') this.loadGallery();
         if (name === 'theme') this.loadTheme();
+        if (name === 'events') this.loadEvents();
         if (name === 'templates') this.loadTemplates();
         if (name === 'analytics') this.loadAnalytics();
     }
@@ -1479,6 +1480,148 @@ class AdminPanel {
                 </div>
             </div>
         `;
+    }
+
+    /* ── Events Tab ─────────────────────────────────────────────── */
+
+    async loadEvents() {
+        const container = document.getElementById('events-content');
+        if (!container) return;
+        container.innerHTML = '<div class="loading">Loading events...</div>';
+
+        // Ensure config is loaded so we know the active gallery
+        if (!this.config) {
+            try {
+                const cfgRes = await fetch('/api/admin/config');
+                this.config = await cfgRes.json();
+            } catch (_) { /* ignore */ }
+        }
+
+        try {
+            const res = await fetch('/api/admin/events');
+            const data = await res.json();
+
+            if (data.error) {
+                container.innerHTML = `<div class="empty-state"><p>${data.error}</p></div>`;
+                return;
+            }
+
+            this.renderEvents(data.events, container);
+        } catch (e) {
+            container.innerHTML = `<div class="error">Failed to load events</div>`;
+        }
+    }
+
+    renderEvents(events, container) {
+        const activeId = this.config?.cloud_gallery?.gallery_id || '';
+
+        let html = `
+            <div class="events-header">
+                <h3>Events</h3>
+                <button class="btn btn-primary" id="create-event-btn">+ New Event</button>
+            </div>
+            <p class="section-desc">Each event is a gallery on gallery.cush.rocks. Photos upload to the active event.</p>
+        `;
+
+        if (events.length === 0) {
+            html += '<div class="empty-state"><p>No events yet. Create one to get started.</p></div>';
+        } else {
+            html += '<div class="events-list">';
+            for (const event of events) {
+                const isActive = event.id === activeId;
+                const photoCount = event.media_count || 0;
+                const date = new Date(event.created_at).toLocaleDateString();
+                const publicUrl = `https://gallery.cush.rocks/${event.slug}`;
+
+                html += `
+                    <div class="event-card ${isActive ? 'active' : ''}">
+                        <div class="event-info">
+                            <div class="event-name">${event.name} ${isActive ? '<span class="event-badge">Active</span>' : ''}</div>
+                            <div class="event-meta">${photoCount} photos &middot; Created ${date}</div>
+                            <div class="event-url"><a href="${publicUrl}" target="_blank">${publicUrl}</a></div>
+                        </div>
+                        <div class="event-actions">
+                            ${!isActive ? `<button class="btn btn-sm btn-primary" data-activate-event="${event.id}">Activate</button>` : ''}
+                            <button class="btn btn-sm" data-copy-event-url="${publicUrl}">Copy Link</button>
+                            <button class="btn btn-sm btn-danger" data-delete-event="${event.id}">Delete</button>
+                        </div>
+                    </div>
+                `;
+            }
+            html += '</div>';
+        }
+
+        container.innerHTML = html;
+
+        // Bind create button
+        document.getElementById('create-event-btn')?.addEventListener('click', () => this.showCreateEventDialog());
+
+        // Bind activate buttons
+        container.querySelectorAll('[data-activate-event]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const id = btn.dataset.activateEvent;
+                await fetch(`/api/admin/events/${id}/activate`, { method: 'POST' });
+                this.showNotification('Event activated!', 'success');
+                this.loadEvents();
+                this.loadConfig();
+            });
+        });
+
+        // Bind copy URL buttons
+        container.querySelectorAll('[data-copy-event-url]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const url = btn.dataset.copyEventUrl;
+                try {
+                    await navigator.clipboard.writeText(url);
+                    btn.textContent = 'Copied!';
+                    setTimeout(() => { btn.textContent = 'Copy Link'; }, 2000);
+                } catch (_) { /* ignore */ }
+            });
+        });
+
+        // Bind delete buttons
+        container.querySelectorAll('[data-delete-event]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                if (!confirm('Delete this event and all its photos?')) return;
+                await fetch(`/api/admin/events/${btn.dataset.deleteEvent}`, { method: 'DELETE' });
+                this.showNotification('Event deleted', 'success');
+                this.loadEvents();
+            });
+        });
+    }
+
+    showCreateEventDialog() {
+        const name = prompt('Event name:');
+        if (!name) return;
+
+        const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        this.createEvent(name, slug);
+    }
+
+    async createEvent(name, slug) {
+        try {
+            const res = await fetch('/api/admin/events', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, slug }),
+            });
+            if (res.ok) {
+                const data = await res.json();
+                this.showNotification('Event created!', 'success');
+
+                // Auto-activate the new event
+                if (data.event?.id) {
+                    await fetch(`/api/admin/events/${data.event.id}/activate`, { method: 'POST' });
+                }
+
+                this.loadEvents();
+                this.loadConfig();
+            } else {
+                this.showNotification('Failed to create event', 'error');
+            }
+        } catch (e) {
+            this.showNotification('Error: ' + e.message, 'error');
+        }
     }
 
     /* ── Utilities ───────────────────────────────────────────────── */

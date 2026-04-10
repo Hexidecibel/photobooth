@@ -124,3 +124,65 @@ class CloudGalleryService:
         """Build the public gallery URL from the slug."""
         base = self._api_url.split("/api")[0]
         return f"{base}/{slug}"
+
+    async def list_galleries(self) -> list[dict]:
+        """List all galleries for this tenant."""
+        try:
+            async with httpx.AsyncClient(timeout=10) as client:
+                resp = await client.get(
+                    f"{self._api_url}/galleries",
+                    headers=self._headers,
+                    params={"limit": 100},
+                )
+                if resp.status_code == 200:
+                    data = resp.json()
+                    return data.get("data", [])
+        except Exception as e:
+            logger.error("Failed to list galleries: %s", e)
+        return []
+
+    async def create_gallery(self, name: str, slug: str = "") -> dict | None:
+        """Create a new gallery."""
+        try:
+            body: dict = {"name": name}
+            if slug:
+                body["slug"] = slug
+            async with httpx.AsyncClient(timeout=10) as client:
+                resp = await client.post(
+                    f"{self._api_url}/galleries",
+                    headers=self._headers,
+                    json=body,
+                )
+                if resp.status_code in (200, 201):
+                    return resp.json().get("data")
+                logger.error("Create gallery failed: %s", resp.text)
+        except Exception as e:
+            logger.error("Failed to create gallery: %s", e)
+        return None
+
+    async def publish_gallery(self, gallery_id: str) -> bool:
+        """Publish a gallery so guests can view it."""
+        try:
+            async with httpx.AsyncClient(timeout=10) as client:
+                resp = await client.patch(
+                    f"{self._api_url}/galleries/{gallery_id}",
+                    headers=self._headers,
+                    json={"published": True},
+                )
+                return resp.status_code == 200
+        except Exception as e:
+            logger.error("Failed to publish gallery: %s", e)
+        return False
+
+    async def delete_gallery(self, gallery_id: str) -> bool:
+        """Delete a gallery."""
+        try:
+            async with httpx.AsyncClient(timeout=10) as client:
+                resp = await client.delete(
+                    f"{self._api_url}/galleries/{gallery_id}",
+                    headers=self._headers,
+                )
+                return resp.status_code == 200
+        except Exception as e:
+            logger.error("Failed to delete gallery: %s", e)
+        return False
