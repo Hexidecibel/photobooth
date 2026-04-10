@@ -284,6 +284,7 @@ class BoothApp {
         if (state === 'preview') {
             this.startPreview();
             // Multi-shot: pause between captures
+            console.log('[booth] preview: captureCount=' + this.captureCount + ' captureIndex=' + this.captureIndex);
             if (this.captureCount > 1 && this.captureIndex > 0 && this.captureIndex < this.captureCount) {
                 var self = this;
                 var countdownEl = document.getElementById('countdown');
