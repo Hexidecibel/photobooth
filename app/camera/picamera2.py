@@ -72,7 +72,7 @@ class PiCamera2Backend(CameraBase):
             Picamera2, self._camera_index
         )
         config = self._picam2.create_video_configuration(
-            main={"size": resolution},
+            main={"size": resolution, "format": "YUV420"},
         )
         await asyncio.to_thread(self._picam2.configure, config)
         self._output = StreamingOutput()
