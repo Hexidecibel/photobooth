@@ -95,9 +95,9 @@ class PiCamera2Backend(CameraBase):
 
                 img = PILImage.fromarray(frame, "RGB")
                 buf = io.BytesIO()
-                img.save(buf, format="JPEG", quality=85)
+                img.save(buf, format="JPEG", quality=90)
                 yield buf.getvalue()
-                await asyncio.sleep(1 / 15)  # ~15fps
+                await asyncio.sleep(1 / 20)  # ~20fps
             except Exception as e:
                 logger.debug("Frame capture error: %s", e)
                 await asyncio.sleep(0.1)
@@ -106,27 +106,30 @@ class PiCamera2Backend(CameraBase):
         if not self._picam2:
             raise RuntimeError("Camera not started")
         path.parent.mkdir(parents=True, exist_ok=True)
-        # Use the sensor's native resolution for best quality
+
+        # switch_mode_and_capture_file handles mode switch + full-res capture
         sensor_res = self._picam2.camera_properties.get(
             "PixelArraySize", (3280, 2464)
         )
         still_config = self._picam2.create_still_configuration(
             main={"size": sensor_res}
         )
+        # Stop preview, capture full-res still, restart preview
+        self._running = False
+        await asyncio.to_thread(self._picam2.stop)
+        await asyncio.to_thread(self._picam2.configure, still_config)
+        await asyncio.to_thread(self._picam2.start)
         image = await asyncio.to_thread(
-            self._picam2.switch_mode_and_capture_image,
-            still_config,
-            "main",
+            self._picam2.capture_image, "main"
         )
-        await asyncio.to_thread(image.save, str(path))
-        # Switch back to preview mode
-        preview_config = self._picam2.create_video_configuration(
-            main={
-                "size": self._preview_resolution,
-                "format": "RGB888",
-            }
+        await asyncio.to_thread(image.save, str(path), quality=95)
+        # Restart preview
+        await asyncio.to_thread(self._picam2.stop)
+        preview_config = self._picam2.create_preview_configuration(
+            main={"size": self._preview_resolution, "format": "RGB888"},
         )
         await asyncio.to_thread(self._picam2.configure, preview_config)
+        await asyncio.to_thread(self._picam2.start)
         self._running = True
         logger.info("Still captured: %s", path)
         return path
@@ -138,14 +141,15 @@ class PiCamera2Backend(CameraBase):
         paths: list[Path] = []
         for i in range(count):
             path = output_dir / f"frame_{i:03d}.jpg"
-            # For sequences, capture from the preview stream (lower res but fast)
-            if self._output:
-                frame = await asyncio.to_thread(
-                    self._output.wait_for_frame, 1.0
-                )
-                if frame:
-                    path.write_bytes(frame)
-                    paths.append(path)
+            # Grab frame from the running preview
+            frame = await asyncio.to_thread(
+                self._picam2.capture_array, "main"
+            )
+            from PIL import Image as PILImage
+
+            img = PILImage.fromarray(frame, "RGB")
+            img.save(str(path), quality=90)
+            paths.append(path)
             if i < count - 1:
                 await asyncio.sleep(interval_ms / 1000)
         return paths
