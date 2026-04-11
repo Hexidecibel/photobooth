@@ -123,6 +123,7 @@ class BoothApp {
     resetIdleTimer() {
         // Safety timer handles timeouts now (90s warning, 120s reset)
         clearTimeout(this.idleTimer);
+        this.resetSafetyTimer();
     }
 
     /* ------------------------------------------------------------------ */
@@ -276,6 +277,7 @@ class BoothApp {
         // Show button hints when hardware buttons are used
         var hints = document.getElementById('button-hints');
         if (hints) hints.style.display = 'flex';
+        this.resetSafetyTimer();
 
         // Find all visible option cards/buttons on the current screen
         var items = [];
